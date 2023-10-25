@@ -1,9 +1,20 @@
 #lang info
+
+;; general
+
 (define collection "lsl")
-(define deps '("base"))
-(define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/lsl.scrbl" ())))
-(define pkg-desc "Description Here")
+(define pkg-desc "Logical Student Language")
 (define version "0.0")
-(define pkg-authors '(camoy))
-(define license '(Apache-2.0 OR MIT))
+(define pkg-authors '(camoy dbp))
+
+;; dependencies
+
+(define deps
+  '("base"
+    "rosette"))
+
+(define build-deps
+  '("scribble-lib"
+    "racket-doc"
+    "rackunit-lib"))

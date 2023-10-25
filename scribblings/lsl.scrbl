@@ -1,6 +1,5 @@
 #lang scribble/manual
-@require[@for-label[lsl
-                    racket/base]]
+@require[@for-label[racket/base]]
 
 @title{lsl}
 @author{camoy}

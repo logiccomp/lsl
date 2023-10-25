@@ -1,50 +1,218 @@
 #lang racket/base
 
-(module+ test
-  (require rackunit))
-
-;; Notice
-;; To install (from within the package directory):
-;;   $ raco pkg install
-;; To install (once uploaded to pkgs.racket-lang.org):
-;;   $ raco pkg install <<name>>
-;; To uninstall:
-;;   $ raco pkg remove <<name>>
-;; To view documentation:
-;;   $ raco docs <<name>>
 ;;
-;; For your convenience, we have included LICENSE-MIT and LICENSE-APACHE files.
-;; If you would prefer to use a different license, replace those files with the
-;; desired license.
+;; provide
 ;;
-;; Some users like to add a `private/` directory, place auxiliary files there,
-;; and require them in `main.rkt`.
+
+(require (for-syntax racket/base
+                     racket/string)
+         racket/provide)
+
+(begin-for-syntax
+  (define ((strip pre) str)
+    (and (string-prefix? str pre)
+         (substring str (string-length pre)))))
+
+(provide (filtered-out
+          (strip "$")
+          (combine-out $require
+                       $define
+                       $define-struct
+                       $lambda
+                       $λ
+                       $local
+                       $letrec
+                       $let
+                       $let*
+                       $cond
+                       $if
+                       $and
+                       $or
+                       $quote
+                       $#%datum
+
+                       $empty))
+          (filtered-out
+          (strip "^")
+          (combine-out ^true
+                       ^false
+
+                       ^-
+                       ^<
+                       ^<=
+                       ^>
+                       ^>=
+                       ^abs
+                       ^add1
+                       ^ceiling
+                       ^even?
+                       ^exact->inexact
+                       ^floor
+                       ^inexact->exact
+                       ^integer?
+                       ^max
+                       ^min
+                       ^modulo
+                       ^negative?
+                       ^number?
+                       ^odd?
+                       ^pi
+                       ^positive?
+                       ^quotient
+                       ^real?
+                       ^remainder
+                       ^sgn
+                       ^sub1
+                       ^zero?
+
+                       ^boolean?
+                       ^not
+
+                       ^append
+                       ^assoc
+                       ^assq
+                       ^car
+                       ^cdr
+                       ^cons
+                       ^cons?
+                       ^eighth
+                       ^empty?
+                       ^fifth
+                       ^first
+                       ^fourth
+                       ^length
+                       ^list
+                       ^list-ref
+                       ^list?
+                       ^member
+                       ^memq
+                       ^null
+                       ^null?
+                       ^remove
+                       ^rest
+                       ^reverse
+                       ^second
+                       ^seventh
+                       ^sixth
+                       ^third
+
+                       ^eq?
+                       ^equal?
+                       ^identity
+
+                       ^*
+                       ^+
+                       ^/
+                       ^=
+
+                       ^andmap
+                       ^apply
+                       ^argmax
+                       ^argmin
+                       ^compose
+                       ^filter
+                       ^foldl
+                       ^foldr
+                       ^for-each
+                       ^map
+                       ^memf
+                       ^ormap
+                       ^procedure?
+                       ^sort))
+         #%app
+         #%module-begin
+         #%top-interaction)
+
 ;;
-;; See the current version of the racket style guide here:
-;; http://docs.racket-lang.org/style/index.html
+;; require
+;;
 
-;; Code here
+(require (for-syntax racket/base
+                     syntax/parse)
+         (prefix-in ^ rosette/safe)
+         syntax/parse/define)
 
+;;
+;; syntax
+;;
 
+(define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
+  (^require mod ...))
 
-(module+ test
-  ;; Any code in this `test` submodule runs when this file is run using DrRacket
-  ;; or with `raco test`. The code here does not run when this file is
-  ;; required by another module.
+(define-syntax $define
+  (syntax-parser
+    [(_ (name:id param:id ...+) body:expr)
+     #'(^define (name param ...) body)]
+    [(_ name:id rhs:expr)
+     #'(^define name rhs)]))
 
-  (check-equal? (+ 2 2) 4))
+(define-syntax-parse-rule ($define-struct name:id (field:id ...))
+  (^struct name (field ...) #:prefab))
 
-(module+ main
-  ;; (Optional) main submodule. Put code here if you need it to be executed when
-  ;; this file is run using DrRacket or the `racket` executable.  The code here
-  ;; does not run when this file is required by another module. Documentation:
-  ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
+(define-syntax-parse-rule ($lambda (param:id ...+) body:expr)
+  (^lambda (param ...) body))
 
-  (require racket/cmdline)
-  (define who (box "world"))
-  (command-line
-    #:program "my-program"
-    #:once-each
-    [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-    #:args ()
-    (printf "hello ~a~n" (unbox who))))
+(define-syntax-parse-rule ($λ (param:id ...+) body:expr)
+  (^λ (param ...) body))
+
+(define-syntax-parse-rule ($local [def:expr ...] body:expr)
+  (^local [def ...] body))
+
+(define-syntax-parse-rule ($letrec ([var:id rhs:expr] ...) body:expr)
+  (^letrec ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($let ([var:id rhs:expr] ...) body:expr)
+  (^let ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($let* ([var:id rhs:expr] ...) body:expr)
+  (^let* ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($cond [guard:expr arm:expr] ...+)
+  (^cond [guard arm] ...))
+
+(define-syntax-parse-rule ($if guard:expr then:expr else:expr)
+  (^if guard then else))
+
+(define-syntax-parse-rule ($and arg0:expr arg:expr ...+)
+  (^and arg0 arg ...))
+
+(define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
+  (^or arg0 arg ...))
+
+(define-syntax-parse-rule ($quote body:expr)
+  (^quote body))
+
+(define-syntax $#%datum
+  (syntax-parser
+    [(_ . (~or e:number e:boolean e:string e:character))
+     #'(^#%datum . e)]))
+
+;;
+;; TODO: testing
+;;
+
+#|
+
+    (pattern (check-expect arg0:exp arg1:exp))
+    (pattern (check-random arg0:exp arg1:exp))
+    (pattern (check-within arg0:exp arg1:exp arg2:exp))
+    (pattern (check-member-of arg0:exp arg:exp ...))
+    (pattern (check-range arg0:exp arg1:exp arg2:exp))
+    (pattern (check-satisfied arg0:exp arg1:exp))
+    (pattern (check-error arg0:exp arg1:exp))
+    (pattern (check-error arg:exp)))
+
+|#
+
+;;
+;; standard library
+;;
+
+(define $empty ^null)
+
+;;
+;; reader
+;;
+
+(module reader syntax/module-reader
+  lsl)
