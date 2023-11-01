@@ -16,7 +16,8 @@
 (provide (filtered-out
           (strip "$")
           (combine-out $require
-                       $define
+                       ;; from contract.rkt`
+                       ;$define
                        $define-struct
                        $lambda
                        $λ
@@ -121,7 +122,14 @@
                        ^sort))
          #%app
          #%module-begin
-         #%top-interaction)
+         #%top-interaction
+
+         (for-space contract-space (all-defined-out))
+         (rename-out
+          [define-annotated define]
+          [annotate :])
+         ->
+         define-contract)
 
 ;;
 ;; require
@@ -130,7 +138,8 @@
 (require (for-syntax racket/base
                      syntax/parse)
          (prefix-in ^ rosette/safe)
-         syntax/parse/define)
+         syntax/parse/define
+         "syntax.rkt")
 
 ;;
 ;; syntax
@@ -141,7 +150,7 @@
 
 (define-syntax $define
   (syntax-parser
-    [(_ (name:id param:id ...+) body:expr)
+    [(_ (name:id param:id ...) body:expr)
      #'(^define (name param ...) body)]
     [(_ name:id rhs:expr)
      #'(^define name rhs)]))
@@ -149,10 +158,10 @@
 (define-syntax-parse-rule ($define-struct name:id (field:id ...))
   (^struct name (field ...) #:prefab))
 
-(define-syntax-parse-rule ($lambda (param:id ...+) body:expr)
+(define-syntax-parse-rule ($lambda (param:id ...) body:expr)
   (^lambda (param ...) body))
 
-(define-syntax-parse-rule ($λ (param:id ...+) body:expr)
+(define-syntax-parse-rule ($λ (param:id ...) body:expr)
   (^λ (param ...) body))
 
 (define-syntax-parse-rule ($local [def:expr ...] body:expr)
@@ -203,6 +212,12 @@
     (pattern (check-error arg:exp)))
 
 |#
+
+(define-syntax ->
+  (contract-macro
+   (syntax-parser
+     [(_ x ... y)
+      #'(function (arguments [_ x] ...) (results [_ y]))])))
 
 ;;
 ;; standard library

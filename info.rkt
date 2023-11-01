@@ -11,7 +11,8 @@
 ;; dependencies
 
 (define deps
-  '("base"
+  '("https://github.com/michaelballantyne/syntax-spec/"
+    "base"
     "rosette"))
 
 (define build-deps
