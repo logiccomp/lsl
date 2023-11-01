@@ -4,6 +4,7 @@
 * cyclic
 * is `with-reference-compilers` working (?)
 * annotate should use lift to generate contract definition for reuse
+* record src loc for flat contract and use in error reporting
 
 ## `runtime.rkt`
 

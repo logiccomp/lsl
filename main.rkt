@@ -129,7 +129,7 @@
           [define-annotated define]
           [annotate :])
          ->
-         define-contract)
+         define-alias)
 
 ;;
 ;; require

@@ -8,7 +8,7 @@
          (for-syntax contract-macro)
          define-annotated
          annotate
-         define-contract)
+         define-alias)
 
 ;;
 ;; require
@@ -22,7 +22,9 @@
                      syntax/parse/lib/function-header)
          syntax-spec
          syntax/location
-         "runtime.rkt")
+         "runtime/contract.rkt"
+         "runtime/flat.rkt"
+         "runtime/function.rkt")
 
 ;;
 ;; `define-annotated`
@@ -46,9 +48,9 @@
      #:attr ?ctc (bound-id-table-ref contract-table name-stx (const #f))
      #:with ?new-body ((attribute ?head.make-body) #'?body)
      #'(define ?head.name
-         (let ([pos (positive-blm (quote-module-name))]
-               [neg (negative-blm (quote-module-name))])
-           (((ctc-protect (compile ?ctc)) ?new-body pos) neg)))]))
+         (let ([pos (positive-blame-struct (quote-module-name))]
+               [neg (negative-blame-struct (quote-module-name))])
+           (((contract-struct-protect (compile ?ctc)) ?new-body pos) neg)))]))
 
 ;;
 ;; contract grammar
@@ -88,10 +90,10 @@
    #:binding (export x)))
 
 ;;
-;; `define-contract`
+;; `define-alias`
 ;;
 
-(define-syntax define-contract
+(define-syntax define-alias
   (syntax-parser
     [(_ name:id ctc:expr)
      #'(define-syntax name
@@ -107,11 +109,12 @@
   (syntax-parser
     #:datum-literals (function arguments results #%host-expression)
     [(_ (function (arguments [x a] ...) (results [y r] ...)))
-     #'(arrow (list (λ* (x ...) (compile a)) ...)
-              (list (λ* (x ... y ...) (compile r)) ...))]
+     #'(function-contract
+        (list (λ* (x ...) (compile a)) ...)
+        (list (λ* (x ... y ...) (compile r)) ...))]
     [(_ (~and e (#%host-expression _)))
      #'(with-reference-compilers ([contract-var immutable-reference-compiler])
-         (flat e))]))
+         (value->flat-contract e))]))
 
 (define-syntax λ*
   (syntax-parser
