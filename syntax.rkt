@@ -117,8 +117,12 @@
   (syntax-parser
     #:datum-literals (function arguments results #%host-expression)
     [(_ (function (arguments [x a] ...) (results [y r] ...)))
+     #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
+     #:with (l ...) (function-dependencies (syntax->list #'([y r] ...)))
      #'(function-contract
+        (list (#%datum . k) ...)
         (list (λ* (x ...) (compile a)) ...)
+        (list (#%datum . l) ...)
         (list (λ* (x ... y ...) (compile r)) ...))]
     [(_ (~and e (#%host-expression _)))
      #'(with-reference-compilers ([contract-var immutable-reference-compiler])

@@ -62,11 +62,10 @@
      "blaming: ~a")
    "\n  "))
 
-(define (contract-error blm name bool val)
-  (unless bool
-    (define error-msg
-      (format CTC-FMT name val (blame-struct-path blm)))
-    (raise-user-error error-msg)))
+(define (contract-error blm name val)
+  (define error-msg
+    (format CTC-FMT name val (blame-struct-path blm)))
+  (raise-user-error error-msg))
 
 (define GEN-FMT
   "cannot generate ~a")

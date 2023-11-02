@@ -13,6 +13,7 @@
 (define deps
   '("https://github.com/michaelballantyne/syntax-spec/"
     "base"
+    "mischief"
     "rosette"))
 
 (define build-deps

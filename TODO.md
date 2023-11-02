@@ -17,3 +17,6 @@
 * have #false in the structs and only error on projection
 * `contract-generate` should be a macro that takes syntax in
 * better name for arrows
+* split and DRY `function-dependency-graph`
+* dry `function-contract`
+* interact for function because dom is dependent
