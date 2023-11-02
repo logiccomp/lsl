@@ -124,7 +124,10 @@
          #%module-begin
          #%top-interaction
 
-         (for-space contract-space (all-defined-out))
+         (for-space contract-space
+                    function
+                    arguments
+                    results)
          (rename-out
           [define-annotated define]
           [annotate :])
@@ -132,7 +135,8 @@
          define-alias
          contract
          contract-generate
-         contract-interact)
+         contract-interact
+         contract-verify)
 
 ;;
 ;; require
@@ -141,11 +145,14 @@
 (require (for-syntax racket/base
                      syntax/parse)
          (prefix-in ^ rosette/safe)
+         rosette/solver/smt/z3
          syntax/parse/define
          "syntax.rkt"
          "runtime/contract.rkt"
          "runtime/flat.rkt"
          "runtime/function.rkt")
+
+(^current-solver (z3 #:path (find-executable-path "z3")))
 
 ;;
 ;; syntax

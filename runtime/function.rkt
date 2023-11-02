@@ -4,23 +4,14 @@
 ;; provide
 ;;
 
-(provide (for-syntax function-dependencies)
-         function-contract)
+(provide function-contract)
 
 ;;
 ;; require
 ;;
 
-(require (for-syntax racket/base
-                     racket/function
-                     racket/list
-                     syntax/parse
-                     syntax/id-table
-                     mischief/dict
-                     mischief/sort)
-         racket/list
-         "contract.rkt"
-         "../util.rkt")
+(require racket/list
+         "contract.rkt")
 
 ;;
 ;; function
@@ -52,20 +43,22 @@
       (chaperone-procedure
        val wrapper
        impersonator-prop:contract self)))
-  (define generated
-    (procedure-reduce-arity
-     (λ args (apply values (map contract-generate-function cods)))
-     n))
-  (define (interact val)
-    (define args (range n))
+  (define (generated . args)
+    (define ((cod-apply acc k) cod)
+      (define both (append args acc))
+      ((contract-struct-generate (apply cod both))))
+    (apply values (list-update-many cods cod-order cod-apply)))
+  (define (interact mode val)
     (define ((dom-apply acc k) dom)
-      ((contract-struct-generate (apply dom acc))))
-    (list-update-many doms dom-order dom-apply))
+      (mode (apply dom acc)))
+    (apply val (list-update-many doms dom-order dom-apply))
+    (void))
   (define self
     (contract-struct
      'function
      protect
-     (λ () generated)
+     (λ () (procedure-reduce-arity generated n))
+     #false
      interact))
   self)
 
@@ -73,27 +66,3 @@
   (for/fold ([acc xs])
             ([k (in-list ks)])
     (list-update acc k (f acc k))))
-
-;;
-;; dependency
-;;
-
-(begin-for-syntax
-  (define (function-dependencies stxs)
-    (define id-index-table
-      (for/fold ([acc (make-immutable-bound-id-table)])
-                ([stx (in-list stxs)]
-                 [k (in-naturals)])
-        (syntax-parse stx
-          [(name:id body:expr)
-           (bound-id-table-set acc #'name k)])))
-    (define dep-hash
-      (for/hash ([stx (in-list stxs)])
-        (syntax-parse stx
-          [(name:id body:expr)
-           (define deps
-             (for/list ([var (in-list (free-variables #'body))])
-               (bound-id-table-ref id-index-table var #false)))
-           (values #'name (filter values deps))])))
-    (define neighbors (dict->procedure #:failure (const empty) dep-hash))
-    (topological-sort (range (length stxs)) neighbors)))

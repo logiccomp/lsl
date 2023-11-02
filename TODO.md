@@ -1,13 +1,8 @@
-## `syntax.rkt`
-
 * check binding specs (esp. for `contract` nonterminal)
 * cyclic
 * is `with-reference-compilers` working (?)
 * annotate should use lift to generate contract definition for reuse
 * record src loc for flat contract and use in error reporting
-
-## `runtime.rkt`
-
 * improve perf with tight boundary using weak hash table cache
 * add back rosette verification stuff
 * add back random generation
@@ -20,3 +15,4 @@
 * split and DRY `function-dependency-graph`
 * dry `function-contract`
 * interact for function because dom is dependent
+* free variable expansion should not be discarded

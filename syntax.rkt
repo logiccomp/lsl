@@ -4,7 +4,10 @@
 ;; provide
 ;;
 
-(provide (for-space contract-space (all-defined-out))
+(provide (for-space contract-space
+                    function
+                    arguments
+                    results)
          (for-syntax contract-macro)
          define-annotated
          annotate
@@ -18,10 +21,15 @@
 
 (require (for-syntax racket/base
                      racket/function
+                     racket/list
                      racket/sequence
                      syntax/id-table
+                     syntax/id-set
                      syntax/parse
-                     syntax/parse/lib/function-header)
+                     syntax/parse/lib/function-header
+                     syntax/transformer
+                     mischief/dict
+                     mischief/sort)
          syntax-spec
          syntax/location
          "runtime/contract.rkt"
@@ -113,8 +121,8 @@
 ;; `compile`
 ;;
 
-(define-syntax compile
-  (syntax-parser
+(define-syntax (compile stx)
+  (syntax-parse stx
     #:datum-literals (function arguments results #%host-expression)
     [(_ (function (arguments [x a] ...) (results [y r] ...)))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
@@ -125,7 +133,7 @@
         (list (#%datum . l) ...)
         (list (λ* (x ... y ...) (compile r)) ...))]
     [(_ (~and e (#%host-expression _)))
-     #'(with-reference-compilers ([contract-var immutable-reference-compiler])
+     #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
          (value->flat-contract e))]))
 
 (define-syntax λ*
@@ -145,3 +153,44 @@
    (syntax-parser
      [(_ x ... y)
       #'(function (arguments [_ x] ...) (results [_ y]))])))
+
+;;
+;; dependency
+;;
+
+(begin-for-syntax
+  (define (function-dependencies stxs)
+    (define id-index-table
+      (for/fold ([acc (make-immutable-bound-id-table)])
+                ([stx (in-list stxs)]
+                 [k (in-naturals)])
+        (syntax-parse stx
+          [(name:id body:expr)
+           (bound-id-table-set acc #'name k)])))
+    (define dep-hash
+      (for/hash ([stx (in-list stxs)])
+        (syntax-parse stx
+          [(name:id body:expr)
+           (define deps
+             (for/list ([var (in-list (free-variables #'body))])
+               (bound-id-table-ref id-index-table var #false)))
+           (values #'name (filter values deps))])))
+    (define neighbors (dict->procedure #:failure (const empty) dep-hash))
+    (topological-sort (range (length stxs)) neighbors))
+
+  (define current-free-variables (make-parameter #f))
+
+  (define record-var-compiler
+    (make-variable-like-transformer
+     (λ (id)
+       (bound-id-set-add! (current-free-variables) id)
+       #''_)))
+
+  (define (free-variables stx)
+    (define fv-set (mutable-bound-id-set))
+    (define stx*
+      #`(with-reference-compilers ([contract-var-class record-var-compiler])
+          #,stx))
+    (parameterize ([current-free-variables fv-set])
+      (local-expand stx* 'expression null))
+    (bound-id-set->list fv-set)))
