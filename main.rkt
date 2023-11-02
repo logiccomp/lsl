@@ -129,7 +129,10 @@
           [define-annotated define]
           [annotate :])
          ->
-         define-alias)
+         define-alias
+         contract
+         contract-generate
+         contract-interact)
 
 ;;
 ;; require
@@ -139,7 +142,10 @@
                      syntax/parse)
          (prefix-in ^ rosette/safe)
          syntax/parse/define
-         "syntax.rkt")
+         "syntax.rkt"
+         "runtime/contract.rkt"
+         "runtime/flat.rkt"
+         "runtime/function.rkt")
 
 ;;
 ;; syntax
@@ -212,12 +218,6 @@
     (pattern (check-error arg:exp)))
 
 |#
-
-(define-syntax ->
-  (contract-macro
-   (syntax-parser
-     [(_ x ... y)
-      #'(function (arguments [_ x] ...) (results [_ y]))])))
 
 ;;
 ;; standard library

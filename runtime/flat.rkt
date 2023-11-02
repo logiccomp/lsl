@@ -14,6 +14,7 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
+         racket/bool
          "contract.rkt")
 
 ;;
@@ -22,21 +23,31 @@
 
 (define-syntax contract
   (syntax-parser
-    #:literals (check generate)
-    [(_ (~alt (~once (check check-expr:expr))
+    #:datum-literals (domain check generate)
+    [(_ (~alt (~optional (domain dom-expr:expr))
+              (~optional (check check-expr:expr))
               (~optional (generate gen-expr:expr)))
         ...)
      #'(flat-contract
-        check-expr
+        (~? dom-expr #false)
+        (~? check-expr #false)
         (~? gen-expr #false))]))
 
-(define (flat-contract check generate)
+(define (flat-contract dom check generate)
   (define (protect val pos)
-    (contract-error pos check val)
+    (unless (implies dom (dom val))
+      (contract-error pos (object-name dom) val))
+    (unless (implies check (check val))
+      (contract-error pos (object-name check) val))
     (λ (neg) val))
-  (define generate*
-    (or generate (generate-error (object-name check))))
-  (contract-struct protect generate*))
+  (define (interact val) (void))
+  (contract-struct
+   (object-name check)
+   protect
+   generate
+   interact))
 
 (define (value->flat-contract val)
-  (if (contract-struct? val) val (flat-contract val #false)))
+  (if (contract-struct? val)
+      val
+      (flat-contract #false val #false)))

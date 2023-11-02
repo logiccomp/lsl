@@ -8,7 +8,9 @@
          (for-syntax contract-macro)
          define-annotated
          annotate
-         define-alias)
+         define-alias
+         contract-generate
+         ->)
 
 ;;
 ;; require
@@ -47,10 +49,12 @@
      #:do [(define name-stx (syntax-local-introduce #'?head.name))]
      #:attr ?ctc (bound-id-table-ref contract-table name-stx (const #f))
      #:with ?new-body ((attribute ?head.make-body) #'?body)
-     #'(define ?head.name
-         (let ([pos (positive-blame-struct (quote-module-name))]
-               [neg (negative-blame-struct (quote-module-name))])
-           (((contract-struct-protect (compile ?ctc)) ?new-body pos) neg)))]))
+     (if (attribute ?ctc)
+         #'(define ?head.name
+             (let ([pos (positive-blame-struct (quote-module-name))]
+                   [neg (negative-blame-struct (quote-module-name))])
+               (((contract-struct-protect (compile ?ctc)) ?new-body pos) neg)))
+         #'(define ?head.name ?new-body))]))
 
 ;;
 ;; contract grammar
@@ -63,8 +67,12 @@
  (host-interface/definitions
   (annotate name:id ctc:contract)
   #:do [(define name-stx (syntax-local-introduce #'name))
-  (bound-id-table-set! contract-table name-stx #'ctc)]
+        (bound-id-table-set! contract-table name-stx #'ctc)]
   #'(void))
+
+ (host-interface/expression
+  (contract-generate ctc:contract)
+  #'(contract-generate-function (compile ctc)))
 
  (nonterminal contract
    #:allow-extension contract-macro
@@ -123,3 +131,13 @@
      (for/list ([x (in-syntax #'(x ...))])
        (if (eq? (syntax-e x) '_) (gensym) x))
      #'(λ (x* ...) e)]))
+
+;;
+;; macros
+;;
+
+(define-syntax ->
+  (contract-macro
+   (syntax-parser
+     [(_ x ... y)
+      #'(function (arguments [_ x] ...) (results [_ y]))])))

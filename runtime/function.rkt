@@ -18,8 +18,10 @@
 
 (define (function-contract doms cods)
   (define (protect val pos)
-    (contract-error pos procedure? val)
-    (contract-error pos procedure-arity-includes? val (length doms))
+    (unless (procedure? val)
+      (contract-error pos 'procedure? val))
+    (unless (procedure-arity-includes? val (length doms))
+      (contract-error pos 'procedure-arity-includes? val))
     (λ (neg)
       (define (wrapper . args)
         (define args*
@@ -39,5 +41,17 @@
       (chaperone-procedure
        val wrapper
        impersonator-prop:contract self)))
-  (define self (contract-struct protect #false))
+  (define generated
+    (procedure-reduce-arity
+     (λ args (apply values (map contract-generate-function cods)))
+     (length doms)))
+  ;; TODO: doesn't work because doms are functions
+  (define (interact val)
+    (apply val (map contract-generate-function doms)))
+  (define self
+    (contract-struct
+     'function
+     protect
+     (λ () generated)
+     interact))
   self)
