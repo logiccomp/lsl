@@ -4,9 +4,7 @@
 ;; provide
 ;;
 
-(provide contract
-         flat-contract
-         value->flat-contract)
+(provide flat-contract)
 
 ;;
 ;; require
@@ -15,7 +13,6 @@
 (require (for-syntax racket/base
                      syntax/parse)
          (only-in rosette/safe
-                  define-symbolic*
                   solvable?
                   symbolic?
                   assert
@@ -28,40 +25,34 @@
 ;; syntax
 ;;
 
-(define-syntax contract
-  (syntax-parser
-    #:datum-literals (domain check generate)
-    [(_ (~alt (~optional (domain dom-expr:expr))
-              (~optional (check check-expr:expr))
-              (~optional (generate gen-expr:expr)))
-        ...)
-     #'(flat-contract
-        (~? dom-expr #false)
-        (~? check-expr #false)
-        (~? gen-expr #false))]))
-
-(define (flat-contract dom check generate)
+(define (flat-contract dom check generate symbolic)
   (define name (object-name check))
+  (define dom-pred (and dom (flat-contract-struct-predicate dom)))
+  (define dom-name (and dom (contract-struct-name dom)))
+  (define (predicate x)
+    (and (implies dom-pred (dom-pred x))
+         (implies check (check x))))
   (define (protect val pos)
-    (unless (implies dom (dom val))
-      (contract-error pos (object-name dom) val))
-    (unless (implies check (check val))
-      (contract-error pos (object-name check) val))
-    (when (symbolic? val)
-      (assert (implies dom (dom val)))
-      (when (unsat? (solve #true))
-        (verify-error pos (object-name dom) val))
-      (assert (implies check (check val)))
-      (when (unsat? (solve #true))
-        (verify-error pos (object-name check) val)))
+    (cond
+      [(symbolic? val)
+       (assert (implies dom (dom-pred val)))
+       (when (unsat? (solve #true))
+         (verify-error pos dom-name val))
+       (assert (implies check (check val)))
+       (when (unsat? (solve #true))
+         (verify-error pos (object-name check) val))]
+      [else
+       (unless (implies dom (dom-pred val))
+         (contract-error pos dom-name val))
+       (unless (implies check (check val))
+         (contract-error pos (object-name check) val))])
     (λ (neg) val))
-  (define symbolic
-    (and (solvable? dom)
-         (λ () (define-symbolic* x dom) x)))
+  (define symbolic*
+    (or symbolic
+        (and dom
+             (λ ()
+               (define x ((contract-struct-symbolic dom)))
+               (assert (implies check (check x)))
+               x))))
   (define (interact mode val) (void))
-  (contract-struct name protect generate symbolic interact))
-
-(define (value->flat-contract val)
-  (if (contract-struct? val)
-      val
-      (flat-contract #false val #false)))
+  (flat-contract-struct name protect generate symbolic* interact predicate))

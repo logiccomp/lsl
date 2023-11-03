@@ -5,13 +5,18 @@
 ;;
 
 (provide (for-space contract-space
+                    flat
+                    domain
+                    check
+                    generate
+                    symbolic
                     function
                     arguments
                     results)
          (for-syntax contract-macro)
          define-annotated
          annotate
-         define-alias
+         define-contract
          contract-generate
          ->)
 
@@ -22,6 +27,7 @@
 (require (for-syntax racket/base
                      racket/function
                      racket/list
+                     racket/set
                      racket/sequence
                      syntax/id-table
                      syntax/id-set
@@ -85,9 +91,16 @@
  (nonterminal contract
    #:allow-extension contract-macro
    #:binding-space contract-space
+   (flat opt:flat-clause ...)
    (function arg:argument-clause res:result-clause)
-   #:binding {(recursive arg) {(recursive res)}}
-   e:racket-expr)
+   #:binding {(recursive arg) {(recursive res)}})
+
+ (nonterminal flat-clause
+   #:binding-space contract-space
+   (domain dom-ctc:contract)
+   (check check-expr:racket-expr)
+   (generate gen-expr:racket-expr)
+   (symbolic sym-expr:racket-expr))
 
  (nonterminal/two-pass argument-clause
    #:binding-space contract-space
@@ -109,7 +122,7 @@
 ;; `define-alias`
 ;;
 
-(define-syntax define-alias
+(define-syntax define-contract
   (syntax-parser
     [(_ name:id ctc:expr)
      #'(define-syntax name
@@ -123,18 +136,25 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:datum-literals (function arguments results #%host-expression)
+    #:datum-literals (flat domain check generate symbolic function arguments results)
+    [(_ (flat (~alt (~optional (domain dom-ctc))
+                    (~optional (check check-expr))
+                    (~optional (generate gen-expr))
+                    (~optional (symbolic sym-expr))) ...))
+     #'(flat-contract
+        (~? (compile dom-ctc) #false)
+        (~? check-expr #false)
+        (~? gen-expr #false)
+        (~? sym-expr #false))]
     [(_ (function (arguments [x a] ...) (results [y r] ...)))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
      #:with (l ...) (function-dependencies (syntax->list #'([y r] ...)))
-     #'(function-contract
-        (list (#%datum . k) ...)
-        (list (λ* (x ...) (compile a)) ...)
-        (list (#%datum . l) ...)
-        (list (λ* (x ... y ...) (compile r)) ...))]
-    [(_ (~and e (#%host-expression _)))
      #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
-         (value->flat-contract e))]))
+         (function-contract
+          (list (#%datum . k) ...)
+          (list (λ* (x ...) (compile a)) ...)
+          (list (#%datum . l) ...)
+          (list (λ* (x ... y ...) (compile r)) ...)))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -143,6 +163,30 @@
      (for/list ([x (in-syntax #'(x ...))])
        (if (eq? (syntax-e x) '_) (gensym) x))
      #'(λ (x* ...) e)]))
+
+;;
+;; free variables
+;;
+
+(begin-for-syntax
+  (define MT (immutable-bound-id-set))
+  (define fv
+    (syntax-parser
+      #:datum-literals (flat domain check generate symbolic function arguments results)
+      [(flat (~alt (~optional (domain dom-ctc))
+                   (~optional (check check-expr))
+                   (~optional (generate gen-expr))
+                   (~optional (symbolic sym-expr))) ...)
+       (bound-id-set-union
+        (if (attribute dom-ctc) (fv #'dom-ctc) MT)
+        (if (attribute check-expr) (free-variables #'check-expr) MT)
+        (if (attribute gen-expr) (free-variables #'gen-expr) MT)
+        (if (attribute sym-expr) (free-variables #'sym-expr) MT))]
+      [(function (arguments [x a] ...) (results [y r] ...))
+       (for/fold ([acc MT])
+                 ([e (in-sequences (in-syntax #'(a ...))
+                                   (in-syntax #'(r ...)))])
+         (bound-id-set-union acc (fv e)))])))
 
 ;;
 ;; macros
@@ -172,7 +216,7 @@
         (syntax-parse stx
           [(name:id body:expr)
            (define deps
-             (for/list ([var (in-list (free-variables #'body))])
+             (for/list ([var (in-bound-id-set (fv #'body))])
                (bound-id-table-ref id-index-table var #false)))
            (values #'name (filter values deps))])))
     (define neighbors (dict->procedure #:failure (const empty) dep-hash))
@@ -183,14 +227,15 @@
   (define record-var-compiler
     (make-variable-like-transformer
      (λ (id)
-       (bound-id-set-add! (current-free-variables) id)
+       (current-free-variables
+        (bound-id-set-add (current-free-variables) id))
        #''_)))
 
   (define (free-variables stx)
-    (define fv-set (mutable-bound-id-set))
+    (define fv-set (immutable-bound-id-set))
     (define stx*
       #`(with-reference-compilers ([contract-var-class record-var-compiler])
           #,stx))
     (parameterize ([current-free-variables fv-set])
       (local-expand stx* 'expression null))
-    (bound-id-set->list fv-set)))
+    fv-set))

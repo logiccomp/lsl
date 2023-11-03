@@ -7,6 +7,8 @@
 (define pkg-desc "Logical Student Language")
 (define version "0.0")
 (define pkg-authors '(camoy dbp))
+(define compile-omit-paths '("manifest.scm"))
+(define test-omit-paths '("manifest.scm"))
 
 ;; dependencies
 

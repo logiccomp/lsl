@@ -125,17 +125,24 @@
          #%top-interaction
 
          (for-space contract-space
+                    flat
+                    domain
+                    check
+                    generate
+                    symbolic
                     function
                     arguments
                     results)
          (rename-out
           [define-annotated define]
           [annotate :])
+         Integer
+         Boolean
+         Real
          ->
-         define-alias
-         contract
+         define-contract
          contract-generate
-         contract-interact
+         contract-exercise
          contract-verify)
 
 ;;
@@ -208,6 +215,28 @@
   (syntax-parser
     [(_ . (~or e:number e:boolean e:string e:character))
      #'(^#%datum . e)]))
+
+;;
+;; built-in contracts
+;;
+
+(define ((predicate->symbolic predicate))
+  (^define-symbolic* x predicate) x)
+
+(define-contract Integer
+  (flat (check ^integer?)
+        (symbolic (predicate->symbolic ^integer?))
+        (generate (λ () (random -100 100)))))
+
+(define-contract Boolean
+  (flat (check ^boolean?)
+        (symbolic (predicate->symbolic ^boolean?))
+        (generate (λ () (< (random) 1/2)))))
+
+(define-contract Real
+  (flat (check ^real?)
+        (symbolic (predicate->symbolic ^real?))
+        (generate (λ () (- (* 200 (random)) 100)))))
 
 ;;
 ;; TODO: testing

@@ -7,9 +7,10 @@
 (provide (struct-out blame-struct)
          (struct-out positive-blame-struct)
          (struct-out negative-blame-struct)
+         (struct-out flat-contract-struct)
          (struct-out contract-struct)
          contract-generate-function
-         contract-interact
+         contract-exercise
          contract-verify
          contract-error
          verify-error
@@ -34,6 +35,7 @@
 (struct positive-blame-struct blame-struct ())
 (struct negative-blame-struct blame-struct ())
 (struct contract-struct (name protect generate symbolic interact))
+(struct flat-contract-struct contract-struct (predicate))
 
 (define-values (impersonator-prop:contract
                 has-impersonator-prop:contract?
@@ -50,7 +52,7 @@
       (generate)
       (generate-error (contract-struct-name ctc))))
 
-(define (contract-interact val [n 1])
+(define (contract-exercise val [n 1])
   (define ctc (value->contract val))
   (define mode contract-generate-function)
   (when ctc
