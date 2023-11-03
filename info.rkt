@@ -13,7 +13,7 @@
 ;; dependencies
 
 (define deps
-  '("https://github.com/michaelballantyne/syntax-spec/"
+  '("https://github.com/michaelballantyne/syntax-spec.git"
     "base"
     "mischief"
     "rosette"))
