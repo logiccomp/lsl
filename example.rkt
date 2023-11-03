@@ -30,4 +30,42 @@
 ;(contract-exercise add-one)
 
 ;; Fails verification
-;(contract-verify add-one)
+;;(contract-verify add-one)
+
+(: add-two (-> Even Even))
+(define (add-two x)
+  (+ x 2))
+
+;(contract-verify add-two)
+
+(: f (-> Integer Integer))
+(define (f x) #t)
+
+(: g (-> Integer Integer))
+(define (g x) (f x))
+
+;; fails random generation
+;(contract-exercise f)
+
+;(contract-verify f)
+
+(define-contract FizzBuzz
+  (flat
+   (domain Integer)
+   (check (lambda (x) (not (or (zero? (modulo x 3)) (zero? (modulo x 5))))))
+   (generate (λ () (+ (* 15 (contract-generate Integer)) 1)))))
+
+; fails validation
+;(: a-good-number FizzBuzz)
+(define a-good-number 3)
+
+(: h (-> Integer FizzBuzz))
+(define (h x) x)
+; fails verification
+;(contract-verify h)
+
+
+(: myfn (-> Integer Boolean))
+(define (myfn x) x)
+
+; (contract-verify myfn)
