@@ -128,7 +128,7 @@
      #'(define-syntax name
          (contract-macro
           (syntax-parser
-            [_ #'ctc])))]))
+            [_ (syntax-property #'ctc 'inferred-name (syntax->datum #'name))])))]))
 
 ;;
 ;; `compile`
@@ -137,20 +137,26 @@
 (define-syntax (compile stx)
   (syntax-parse stx
     #:datum-literals (flat domain check generate symbolic function arguments results)
-    [(_ (flat (~alt (~optional (domain dom-ctc))
-                    (~optional (check check-expr))
-                    (~optional (generate gen-expr))
-                    (~optional (symbolic sym-expr))) ...))
+    [(_ (~and (flat (~alt (~optional (domain dom-ctc))
+                          (~optional (check check-expr))
+                          (~optional (generate gen-expr))
+                          (~optional (symbolic sym-expr))) ...)
+              flat-stx))
+     #:with name (syntax-property #'flat-stx 'inferred-name)
      #'(flat-contract
+        'name
         (~? (compile dom-ctc) #false)
         (~? check-expr #false)
         (~? gen-expr #false)
         (~? sym-expr #false))]
-    [(_ (function (arguments [x a] ...) (results [y r] ...)))
+    [(_ (~and (function (arguments [x a] ...) (results [y r] ...))
+              fun-stx))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
      #:with (l ...) (function-dependencies (syntax->list #'([y r] ...)))
+     #:with name (syntax-property #'fun-stx 'inferred-name)
      #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
          (function-contract
+          'name
           (list (#%datum . k) ...)
           (list (λ* (x ...) (compile a)) ...)
           (list (#%datum . l) ...)
