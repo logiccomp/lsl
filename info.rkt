@@ -15,6 +15,7 @@
 (define deps
   '("https://github.com/michaelballantyne/syntax-spec.git"
     "base"
+    "errortrace-lib"
     "mischief"
     "rosette"))
 
