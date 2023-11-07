@@ -16,6 +16,7 @@
                   solvable?
                   symbolic?
                   assert
+                  assume
                   verify
                   sat?
                   evaluate
@@ -58,7 +59,7 @@
         (and dom
              (λ ()
                (define x ((contract-struct-symbolic dom)))
-               ;(assert (implies check (check x)))
+               (assume (implies check (check x)))
                x))))
   (define (interact mode val) (void))
   (flat-contract-struct name protect generate symbolic* interact predicate))
