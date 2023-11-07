@@ -16,8 +16,11 @@
                   solvable?
                   symbolic?
                   assert
-                  solve
-                  unsat?)
+                  assume
+                  verify
+                  sat?
+                  evaluate
+                  complete-solution)
          racket/bool
          "contract.rkt")
 
@@ -35,12 +38,16 @@
   (define (protect val pos)
     (cond
       [(symbolic? val)
-       (assert (implies dom (dom-pred val)))
-       (when (unsat? (solve #true))
-         (verify-error pos name val))
-       (assert (implies check (check val)))
-       (when (unsat? (solve #true))
-         (verify-error pos name val))]
+       (define domres (verify (assert (implies dom (dom-pred val)))))
+       (when (sat? domres)
+         (verify-error pos
+                       name
+                       (evaluate val (complete-solution domres (list val)))))
+       (define checkres (verify (assert (implies check (check val)))))
+       (when (sat? checkres)
+         (verify-error pos
+                       name
+                       (evaluate val (complete-solution checkres (list val)))))]
       [else
        (unless (implies dom (dom-pred val))
          (contract-error pos name val))
@@ -52,7 +59,7 @@
         (and dom
              (λ ()
                (define x ((contract-struct-symbolic dom)))
-               (assert (implies check (check x)))
+               (assume (implies check (check x)))
                x))))
   (define (interact mode val) (void))
   (flat-contract-struct name protect generate symbolic* interact predicate))
