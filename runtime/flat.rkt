@@ -4,7 +4,8 @@
 ;; provide
 ;;
 
-(provide flat-contract)
+(provide flat-contract
+         flat-contract-protect)
 
 ;;
 ;; require
@@ -13,6 +14,7 @@
 (require (for-syntax racket/base
                      syntax/parse)
          (only-in rosette/safe
+                  concrete?
                   solvable?
                   symbolic?
                   assert
@@ -35,25 +37,7 @@
   (define (predicate x)
     (and (implies dom-pred (dom-pred x))
          (implies check (check x))))
-  (define (protect val pos)
-    (cond
-      [(symbolic? val)
-       (define domres (verify (assert (implies dom (dom-pred val)))))
-       (when (sat? domres)
-         (verify-error pos
-                       name
-                       (evaluate val (complete-solution domres (list val)))))
-       (define checkres (verify (assert (implies check (check val)))))
-       (when (sat? checkres)
-         (verify-error pos
-                       name
-                       (evaluate val (complete-solution checkres (list val)))))]
-      [else
-       (unless (implies dom (dom-pred val))
-         (contract-error pos name val))
-       (unless (implies check (check val))
-         (contract-error pos name val))])
-    (λ (neg) val))
+  (define protect (flat-contract-protect name predicate))
   (define symbolic*
     (or symbolic
         (and dom
@@ -63,3 +47,15 @@
                x))))
   (define (interact mode val) (void))
   (flat-contract-struct name protect generate symbolic* interact predicate))
+
+(define (flat-contract-protect name predicate)
+  (λ (val pos)
+    (when (symbolic? val)
+      (define result (verify (assert (predicate val))))
+      (when (sat? result)
+        (define counter-eg (evaluate val (complete-solution result (list val))))
+        (verify-error pos name counter-eg)))
+    (when (concrete? val)
+       (unless (predicate val)
+         (contract-error pos name val)))
+    (λ (neg) val)))

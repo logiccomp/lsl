@@ -69,3 +69,9 @@
 (define (myfn x) x)
 
 ; (contract-verify myfn)
+
+(: myfn2 (-> (one-of Integer Boolean) Boolean))
+(define (myfn2 x)
+  (if (integer? x) #t x))
+
+(myfn2 'hi)

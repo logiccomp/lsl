@@ -130,7 +130,8 @@
                     check
                     generate
                     symbolic
-                    function)
+                    function
+                    one-of)
          (rename-out
           [define-annotated define]
           [annotate :])
@@ -174,7 +175,7 @@
      #'(^define name rhs)]))
 
 (define-syntax-parse-rule ($define-struct name:id (field:id ...))
-  (^struct name (field ...) #:prefab))
+  (^struct name (field ...) #:transparent))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
   (^lambda (param ...) body))

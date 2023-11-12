@@ -10,7 +10,8 @@
                     check
                     generate
                     symbolic
-                    function)
+                    function
+                    one-of)
          (for-syntax contract-macro)
          define-annotated
          annotate
@@ -38,6 +39,7 @@
          syntax-spec
          syntax/location
          "runtime/contract.rkt"
+         "runtime/or.rkt"
          "runtime/flat.rkt"
          "runtime/function.rkt")
 
@@ -92,6 +94,7 @@
    #:allow-extension contract-macro
    #:binding-space contract-space
    (flat opt:flat-clause ...)
+   (one-of ctc:contract ...)
    (function [arg:racket-var arg-ctc:contract] ... res-ctc:contract)
    #:binding {(bind arg) arg-ctc res-ctc})
 
@@ -120,7 +123,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:datum-literals (flat domain check generate symbolic function)
+    #:datum-literals (flat domain check generate symbolic function one-of)
     [(_ (~and (flat (~alt (~optional (domain dom-ctc))
                           (~optional (check check-expr))
                           (~optional (generate gen-expr))
@@ -141,7 +144,10 @@
           'name
           (list (#%datum . k) ...)
           (list (λ* (x ...) (compile a)) ...)
-          (λ* (x ...) (compile r))))]))
+          (λ* (x ...) (compile r))))]
+    [(_ (~and (one-of ctc ...) or-stx))
+     #:with name (syntax-property #'or-stx 'inferred-name)
+     #'(or-contract 'name (list (compile ctc) ...))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -159,7 +165,7 @@
   (define MT (immutable-bound-id-set))
   (define fv
     (syntax-parser
-      #:datum-literals (flat domain check generate symbolic function arguments results)
+      #:datum-literals (flat domain check generate symbolic function one-of)
       [(flat (~alt (~optional (domain dom-ctc))
                    (~optional (check check-expr))
                    (~optional (generate gen-expr))
@@ -169,10 +175,13 @@
         (if (attribute check-expr) (free-variables #'check-expr) MT)
         (if (attribute gen-expr) (free-variables #'gen-expr) MT)
         (if (attribute sym-expr) (free-variables #'sym-expr) MT))]
-      [(function (arguments [x a] ...) (results [y r] ...))
+      [(function [x a] ... r)
        (for/fold ([acc MT])
-                 ([e (in-sequences (in-syntax #'(a ...))
-                                   (in-syntax #'(r ...)))])
+                 ([e (in-sequences (in-syntax #'(a ... r)))])
+         (bound-id-set-union acc (fv e)))]
+      [(one-of ctc ...)
+       (for/fold ([acc MT])
+                 ([e (in-sequences (in-syntax #'(ctc ...)))])
          (bound-id-set-union acc (fv e)))])))
 
 ;;

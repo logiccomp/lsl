@@ -18,3 +18,6 @@
 * should remove multiple values from function since ISL doesn't have them?
 * contract-exercise & contract-verify should have output
 * `define-annotated` should be in syntax-spec and should attach contract to persistent symbol table
+* restrict disjuncts of `one-of` to flat
+* or contract generation and symbolic, etc
+* name for or error reporting
