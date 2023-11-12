@@ -10,9 +10,7 @@
                     check
                     generate
                     symbolic
-                    function
-                    arguments
-                    results)
+                    function)
          (for-syntax contract-macro)
          define-annotated
          annotate
@@ -80,7 +78,6 @@
 ;;
 
 (syntax-spec
- (binding-class contract-var-class)
  (extension-class contract-macro #:binding-space contract-space)
 
  (host-interface/definitions
@@ -95,31 +92,15 @@
    #:allow-extension contract-macro
    #:binding-space contract-space
    (flat opt:flat-clause ...)
-   (function arg:argument-clause res:result-clause)
-   #:binding {(recursive arg) {(recursive res)}})
+   (function [arg:racket-var arg-ctc:contract] ... res-ctc:contract)
+   #:binding {(bind arg) arg-ctc res-ctc})
 
  (nonterminal flat-clause
    #:binding-space contract-space
    (domain dom-ctc:contract)
    (check check-expr:racket-expr)
    (generate gen-expr:racket-expr)
-   (symbolic sym-expr:racket-expr))
-
- (nonterminal/two-pass argument-clause
-   #:binding-space contract-space
-   (arguments [x:contract-var ctc:contract] ...)
-   #:binding [(re-export x) ctc])
-
- (nonterminal/two-pass result-clause
-   #:binding-space contract-space
-   (results [x:contract-var ctc:contract] ...)
-   #:binding [(re-export x) ctc])
-
- (nonterminal/two-pass contract-var
-   #:binding-space contract-space
-   _
-   x:contract-var-class
-   #:binding (export x)))
+   (symbolic sym-expr:racket-expr)))
 
 ;;
 ;; `define-alias`
@@ -139,7 +120,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:datum-literals (flat domain check generate symbolic function arguments results)
+    #:datum-literals (flat domain check generate symbolic function)
     [(_ (~and (flat (~alt (~optional (domain dom-ctc))
                           (~optional (check check-expr))
                           (~optional (generate gen-expr))
@@ -152,18 +133,15 @@
         (~? check-expr #false)
         (~? gen-expr #false)
         (~? sym-expr #false))]
-    [(_ (~and (function (arguments [x a] ...) (results [y r] ...))
-              fun-stx))
+    [(_ (~and (function [x a] ... r) fun-stx))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
-     #:with (l ...) (function-dependencies (syntax->list #'([y r] ...)))
      #:with name (syntax-property #'fun-stx 'inferred-name)
      #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
          (function-contract
           'name
           (list (#%datum . k) ...)
           (list (λ* (x ...) (compile a)) ...)
-          (list (#%datum . l) ...)
-          (list (λ* (x ... y ...) (compile r)) ...)))]))
+          (λ* (x ...) (compile r))))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -205,7 +183,7 @@
   (contract-macro
    (syntax-parser
      [(_ x ... y)
-      #'(function (arguments [_ x] ...) (results [_ y]))])))
+      #'(function [_ x] ... y)])))
 
 ;;
 ;; dependency

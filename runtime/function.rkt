@@ -17,7 +17,7 @@
 ;; function
 ;;
 
-(define (function-contract maybe-name dom-order doms cod-order cods)
+(define (function-contract maybe-name dom-order doms cod)
   (define name (or maybe-name '|anonymous contract|))
   (define n (length doms))
   (define (protect val pos)
@@ -32,23 +32,15 @@
           (define proj (contract-struct-protect (apply dom acc)))
           ((proj arg pos) neg))
         (define args* (list-update-many args dom-order dom-apply))
-        (define (results-wrapper . results)
-          (define ((cod-apply acc k) res)
-            (define cod (list-ref cods k))
-            (define both (append args* acc))
-            (define proj (contract-struct-protect (apply cod both)))
-            ((proj res pos) neg))
-          (define results* (list-update-many results cod-order cod-apply))
-          (apply values results*))
+        (define (results-wrapper res)
+          (define proj (contract-struct-protect (apply cod args*)))
+          ((proj res pos) neg))
         (apply values (cons results-wrapper args*)))
       (chaperone-procedure
        val wrapper
        impersonator-prop:contract self)))
   (define (generated . args)
-    (define ((cod-apply acc k) cod)
-      (define both (append args acc))
-      ((contract-struct-generate (apply cod both))))
-    (apply values (list-update-many cods cod-order cod-apply)))
+    ((contract-struct-generate (apply cod args))))
   (define (interact mode val)
     (define ((dom-apply acc k) dom)
       (mode (apply dom acc)))

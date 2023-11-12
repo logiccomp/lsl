@@ -10,7 +10,7 @@
 (define another-number 0)
 
 ;; Function contract
-(: square (function (arguments [in Integer]) (results [out Integer])))
+(: square (function [in Integer] Integer))
 (define (square x)
   (* x x))
 

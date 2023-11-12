@@ -130,9 +130,7 @@
                     check
                     generate
                     symbolic
-                    function
-                    arguments
-                    results)
+                    function)
          (rename-out
           [define-annotated define]
           [annotate :])
