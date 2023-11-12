@@ -21,7 +21,7 @@
                        $define-struct
                        $lambda
                        $λ
-                       $local
+                       $begin
                        $letrec
                        $let
                        $let*
@@ -183,8 +183,8 @@
 (define-syntax-parse-rule ($λ (param:id ...) body:expr)
   (^λ (param ...) body))
 
-(define-syntax-parse-rule ($local [def:expr ...] body:expr)
-  (^local [def ...] body))
+(define-syntax-parse-rule ($begin body:expr ...+)
+  (^begin body ...))
 
 (define-syntax-parse-rule ($letrec ([var:id rhs:expr] ...) body:expr)
   (^letrec ([var rhs] ...) body))

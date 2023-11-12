@@ -13,6 +13,7 @@
 (define deps
   '("https://github.com/michaelballantyne/syntax-spec.git"
     "base"
+    "ee-lib"
     "errortrace-lib"
     "mischief"
     "rosette"))

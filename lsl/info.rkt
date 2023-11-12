@@ -10,11 +10,15 @@
 ;; dependencies
 
 (define deps
-  '("base"
+  '("errortrace-lib"
+    "base"
     "lsl-lib"))
 
 (define implies
   '("lsl-lib"))
 
 (define build-deps
-  '())
+  '("chk-lib"
+    "racket-doc"
+    "sandbox-lib"
+    "scribble-lib"))
