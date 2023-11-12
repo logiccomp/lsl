@@ -25,11 +25,11 @@
 (define-syntax mb
   (syntax-parser
     [(_ . body)
-     (define stx #`(module . #,(strip-context #`(_ lsl/no-debug . body))))
+     (define stx #`(module . #,(strip-context #`(_ lsl/lang . body))))
      (syntax-parse (errortrace-annotate stx)
        [(_ _ _ (_ . body))
         #`(#%plain-module-begin
-           (require (only-in lsl/no-debug)
+           (require (only-in lsl/lang)
                     (only-in errortrace))
            . body)])]))
 

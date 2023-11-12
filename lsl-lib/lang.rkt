@@ -153,10 +153,10 @@
          (prefix-in ^ rosette/safe)
          rosette/solver/smt/z3
          syntax/parse/define
-         "syntax.rkt"
-         "runtime/contract.rkt"
-         "runtime/flat.rkt"
-         "runtime/function.rkt")
+         "private/syntax/syntax.rkt"
+         "private/runtime/contract.rkt"
+         "private/runtime/flat.rkt"
+         "private/runtime/function.rkt")
 
 (^current-solver (z3 #:path (find-executable-path "z3")))
 

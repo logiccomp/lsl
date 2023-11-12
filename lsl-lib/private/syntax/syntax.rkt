@@ -38,10 +38,10 @@
                      mischief/sort)
          syntax-spec
          syntax/location
-         "runtime/contract.rkt"
-         "runtime/or.rkt"
-         "runtime/flat.rkt"
-         "runtime/function.rkt")
+         "../runtime/contract.rkt"
+         "../runtime/or.rkt"
+         "../runtime/flat.rkt"
+         "../runtime/function.rkt")
 
 ;;
 ;; `define-annotated`
