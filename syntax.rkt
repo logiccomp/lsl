@@ -24,7 +24,8 @@
 ;; require
 ;;
 
-(require (for-syntax racket/base
+(require (for-syntax (only-in ee-lib flip-intro-scope)
+                     racket/base
                      racket/function
                      racket/list
                      racket/set
@@ -47,7 +48,7 @@
 ;;
 
 (begin-for-syntax
-  (define contract-table (make-bound-id-table))
+  (define ctc-sc (make-syntax-introducer))
 
   (define-syntax-class define-header
     (pattern x:function-header
@@ -57,17 +58,21 @@
              #:with name #'x
              #:attr make-body (λ (body) body))))
 
+(define-syntax annotate
+  (syntax-parser
+    [(_ name:id ctc:expr)
+     #`(: #,(ctc-sc #'name) ctc)]))
+
 (define-syntax define-annotated
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
-     #:do [(define name-stx (syntax-local-introduce #'?head.name))]
-     #:attr ?ctc (bound-id-table-ref contract-table name-stx (const #f))
+     #:do [(define ctc (syntax-local-value (ctc-sc #'?head.name) (const #f)))]
      #:with ?new-body ((attribute ?head.make-body) #'?body)
-     (if (attribute ?ctc)
-         #'(define ?head.name
+     (if ctc
+         #`(define ?head.name
              (let ([pos (positive-blame-struct (quote-module-name))]
                    [neg (negative-blame-struct (quote-module-name))])
-               (((contract-struct-protect (compile ?ctc)) ?new-body pos) neg)))
+               (((contract-struct-protect (compile #,(flip-intro-scope ctc))) ?new-body pos) neg)))
          #'(define ?head.name ?new-body))]))
 
 ;;
@@ -79,10 +84,8 @@
  (extension-class contract-macro #:binding-space contract-space)
 
  (host-interface/definitions
-  (annotate name:id ctc:contract)
-  #:do [(define name-stx (syntax-local-introduce #'name))
-        (bound-id-table-set! contract-table name-stx #'ctc)]
-  #'(void))
+  (: name:id ctc:contract)
+  #`(define-syntax name (flip-intro-scope #'ctc)))
 
  (host-interface/expression
   (contract-generate ctc:contract)
