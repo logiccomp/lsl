@@ -16,6 +16,8 @@
     "ee-lib"
     "errortrace-lib"
     "mischief"
-    "rosette"))
+    "rosette"
+    "syntax-classes"
+    "threading"))
 
 (define build-deps '())

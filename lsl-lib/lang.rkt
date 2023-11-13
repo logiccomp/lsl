@@ -131,7 +131,8 @@
                     generate
                     symbolic
                     function
-                    one-of)
+                    one-of
+                    Struct)
          (rename-out
           [define-annotated define]
           [annotate :])
@@ -149,7 +150,8 @@
 ;;
 
 (require (for-syntax racket/base
-                     syntax/parse)
+                     syntax/parse
+                     threading)
          (prefix-in ^ rosette/safe)
          rosette/solver/smt/z3
          syntax/parse/define
@@ -174,8 +176,30 @@
     [(_ name:id rhs:expr)
      #'(^define name rhs)]))
 
-(define-syntax-parse-rule ($define-struct name:id (field:id ...))
-  (^struct name (field ...) #:transparent))
+(begin-for-syntax
+  (define (struct-name->contract-name stx)
+    (~> stx
+        syntax-e
+        symbol->string
+        (string-replace "-" " ")
+        string-titlecase
+        (string-replace " " "")
+        string->symbol
+        (datum->syntax stx _)))
+
+  (define (struct-contract-macro sname)
+    (contract-macro
+     (syntax-parser
+       [(_ ctc ...)
+        #`(Struct #,sname ctc ...)]))))
+
+(define-syntax $define-struct
+  (syntax-parser
+    [(_ name:id (field:id ...))
+     #:with Name (struct-name->contract-name #'name)
+     #'(begin
+         (define-syntax Name (struct-contract-macro #'name))
+         (^struct name (field ...) #:transparent))]))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
   (^lambda (param ...) body))

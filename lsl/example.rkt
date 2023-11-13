@@ -74,4 +74,12 @@
 (define (myfn2 x)
   (if (integer? x) #t x))
 
-(myfn2 'hi)
+;(myfn2 'hi)
+
+(define-struct hello (foo bar))
+
+(: bah (-> (Hello Integer Integer) Integer))
+(define (bah x)
+  (+ (hello-foo x) (hello-foo x)))
+
+(bah (hello 1 2))

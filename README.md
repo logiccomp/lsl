@@ -23,3 +23,4 @@
 * restrict disjuncts of `one-of` to flat
 * or contract generation and symbolic, etc
 * name for or error reporting
+* restrict names of struct to lowercase kebab case

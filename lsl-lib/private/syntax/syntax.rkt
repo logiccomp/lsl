@@ -11,7 +11,8 @@
                     generate
                     symbolic
                     function
-                    one-of)
+                    one-of
+                    Struct)
          (for-syntax contract-macro)
          define-annotated
          annotate
@@ -33,6 +34,7 @@
                      syntax/id-set
                      syntax/parse
                      syntax/parse/lib/function-header
+                     syntax/parse/class/struct-id
                      syntax/transformer
                      mischief/dict
                      mischief/sort)
@@ -41,7 +43,8 @@
          "../runtime/contract.rkt"
          "../runtime/or.rkt"
          "../runtime/flat.rkt"
-         "../runtime/function.rkt")
+         "../runtime/function.rkt"
+         "../runtime/struct.rkt")
 
 ;;
 ;; `define-annotated`
@@ -95,6 +98,7 @@
    #:binding-space contract-space
    (flat opt:flat-clause ...)
    (one-of ctc:contract ...)
+   (Struct name:id ctc:contract ...)
    (function [arg:racket-var arg-ctc:contract] ... res-ctc:contract)
    #:binding {(bind arg) arg-ctc res-ctc})
 
@@ -123,7 +127,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:datum-literals (flat domain check generate symbolic function one-of)
+    #:datum-literals (flat domain check generate symbolic function one-of Struct)
     [(_ (~and (flat (~alt (~optional (domain dom-ctc))
                           (~optional (check check-expr))
                           (~optional (generate gen-expr))
@@ -147,7 +151,10 @@
           (λ* (x ...) (compile r))))]
     [(_ (~and (one-of ctc ...) or-stx))
      #:with name (syntax-property #'or-stx 'inferred-name)
-     #'(or-contract 'name (list (compile ctc) ...))]))
+     #'(or-contract 'name (list (compile ctc) ...))]
+    [(_ (~and (Struct sname:struct-id ctc ...) sstx))
+     #:with name (syntax-property #'fun-stx 'inferred-name)
+     #'(struct-contract 'name sname.constructor-id (list (compile ctc) ...))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -178,6 +185,10 @@
       [(function [x a] ... r)
        (for/fold ([acc MT])
                  ([e (in-sequences (in-syntax #'(a ... r)))])
+         (bound-id-set-union acc (fv e)))]
+      [(Struct _ ctc ...)
+       (for/fold ([acc MT])
+                 ([e (in-sequences (in-syntax #'(ctc ...)))])
          (bound-id-set-union acc (fv e)))]
       [(one-of ctc ...)
        (for/fold ([acc MT])
