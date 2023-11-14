@@ -73,7 +73,7 @@
   (string-join
    '("verification failure"
      "expected: ~a"
-     "given: ~v"
+     "counterexample: ~v"
      "blaming: ~a")
    "\n  "))
 

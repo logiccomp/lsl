@@ -246,15 +246,15 @@
 (define ((predicate->symbolic predicate))
   (^define-symbolic* x predicate) x)
 
-(define-contract Integer
-  (flat (check ^integer?)
-        (symbolic (predicate->symbolic ^integer?))
-        (generate (λ () (random -100 100)))))
-
 (define-contract Boolean
   (flat (check ^boolean?)
         (symbolic (predicate->symbolic ^boolean?))
         (generate (λ () (< (random) 1/2)))))
+
+(define-contract Integer
+  (flat (check ^integer?)
+        (symbolic (predicate->symbolic ^integer?))
+        (generate (λ () (random -100 100)))))
 
 (define-contract Real
   (flat (check ^real?)
