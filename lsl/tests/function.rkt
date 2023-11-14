@@ -6,7 +6,7 @@
 ;; success
 (chk
  (run/var (-> Integer Integer) f (λ (x) x) (f 10))  10
- (run/var (function [x Integer] (flat (check (λ (y) (eq? x y)))))
+ (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
           f
           (λ (x) x)
           (f 10))
@@ -22,13 +22,13 @@
  "expected: Boolean"
  #:x (run/var (-> Integer Boolean) f (λ (x) x) (contract-exercise f))
  "expected: Boolean"
- #:x (run/var (function [x Integer] (flat (check (λ (y) (eq? x y)))))
+ #:x (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
               f
               (λ (x) (+ x 1))
               (f 10))
  "expected: anonymous contract"
  #:x (run (define-contract Even
-            (flat
+            (Flat
              (domain Integer)
              (check even?)))
           (: f (-> Even Even))
@@ -40,7 +40,7 @@
 (chk
  #:do (define fb
         '(define-contract FizzBuzz
-           (flat
+           (Flat
             (domain Integer)
             (check (lambda (x) (not (or (zero? (modulo x 3)) (zero? (modulo x 5))))))
             (generate (λ () (+ (* 15 (contract-generate Integer)) 1))))))

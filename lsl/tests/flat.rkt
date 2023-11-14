@@ -30,7 +30,7 @@
 (chk
  #:do (define even-sexp
         '(define-contract Even
-           (flat (domain Integer)
+           (Flat (domain Integer)
                  (check even?)
                  (generate (λ () (* 2 (contract-generate Integer)))))))
  (run/sexp `(begin ,even-sexp (: x Even) (define x 2) x))  2

@@ -124,15 +124,7 @@
          #%module-begin
          #%top-interaction
 
-         (for-space contract-space
-                    flat
-                    domain
-                    check
-                    generate
-                    symbolic
-                    function
-                    one-of
-                    Struct)
+         (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))
          (rename-out
           [define-annotated define]
           [annotate :])
@@ -153,6 +145,7 @@
                      syntax/parse
                      threading)
          (prefix-in ^ rosette/safe)
+         (for-space contract-space "private/syntax/syntax.rkt")
          rosette/solver/smt/z3
          syntax/parse/define
          "private/syntax/syntax.rkt"
@@ -247,17 +240,17 @@
   (^define-symbolic* x predicate) x)
 
 (define-contract Boolean
-  (flat (check ^boolean?)
+  (Flat (check ^boolean?)
         (symbolic (predicate->symbolic ^boolean?))
         (generate (λ () (< (random) 1/2)))))
 
 (define-contract Integer
-  (flat (check ^integer?)
+  (Flat (check ^integer?)
         (symbolic (predicate->symbolic ^integer?))
         (generate (λ () (random -100 100)))))
 
 (define-contract Real
-  (flat (check ^real?)
+  (Flat (check ^real?)
         (symbolic (predicate->symbolic ^real?))
         (generate (λ () (- (* 200 (random)) 100)))))
 
