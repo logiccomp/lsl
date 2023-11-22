@@ -1,5 +1,6 @@
 ## LSL todo
 
+* define-contract should check to make sure is actually contract...
 * check binding specs (esp. for `contract` nonterminal)
 * cyclic
 * annotate should use lift to generate contract definition for reuse
@@ -24,3 +25,14 @@
 * or contract generation and symbolic, etc
 * name for or error reporting
 * restrict names of struct to lowercase kebab case
+* define-contract needs "function" form for abstraction in dependency case
+* countexample generation for unions doesn't work properly
+* TODO struct should do as many flat contracts as possibly can early
+* recursive check inside "productive" constructors
+* performance is atrocious...
+* why no #%top-interaction?
+* recursive must be over flat stuff
+* shorthand for recursive (no explicit syntax)
+* parameterized define-contract
+* bind #%top for unbound identifiers
+* no else for cond

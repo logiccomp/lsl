@@ -23,15 +23,18 @@
                   complete-solution)
          racket/bool
          racket/struct
-         "contract.rkt")
+         "contract.rkt"
+         "flat.rkt")
 
 ;;
 ;; syntax
 ;;
 
-(define (struct-contract maybe-name make ctcs)
+(define (struct-contract maybe-name make struct-pred? ctcs)
   (define name (or maybe-name '|anonymous contract|))
   (define (protect val pos)
+    (unless (struct-pred? val)
+      (contract-error pos name val))
     (λ (neg)
       (define fields (struct->list val))
       (define new-fields
@@ -39,9 +42,11 @@
                    [field (in-list fields)])
           (((contract-struct-protect ctc) field pos) neg)))
       (apply make new-fields)))
-  (contract-struct
-   name
-   protect
-   #false
-   #false
-   #false))
+  (define (predicate val)
+    (and (struct-pred? val)
+         (for/and ([ctc (in-list ctcs)]
+                   [field (in-list (struct->list val))])
+           ((flat-contract-struct-predicate ctc) field))))
+  (if (andmap flat-contract-struct? ctcs)
+      (flat-contract-struct name protect #f #f #f predicate)
+      (contract-struct name protect #f #f #f)))

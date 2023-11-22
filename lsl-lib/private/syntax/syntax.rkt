@@ -36,6 +36,7 @@
          "../runtime/or.rkt"
          "../runtime/flat.rkt"
          "../runtime/function.rkt"
+         "../runtime/recursive.rkt"
          "../runtime/struct.rkt")
 
 ;;
@@ -75,6 +76,7 @@
 ;;
 
 (syntax-spec
+ (binding-class contract-var)
  (extension-class contract-macro #:binding-space contract-space)
 
  (host-interface/definitions
@@ -88,9 +90,12 @@
  (nonterminal contract
    #:allow-extension contract-macro
    #:binding-space contract-space
+   name:contract-var
    (Flat opt:flat-clause ...)
    (OneOf ctc:contract ...)
    (Struct name:id ctc:contract ...)
+   (Recursive name:contract-var ctc:contract)
+   #:binding {(bind name) ctc}
    (Function [arg:racket-var arg-ctc:contract] ... res-ctc:contract)
    #:binding {(bind arg) arg-ctc res-ctc})
 
@@ -119,7 +124,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:datum-literals (Flat domain check generate symbolic Function OneOf Struct)
+    #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
     [(_ (~and (Flat (~alt (~optional (domain dom-ctc))
                           (~optional (check check-expr))
                           (~optional (generate gen-expr))
@@ -145,8 +150,15 @@
      #:with name (syntax-property #'or-stx 'inferred-name)
      #'(or-contract 'name (list (compile ctc) ...))]
     [(_ (~and (Struct sname:struct-id ctc ...) sstx))
-     #:with name (syntax-property #'fun-stx 'inferred-name)
-     #'(struct-contract 'name sname.constructor-id (list (compile ctc) ...))]))
+     #:with name (syntax-property #'sstx 'inferred-name)
+     #'(struct-contract 'name
+                        sname.constructor-id
+                        sname.predicate-id
+                        (list (compile ctc) ...))]
+    [(_ (~and (Recursive x:id ctc) rstx))
+     #'(letrec ([x (compile ctc)]) x)]
+    [(_ name:id)
+     #'(recursive-contract (λ () name))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -164,7 +176,7 @@
   (define MT (immutable-bound-id-set))
   (define fv
     (syntax-parser
-      #:datum-literals (Flat domain check generate symbolic Function OneOf Struct)
+      #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
       [(Flat (~alt (~optional (domain dom-ctc))
                    (~optional (check check-expr))
                    (~optional (generate gen-expr))
@@ -185,7 +197,9 @@
       [(OneOf ctc ...)
        (for/fold ([acc MT])
                  ([e (in-sequences (in-syntax #'(ctc ...)))])
-         (bound-id-set-union acc (fv e)))])))
+         (bound-id-set-union acc (fv e)))]
+      [(Recursive _ ctc) (fv #'ctc)]
+      [_:id MT])))
 
 ;;
 ;; macros
