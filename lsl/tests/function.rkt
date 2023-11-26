@@ -14,7 +14,8 @@
  #:? integer?
  (run ((contract-generate (-> Integer Integer)) 10))
  (run/var (-> Integer Integer) f (λ (x) x) (contract-exercise f))  (void)
- (run/var (-> Integer Integer) f (λ (x) x) (contract-verify f))  (void))
+ (run/var (-> Integer Integer) f (λ (x) x) (contract-verify f))  (void)
+ (run/var (-> Integer Integer Integer) f (λ (x y) x) (contract-exercise f))  (void))
 
 ;; failure
 (chk
@@ -50,6 +51,12 @@
                    (define x 4)
                    x))
  4
+
+ (run/sexp `(begin ,fb
+                   (: f (-> (-> Integer Integer) FizzBuzz))
+                   (define (f g) 4)
+                   (contract-exercise f)))
+ (void)
 
  (run/sexp `(begin ,fb
                    (: f (-> Integer FizzBuzz))
