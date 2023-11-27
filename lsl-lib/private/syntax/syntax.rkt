@@ -96,8 +96,13 @@
    (Struct name:id ctc:contract ...)
    (Recursive name:contract-var ctc:contract)
    #:binding {(bind name) ctc}
-   (Function [arg:racket-var arg-ctc:contract] ... res-ctc:contract)
-   #:binding {(bind arg) arg-ctc res-ctc})
+   (Function arg:function-clause ... res-ctc:contract)
+   #:binding {(recursive arg) res-ctc})
+
+ (nonterminal/two-pass function-clause
+   [(~datum _) arg-ctc:contract]
+   [arg:racket-var arg-ctc:contract]
+   #:binding (export arg))
 
  (nonterminal flat-clause
    #:binding-space contract-space
@@ -140,6 +145,7 @@
     [(_ (~and (Function [x a] ... r) fun-stx))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
      #:with name (syntax-property #'fun-stx 'inferred-name)
+     ;; TODO: move (?)
      #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
          (function-contract
           'name
