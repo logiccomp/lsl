@@ -5,7 +5,8 @@
 ;;
 
 (require (for-syntax racket/base
-                     racket/string)
+                     racket/string
+                     racket/list)
          racket/provide
          rackunit
          rackunit/text-ui)
@@ -130,8 +131,9 @@
                        ^ormap
                        ^procedure?
                        ^sort))
-         #%app
-         #%top-interaction
+          #%app
+          #%top
+          #%top-interaction
 
          (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))
          (rename-out
@@ -316,11 +318,13 @@
   (syntax-parser
     [(_)
      #:with (form ...) expect-forms
-     #'(void
-        (run-tests
-         (test-suite
-          "unit tests"
-          (test-begin form) ...)))]))
+     (if (empty? expect-forms)
+         #'(void)
+         #'(void
+            (run-tests*
+             (test-suite
+              "unit tests"
+              (test-begin form) ...))))]))
 
 (define (always _) #t)
 

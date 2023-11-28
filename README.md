@@ -34,9 +34,7 @@
 * recursive must be over flat stuff
 * shorthand for recursive (no explicit syntax)
 * parameterized define-contract
-* bind #%top for unbound identifiers
 * no else for cond
-* wrap rackunit for testing
 * add contract-verify and contract-exercise to rackunit results with extension hooks
 * mutual recursion
 * errors (invalid inputs) for check-*
