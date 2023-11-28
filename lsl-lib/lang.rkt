@@ -6,7 +6,9 @@
 
 (require (for-syntax racket/base
                      racket/string)
-         racket/provide)
+         racket/provide
+         rackunit
+         rackunit/text-ui)
 
 (begin-for-syntax
   (define ((strip pre) str)
@@ -32,7 +34,15 @@
                        $quote
                        $#%datum
 
-                       $empty))
+                       $check-expect
+                       $check-within
+                       $check-member-of
+                       $check-range
+                       $check-satisfied
+                       $check-error
+
+                       $empty
+                       $#%module-begin))
           (filtered-out
           (strip "^")
           (combine-out ^true
@@ -121,7 +131,6 @@
                        ^procedure?
                        ^sort))
          #%app
-         #%module-begin
          #%top-interaction
 
          (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))
@@ -146,6 +155,7 @@
                      threading)
          (prefix-in ^ rosette/safe)
          (for-space contract-space "private/syntax/syntax.rkt")
+         racket/string
          rosette/solver/smt/z3
          syntax/parse/define
          "private/syntax/syntax.rkt"
@@ -161,6 +171,11 @@
 
 (define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
   (^require mod ...))
+
+(define-syntax $#%module-begin
+  (syntax-parser
+    [(_ form:expr ...)
+     #'(#%module-begin form ... ($run-tests))]))
 
 (define-syntax $define
   (syntax-parser
@@ -255,21 +270,62 @@
         (generate (λ () (- (* 200 (random)) 100)))))
 
 ;;
-;; TODO: testing
+;; testing
 ;;
 
-#|
+(begin-for-syntax
+  (define expect-forms null)
 
-    (pattern (check-expect arg0:exp arg1:exp))
-    (pattern (check-random arg0:exp arg1:exp))
-    (pattern (check-within arg0:exp arg1:exp arg2:exp))
-    (pattern (check-member-of arg0:exp arg:exp ...))
-    (pattern (check-range arg0:exp arg1:exp arg2:exp))
-    (pattern (check-satisfied arg0:exp arg1:exp))
-    (pattern (check-error arg0:exp arg1:exp))
-    (pattern (check-error arg:exp)))
+  (define (push-form! stx)
+    (set! expect-forms (cons stx expect-forms))
+    #'(void)))
 
-|#
+(define-syntax $check-expect
+  (syntax-parser
+    [(_ actual expected)
+     (push-form! #'(check-equal? actual expected))]))
+
+(define-syntax $check-within
+  (syntax-parser
+    [(_ actual expected ϵ)
+     (push-form! #'(check-within actual expected ϵ))]))
+
+(define-syntax $check-member-of
+  (syntax-parser
+    [(_ actual expecteds ...)
+     (push-form! #'(check-true (member actual (list expecteds ...))))]))
+
+(define-syntax $check-range
+  (syntax-parser
+    [(_ actual low high)
+     (push-form! #'(check-true (<= low actual high)))]))
+
+(define-syntax $check-satisfied
+  (syntax-parser
+    [(_ actual pred)
+     (push-form! #'(check-pred pred actual))]))
+
+(define-syntax $check-error
+  (syntax-parser
+    [(_ body:expr)
+     (push-form! #'(check-exn always (λ () body)))]
+    [(_ body:expr msg:expr)
+     (push-form! #'(check-exn (matches? msg) (λ () body)))]))
+
+(define-syntax $run-tests
+  (syntax-parser
+    [(_)
+     #:with (form ...) expect-forms
+     #'(void
+        (run-tests
+         (test-suite
+          "unit tests"
+          (test-begin form) ...)))]))
+
+(define (always _) #t)
+
+(define ((matches? msg) e)
+  (string-contains? (exn-message e) msg))
 
 ;;
 ;; standard library

@@ -3,6 +3,8 @@
 (require chk
          "util.rkt")
 
+;; recursive
+
 (chk
  #:do (define int-tree-sexp
         '[(define-struct node (left value right))
