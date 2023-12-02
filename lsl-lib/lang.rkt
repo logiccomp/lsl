@@ -321,7 +321,7 @@
      (if (empty? expect-forms)
          #'(void)
          #'(void
-            (run-tests*
+            (run-tests
              (test-suite
               "unit tests"
               (test-begin form) ...))))]))

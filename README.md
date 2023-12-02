@@ -1,5 +1,6 @@
 ## LSL todo
 
+* rename contract-exercise to check-???
 * define-contract should check to make sure is actually contract...
 * check binding specs (esp. for `contract` nonterminal)
 * cyclic

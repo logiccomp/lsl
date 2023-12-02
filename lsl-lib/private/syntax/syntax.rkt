@@ -67,8 +67,9 @@
      (if ctc
          #`(define ?head.name
              (let ([pos (positive-blame-struct (quote-module-name))]
-                   [neg (negative-blame-struct (quote-module-name))])
-               (((contract-struct-protect (compile #,(flip-intro-scope ctc))) ?new-body pos) neg)))
+                   [neg (negative-blame-struct (quote-module-name))]
+                   [compiled (compile* #,(flip-intro-scope ctc))])
+               (((contract-struct-protect compiled) ?new-body pos) neg)))
          #'(define ?head.name ?new-body))]))
 
 ;;
@@ -127,6 +128,13 @@
 ;; `compile`
 ;;
 
+(define-syntax compile*
+  (syntax-parser
+    [(_ ctc)
+     #'(with-reference-compilers
+         ([contract-var-class immutable-reference-compiler])
+         (compile ctc))]))
+
 (define-syntax (compile stx)
   (syntax-parse stx
     #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
@@ -145,13 +153,11 @@
     [(_ (~and (Function [x a] ... r) fun-stx))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
      #:with name (syntax-property #'fun-stx 'inferred-name)
-     ;; TODO: move (?)
-     #'(with-reference-compilers ([contract-var-class immutable-reference-compiler])
-         (function-contract
+     #'(function-contract
           'name
           (list (#%datum . k) ...)
           (list (λ* (x ...) (compile a)) ...)
-          (λ* (x ...) (compile r))))]
+          (λ* (x ...) (compile r)))]
     [(_ (~and (OneOf ctc ...) or-stx))
      #:with name (syntax-property #'or-stx 'inferred-name)
      #'(or-contract 'name (list (compile ctc) ...))]
