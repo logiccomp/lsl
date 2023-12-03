@@ -29,11 +29,10 @@
 ;; syntax
 ;;
 
-(define (or-contract maybe-name ctcs)
-  (define name (or maybe-name '|anonymous contract|))
+(define (or-contract stx ctcs)
   (define preds (map flat-contract-struct-predicate ctcs))
   (define (predicate val)
     (for/or ([pred (in-list preds)])
       (pred val)))
-  (define protect (flat-contract-protect name predicate))
-  (flat-contract-struct name protect #f #f #f predicate))
+  (define protect (flat-contract-protect stx predicate))
+  (flat-contract-struct stx protect #f #f #f predicate))

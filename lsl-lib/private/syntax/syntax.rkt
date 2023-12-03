@@ -23,6 +23,7 @@
                      racket/match
                      racket/set
                      racket/sequence
+                     racket/syntax
                      syntax/id-table
                      syntax/id-set
                      syntax/parse
@@ -63,15 +64,14 @@
 (define-syntax define-annotated
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
-     #:do [(define ctc (syntax-local-value (ctc-sc #'?head.name) (const #f)))]
      #:with ?new-body ((attribute ?head.make-body) #'?body)
-     (if ctc
-         #`(define ?head.name
-             (let ([pos (positive-blame-struct '?head.name (quote-module-name))]
-                   [neg (negative-blame-struct '?head.name (quote-module-name))]
-                   [compiled (compile* #,(flip-intro-scope ctc))])
-               (((contract-struct-protect compiled) ?new-body pos) neg)))
-         #'(define ?head.name ?new-body))]))
+     (match (syntax-local-value (ctc-sc #'?head.name) (const #f))
+       [(? not) #'(define ?head.name ?new-body)]
+       [ctc     #`(define ?head.name
+                    (let ([pos (positive-blame-struct '?head.name (quote-module-name))]
+                          [neg (negative-blame-struct '?head.name (quote-module-name))]
+                          [compiled (compile-contract #,(flip-intro-scope ctc))])
+                      (((contract-struct-protect compiled) ?new-body pos) neg)))])]))
 
 ;;
 ;; contract grammar
@@ -87,7 +87,7 @@
 
  (host-interface/expression
   (contract-generate ctc:contract)
-  #'(contract-generate-function (compile ctc)))
+  #'(contract-generate-function (compile-contract ctc)))
 
  (nonterminal contract
    #:allow-extension contract-macro
@@ -114,7 +114,7 @@
    (symbolic sym-expr:racket-expr)))
 
 ;;
-;; `define-alias`
+;; `define-contract`
 ;;
 
 (define-syntax define-contract
@@ -126,29 +126,11 @@
             [_ #'ctc])))]))
 
 ;;
-;; `compile`
+;; `compile-contract`
 ;;
 
-(define-syntax compile*
-  (syntax-parser
-    [(_ ctc)
-     #'(with-reference-compilers
-         ([contract-var-class immutable-reference-compiler])
-         (compile ctc))]))
-
-(begin-for-syntax
-  (define get-name
-    (syntax-parser
-      [(_ ctc)
-       (match (syntax-property #'ctc 'origin)
-         [(list _ ... orig-stx)
-          #:when (identifier? orig-stx)
-          orig-stx]
-         [_ #f])]
-      [_ #f])))
-
-(define-syntax (compile stx)
-  (define name (get-name stx))
+(define-syntax (compile-contract stx)
+  (define/with-syntax (_ ctc) stx)
   (syntax-parse stx
     #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
     [(_ (Flat (~alt (~optional (domain dom-ctc))
@@ -156,27 +138,30 @@
                     (~optional (generate gen-expr))
                     (~optional (symbolic sym-expr))) ...))
      #`(flat-contract
-        #'#,name
-        (~? (compile dom-ctc) #false)
+        #'ctc
+        (~? (compile-contract dom-ctc) #false)
         (~? check-expr #false)
         (~? gen-expr #false)
         (~? sym-expr #false))]
     [(_ (Function [x a] ... r))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
      #`(function-contract
-          '#,name
-          (list (#%datum . k) ...)
-          (list (λ* (x ...) (compile a)) ...)
-          (λ* (x ...) (compile r)))]
-    [(_ (OneOf ctc ...))
-     #`(or-contract '#,name (list (compile ctc) ...))]
-    [(_ (Struct sname:struct-id ctc ...))
-     #`(struct-contract '#,name
-                        sname.constructor-id
-                        sname.predicate-id
-                        (list (compile ctc) ...))]
-    [(_ (Recursive x:id ctc))
-     #'(letrec ([x (compile ctc)]) x)]
+        #'ctc
+        (list (#%datum . k) ...)
+        (list (λ* (x ...) (compile-contract a)) ...)
+        (λ* (x ...) (compile-contract r)))]
+    [(_ (OneOf disj ...))
+     #`(or-contract
+        #'ctc
+        (list (compile-contract disj) ...))]
+    [(_ (Struct sname:struct-id fld ...))
+     #`(struct-contract
+        #'ctc
+        sname.constructor-id
+        sname.predicate-id
+        (list (compile-contract fld) ...))]
+    [(_ (Recursive x:id body))
+     #'(letrec ([x (compile-contract body)]) x)]
     [(_ name:id)
      #'(recursive-contract (λ () name))]))
 

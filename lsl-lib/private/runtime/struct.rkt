@@ -30,11 +30,10 @@
 ;; syntax
 ;;
 
-(define (struct-contract maybe-name make struct-pred? ctcs)
-  (define name (or maybe-name '|anonymous contract|))
+(define (struct-contract stx make struct-pred? ctcs)
   (define (protect val pos)
     (unless (struct-pred? val)
-      (contract-error pos name val))
+      (contract-error pos stx val))
     (λ (neg)
       (define fields (struct->list val))
       (define new-fields
@@ -48,5 +47,5 @@
                    [field (in-list (struct->list val))])
            ((flat-contract-struct-predicate ctc) field))))
   (if (andmap flat-contract-struct? ctcs)
-      (flat-contract-struct name protect #f #f #f predicate)
-      (contract-struct name protect #f #f #f)))
+      (flat-contract-struct stx protect #f #f #f predicate)
+      (contract-struct stx protect #f #f #f)))

@@ -30,32 +30,29 @@
 ;; syntax
 ;;
 
-(define (flat-contract maybe-name dom check generate symbolic)
-  (define name (or maybe-name '|anonymous contract|))
+(define (flat-contract stx dom check generate symbolic)
   (define dom-pred (and dom (flat-contract-struct-predicate dom)))
   (define dom-name (and dom (contract-struct-name dom)))
   (define (predicate x)
     (and (implies dom-pred (dom-pred x))
          (implies check (check x))))
-  (define protect (flat-contract-protect name predicate))
-  (define symbolic*
-    (or symbolic
-        (and dom
-             (λ ()
-               (define x ((contract-struct-symbolic dom)))
-               (assume (implies check (check x)))
-               x))))
+  (define protect (flat-contract-protect stx predicate))
+  (define (default-symbolic)
+    (define x ((contract-struct-symbolic dom)))
+    (assume (implies check (check x)))
+    x)
+  (define symbolic* (or symbolic (and dom default-symbolic)))
   (define (interact mode val) (void))
-  (flat-contract-struct name protect generate symbolic* interact predicate))
+  (flat-contract-struct stx protect generate symbolic* interact predicate))
 
-(define (flat-contract-protect name predicate)
+(define (flat-contract-protect stx predicate)
   (λ (val pos)
     (when (symbolic? val)
       (define result (verify (assert (predicate val))))
       (when (sat? result)
         (define counter-eg (evaluate val (complete-solution result (list val))))
-        (verify-error pos name counter-eg)))
+        (verify-error pos stx counter-eg)))
     (when (concrete? val)
        (unless (predicate val)
-         (contract-error pos name val)))
+         (contract-error pos stx val)))
     (λ (neg) val)))

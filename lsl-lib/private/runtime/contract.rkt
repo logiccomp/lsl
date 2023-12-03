@@ -92,28 +92,33 @@
      "blaming: ~a")
    "\n  "))
 
+(define (syntax->name stx)
+  (cond
+    [(syntax-property stx 'origin) => (compose syntax->datum last)]
+    [else "anonymous contract"]))
+
 (define (contract-error blm stx val)
   (define error-msg
     (format CTC-FMT
             (blame-struct-name blm)
-            (syntax->datum stx)
+            (syntax->name stx)
             val
             (blame-struct-path blm)))
+  (define stx-srclocs
+    (cond
+      [(and stx (syntax-srcloc stx)) => list]
+      [else null]))
   (define cms (current-continuation-marks))
-  (match (continuation-mark-set->list cms errortrace-key)
-    [(cons (cons datum srcloc-list) _)
-     (define srclocs (list (apply srcloc srcloc-list) (syntax-srcloc stx)))
-     (raise (exn:fail:contract error-msg cms srclocs))]
-    [_
-     (define srclocs
-       (cond
-         [(syntax-srcloc stx) => list]
-         [else null]))
-     (raise (exn:fail:contract error-msg cms srclocs))]))
+  (define cm-srclocs
+    (match (continuation-mark-set->list cms errortrace-key)
+      [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
+      [_ null]))
+  (define srclocs (append stx-srclocs cm-srclocs))
+  (raise (exn:fail:contract error-msg cms srclocs)))
 
-(define (verify-error blm name val)
+(define (verify-error blm stx val)
   (define error-msg
-    (format VERIFY-FMT name val (blame-struct-path blm)))
+    (format VERIFY-FMT (syntax->name stx) val (blame-struct-path blm)))
   (raise-user-error error-msg))
 
 (define GEN-FMT

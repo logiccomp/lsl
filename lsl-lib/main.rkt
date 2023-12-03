@@ -41,7 +41,6 @@
   #:language 'lsl
   #:info
   (λ (key default use-default)
-    (displayln key)
     (case key
       [(drracket:opt-out-toolbar-buttons) #f]
       [else (use-default key default)])))

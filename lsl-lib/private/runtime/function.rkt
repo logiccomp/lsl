@@ -17,14 +17,13 @@
 ;; function
 ;;
 
-(define (function-contract maybe-name dom-order doms cod)
-  (define name (or maybe-name '|anonymous contract|))
+(define (function-contract stx dom-order doms cod)
   (define n (length doms))
   (define (protect val pos)
     (unless (procedure? val)
-      (contract-error pos name val))
+      (contract-error pos stx val))
     (unless (procedure-arity-includes? val n)
-      (contract-error pos name val))
+      (contract-error pos stx val))
     (λ (neg)
       (define (wrapper . args)
         (define ((dom-apply acc k) arg)
@@ -48,7 +47,7 @@
     (void))
   (define self
     (contract-struct
-     name
+     stx
      protect
      (λ () (procedure-reduce-arity generated n))
      #false
