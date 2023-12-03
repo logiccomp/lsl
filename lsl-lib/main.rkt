@@ -43,7 +43,8 @@
                        $check-error
 
                        $empty
-                       $#%module-begin))
+                       $#%module-begin
+                       $#%top))
           (filtered-out
           (strip "^")
           (combine-out ^true
@@ -132,7 +133,6 @@
                        ^procedure?
                        ^sort))
           #%app
-          #%top
           #%top-interaction
 
          (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))

@@ -15,5 +15,5 @@
 (define (run/sexp sexp)
   (define ns (make-base-empty-namespace))
   (parameterize ([current-namespace ns])
-    (namespace-require 'lsl/lang))
+    (namespace-require 'lsl))
   (eval sexp ns))

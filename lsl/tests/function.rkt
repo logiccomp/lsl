@@ -6,6 +6,13 @@
 ;; success
 (chk
  (run/var (-> Integer Integer) f (λ (x) x) (f 10))  10
+ (run/var (Function [x Integer]
+                    [y (Flat (check (λ (z) (eq? x z))))]
+                    Integer)
+          f
+          (λ (x y) (+ x y))
+          (f 10 10))
+ 20
  (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
           f
           (λ (x) x)
@@ -35,7 +42,14 @@
           (: f (-> Even Even))
           (define (f x) (+ x 1))
           (contract-verify f))
- "expected: Even")
+ "expected: Even"
+ #:x (run/var (Function [x (Flat (check (λ (z) (eq? y z))))]
+                        [y (Flat (check (λ (z) (eq? x z))))]
+                        Integer)
+              f
+              (λ (x y) (+ x y))
+              (f 10 20))
+ "cannot have cyclic dependency")
 
 ;; fizzbuzz
 (chk

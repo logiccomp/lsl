@@ -10,7 +10,8 @@
          annotate
          define-contract
          contract-generate
-         ->)
+         ->
+         $#%top)
 
 ;;
 ;; require
@@ -24,6 +25,7 @@
                      racket/set
                      racket/sequence
                      racket/syntax
+                     racket/syntax-srcloc
                      syntax/id-table
                      syntax/id-set
                      syntax/parse
@@ -98,13 +100,11 @@
    (Struct name:id ctc:contract ...)
    (Recursive name:contract-var ctc:contract)
    #:binding {(bind name) ctc}
-   (Function arg:function-clause ... res-ctc:contract)
-   #:binding {(recursive arg) res-ctc})
+   (Function arg:function-clause ... res-ctc:contract))
 
- (nonterminal/two-pass function-clause
+ (nonterminal function-clause
    [(~datum _) arg-ctc:contract]
-   [arg:racket-var arg-ctc:contract]
-   #:binding (export arg))
+   [arg:id arg-ctc:contract])
 
  (nonterminal flat-clause
    #:binding-space contract-space
@@ -144,7 +144,7 @@
         (~? gen-expr #false)
         (~? sym-expr #false))]
     [(_ (Function [x a] ... r))
-     #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
+     #:with (k ...) (function-dependencies #'ctc (syntax->list #'([x a] ...)))
      #`(function-contract
         #'ctc
         (list (#%datum . k) ...)
@@ -221,39 +221,48 @@
 ;;
 
 (begin-for-syntax
-  (define (function-dependencies stxs)
+  (struct exn:fail:cyclic exn:fail (srclocs)
+    #:property prop:exn:srclocs
+    (λ (self) (exn:fail:cyclic-srclocs self)))
+
+  (define (function-dependencies src-stx stxs)
     (define id-index-table
-      (for/fold ([acc (make-immutable-bound-id-table)])
-                ([stx (in-list stxs)]
+      (for/hash ([stx (in-list stxs)]
                  [k (in-naturals)])
         (syntax-parse stx
           [(name:id body:expr)
-           (bound-id-table-set acc #'name k)])))
+           (values (syntax-e #'name) k)])))
     (define dep-hash
       (for/hash ([stx (in-list stxs)])
         (syntax-parse stx
           [(name:id body:expr)
            (define deps
              (for/list ([var (in-bound-id-set (fv #'body))])
-               (bound-id-table-ref id-index-table var #false)))
-           (values #'name (filter values deps))])))
-    (define neighbors (dict->procedure #:failure (const empty) dep-hash))
-    (topological-sort (range (length stxs)) neighbors))
+               (hash-ref id-index-table (syntax-e var) #false)))
+           (values (hash-ref id-index-table (syntax-e #'name))
+                   (filter values deps))])))
+    (define neighbors
+      (dict->procedure
+       #:failure (const empty)
+       dep-hash))
+    (define (cycle _)
+      (raise (exn:fail:cyclic "cannot have cyclic dependency"
+                              (current-continuation-marks)
+                              (list (syntax-srcloc src-stx)))))
+    (topological-sort (range (length stxs)) neighbors #:cycle cycle))
 
   (define current-free-variables (make-parameter #f))
 
-  (define record-var-compiler
-    (make-variable-like-transformer
-     (λ (id)
-       (current-free-variables
-        (bound-id-set-add (current-free-variables) id))
-       #''_)))
-
   (define (free-variables stx)
-    (define fv-set (immutable-bound-id-set))
-    (define stx*
-      #`(with-reference-compilers ([contract-var-class record-var-compiler])
-          #,stx))
-    (parameterize ([current-free-variables fv-set])
-      (local-expand stx* 'expression null))
-    fv-set))
+    (parameterize ([current-free-variables (immutable-bound-id-set)])
+      (local-expand stx 'expression null)
+      (current-free-variables))))
+
+(define-syntax $#%top
+  (syntax-parser
+    [(_ . id)
+     (cond
+       [(current-free-variables)
+        (current-free-variables (bound-id-set-add (current-free-variables) #'id))
+        #''_]
+       [#'(#%top . id)])]))

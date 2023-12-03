@@ -3,7 +3,6 @@
 * rename contract-exercise to check-???
 * define-contract should check to make sure is actually contract...
 * check binding specs (esp. for `contract` nonterminal)
-* cyclic
 * annotate should use lift to generate contract definition for reuse
 * record src loc for flat contract and use in error reporting
 * improve perf with tight boundary using weak hash table cache
@@ -12,11 +11,9 @@
 * better name for arrows (can use the names from stx of doms and cods instead of runtime)
 * split and DRY `function-dependency-graph`
 * dry `function-contract`
-* interact for function because dom is dependent
 * free variable expansion should not be discarded
 * do we need all the `#:binding-class` declarations?
 * enforce ~alt constraint on flat
-* should lift `with-reference-compilers` ?
 * dynamic check that domain is flat contract (not higher order)
 * error if symbolic not present
 * should remove multiple values from function since ISL doesn't have them?
@@ -31,7 +28,6 @@
 * TODO struct should do as many flat contracts as possibly can early
 * recursive check inside "productive" constructors
 * performance is atrocious...
-* why no #%top-interaction?
 * recursive must be over flat stuff
 * shorthand for recursive (no explicit syntax)
 * parameterized define-contract
@@ -39,5 +35,4 @@
 * add contract-verify and contract-exercise to rackunit results with extension hooks
 * mutual recursion
 * errors (invalid inputs) for check-*
-* success message for rackunit
 * recursive should have name too (or not?)
