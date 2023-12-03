@@ -4,9 +4,149 @@
 ;; provide
 ;;
 
-(provide
- (rename-out
-  [mb #%module-begin]))
+(require (for-syntax racket/base
+                     racket/string
+                     racket/list)
+         racket/provide
+         rackunit
+         rackunit/text-ui)
+
+(begin-for-syntax
+  (define ((strip pre) str)
+    (and (string-prefix? str pre)
+         (substring str (string-length pre)))))
+
+(provide (filtered-out
+          (strip "$")
+          (combine-out $require
+                       ;; from contract.rkt`
+                       ;$define
+                       $define-struct
+                       $lambda
+                       $λ
+                       $begin
+                       $letrec
+                       $let
+                       $let*
+                       $cond
+                       $if
+                       $and
+                       $or
+                       $quote
+                       $#%datum
+
+                       $check-expect
+                       $check-within
+                       $check-member-of
+                       $check-range
+                       $check-satisfied
+                       $check-error
+
+                       $empty
+                       $#%module-begin))
+          (filtered-out
+          (strip "^")
+          (combine-out ^true
+                       ^false
+
+                       ^-
+                       ^<
+                       ^<=
+                       ^>
+                       ^>=
+                       ^abs
+                       ^add1
+                       ^ceiling
+                       ^even?
+                       ^exact->inexact
+                       ^floor
+                       ^inexact->exact
+                       ^integer?
+                       ^max
+                       ^min
+                       ^modulo
+                       ^negative?
+                       ^number?
+                       ^odd?
+                       ^pi
+                       ^positive?
+                       ^quotient
+                       ^real?
+                       ^remainder
+                       ^sgn
+                       ^sub1
+                       ^zero?
+
+                       ^boolean?
+                       ^not
+
+                       ^append
+                       ^assoc
+                       ^assq
+                       ^car
+                       ^cdr
+                       ^cons
+                       ^cons?
+                       ^eighth
+                       ^empty?
+                       ^fifth
+                       ^first
+                       ^fourth
+                       ^length
+                       ^list
+                       ^list-ref
+                       ^list?
+                       ^member
+                       ^memq
+                       ^null
+                       ^null?
+                       ^remove
+                       ^rest
+                       ^reverse
+                       ^second
+                       ^seventh
+                       ^sixth
+                       ^third
+
+                       ^eq?
+                       ^equal?
+                       ^identity
+
+                       ^*
+                       ^+
+                       ^/
+                       ^=
+
+                       ^andmap
+                       ^apply
+                       ^argmax
+                       ^argmin
+                       ^compose
+                       ^filter
+                       ^foldl
+                       ^foldr
+                       ^for-each
+                       ^map
+                       ^memf
+                       ^ormap
+                       ^procedure?
+                       ^sort))
+          #%app
+          #%top
+          #%top-interaction
+
+         (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))
+         (rename-out
+          [define-annotated define]
+          [annotate :])
+         Integer
+         Boolean
+         Real
+         ->
+         define-contract
+         contract-generate
+         contract-exercise
+         contract-verify)
 
 ;;
 ;; require
@@ -14,24 +154,188 @@
 
 (require (for-syntax racket/base
                      syntax/parse
-                     syntax/strip-context
-                     errortrace/errortrace-lib))
+                     threading)
+         (prefix-in ^ rosette/safe)
+         (for-space contract-space "private/syntax/syntax.rkt")
+         racket/string
+         rosette/solver/smt/z3
+         syntax/parse/define
+         "private/syntax/syntax.rkt"
+         "private/runtime/contract.rkt"
+         "private/runtime/flat.rkt"
+         "private/runtime/function.rkt")
+
+(^current-solver (z3 #:path (find-executable-path "z3")))
 
 ;;
-;; module begin
+;; syntax
 ;;
 
+(define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
+  (^require mod ...))
 
-(define-syntax mb
+(define-syntax $#%module-begin
   (syntax-parser
-    [(_ . body)
-     (define stx #`(module . #,(strip-context #`(_ lsl/lang . body))))
-     (syntax-parse (errortrace-annotate stx)
-       [(_ _ _ (_ . body))
-        #`(#%plain-module-begin
-           (require (only-in lsl/lang)
-                    (only-in errortrace))
-           . body)])]))
+    [(_ form:expr ...)
+     #'(#%module-begin form ... ($run-tests))]))
+
+(define-syntax $define
+  (syntax-parser
+    [(_ (name:id param:id ...) body:expr)
+     #'(^define (name param ...) body)]
+    [(_ name:id rhs:expr)
+     #'(^define name rhs)]))
+
+(begin-for-syntax
+  (define (struct-name->contract-name stx)
+    (~> stx
+        syntax-e
+        symbol->string
+        (string-replace "-" " ")
+        string-titlecase
+        (string-replace " " "")
+        string->symbol
+        (datum->syntax stx _)))
+
+  (define (struct-contract-macro sname)
+    (contract-macro
+     (syntax-parser
+       [(_ ctc ...)
+        #`(Struct #,sname ctc ...)]))))
+
+(define-syntax $define-struct
+  (syntax-parser
+    [(_ name:id (field:id ...))
+     #:with Name (struct-name->contract-name #'name)
+     #'(begin
+         (define-syntax Name (struct-contract-macro #'name))
+         (^struct name (field ...) #:transparent))]))
+
+(define-syntax-parse-rule ($lambda (param:id ...) body:expr)
+  (^lambda (param ...) body))
+
+(define-syntax-parse-rule ($λ (param:id ...) body:expr)
+  (^λ (param ...) body))
+
+(define-syntax-parse-rule ($begin body:expr ...+)
+  (^begin body ...))
+
+(define-syntax-parse-rule ($letrec ([var:id rhs:expr] ...) body:expr)
+  (^letrec ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($let ([var:id rhs:expr] ...) body:expr)
+  (^let ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($let* ([var:id rhs:expr] ...) body:expr)
+  (^let* ([var rhs] ...) body))
+
+(define-syntax-parse-rule ($cond [guard:expr arm:expr] ...+)
+  (^cond [guard arm] ...))
+
+(define-syntax-parse-rule ($if guard:expr then:expr else:expr)
+  (^if guard then else))
+
+(define-syntax-parse-rule ($and arg0:expr arg:expr ...+)
+  (^and arg0 arg ...))
+
+(define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
+  (^or arg0 arg ...))
+
+(define-syntax-parse-rule ($quote body:expr)
+  (^quote body))
+
+(define-syntax $#%datum
+  (syntax-parser
+    [(_ . (~or e:number e:boolean e:string e:character))
+     #'(^#%datum . e)]))
+
+;;
+;; built-in contracts
+;;
+
+(define ((predicate->symbolic predicate))
+  (^define-symbolic* x predicate) x)
+
+(define-contract Boolean
+  (Flat (check ^boolean?)
+        (symbolic (predicate->symbolic ^boolean?))
+        (generate (λ () (< (random) 1/2)))))
+
+(define-contract Integer
+  (Flat (check ^integer?)
+        (symbolic (predicate->symbolic ^integer?))
+        (generate (λ () (random -100 100)))))
+
+(define-contract Real
+  (Flat (check ^real?)
+        (symbolic (predicate->symbolic ^real?))
+        (generate (λ () (- (* 200 (random)) 100)))))
+
+;;
+;; testing
+;;
+
+(begin-for-syntax
+  (define expect-forms null)
+
+  (define (push-form! stx)
+    (set! expect-forms (cons stx expect-forms))
+    #'(void)))
+
+(define-syntax $check-expect
+  (syntax-parser
+    [(_ actual expected)
+     (push-form! #'(check-equal? actual expected))]))
+
+(define-syntax $check-within
+  (syntax-parser
+    [(_ actual expected ϵ)
+     (push-form! #'(check-within actual expected ϵ))]))
+
+(define-syntax $check-member-of
+  (syntax-parser
+    [(_ actual expecteds ...)
+     (push-form! #'(check-true (member actual (list expecteds ...))))]))
+
+(define-syntax $check-range
+  (syntax-parser
+    [(_ actual low high)
+     (push-form! #'(check-true (<= low actual high)))]))
+
+(define-syntax $check-satisfied
+  (syntax-parser
+    [(_ actual pred)
+     (push-form! #'(check-pred pred actual))]))
+
+(define-syntax $check-error
+  (syntax-parser
+    [(_ body:expr)
+     (push-form! #'(check-exn always (λ () body)))]
+    [(_ body:expr msg:expr)
+     (push-form! #'(check-exn (matches? msg) (λ () body)))]))
+
+(define-syntax $run-tests
+  (syntax-parser
+    [(_)
+     #:with (form ...) expect-forms
+     (if (empty? expect-forms)
+         #'(void)
+         #'(void
+            (run-tests
+             (test-suite
+              "unit tests"
+              (test-begin form) ...))))]))
+
+(define (always _) #t)
+
+(define ((matches? msg) e)
+  (string-contains? (exn-message e) msg))
+
+;;
+;; standard library
+;;
+
+(define $empty ^null)
 
 ;;
 ;; reader
