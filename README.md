@@ -40,3 +40,4 @@
 * mutual recursion
 * errors (invalid inputs) for check-*
 * success message for rackunit
+* recursive should have name too (or not?)

@@ -336,10 +336,3 @@
 ;;
 
 (define $empty ^null)
-
-;;
-;; reader
-;;
-
-(module reader syntax/module-reader
-  lsl)

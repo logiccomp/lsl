@@ -25,17 +25,24 @@
 ;;
 
 (require racket/string
-         racket/list)
+         racket/list
+         racket/match
+         racket/syntax-srcloc
+         errortrace/errortrace-key)
 
 ;;
 ;; data
 ;;
 
-(struct blame-struct (path))
+(struct blame-struct (name path))
 (struct positive-blame-struct blame-struct ())
 (struct negative-blame-struct blame-struct ())
 (struct contract-struct (name protect generate symbolic interact))
 (struct flat-contract-struct contract-struct (predicate))
+
+(struct exn:fail:contract exn:fail (srclocs)
+  #:property prop:exn:srclocs
+  (λ (self) (exn:fail:contract-srclocs self)))
 
 (define-values (impersonator-prop:contract
                 has-impersonator-prop:contract?
@@ -79,16 +86,30 @@
 
 (define CTC-FMT
   (string-join
-   '("contract violation"
+   '("~a: contract violation"
      "expected: ~a"
      "given: ~v"
      "blaming: ~a")
    "\n  "))
 
-(define (contract-error blm name val)
+(define (contract-error blm stx val)
   (define error-msg
-    (format CTC-FMT name val (blame-struct-path blm)))
-  (raise-user-error error-msg))
+    (format CTC-FMT
+            (blame-struct-name blm)
+            (syntax->datum stx)
+            val
+            (blame-struct-path blm)))
+  (define cms (current-continuation-marks))
+  (match (continuation-mark-set->list cms errortrace-key)
+    [(cons (cons datum srcloc-list) _)
+     (define srclocs (list (apply srcloc srcloc-list) (syntax-srcloc stx)))
+     (raise (exn:fail:contract error-msg cms srclocs))]
+    [_
+     (define srclocs
+       (cond
+         [(syntax-srcloc stx) => list]
+         [else null]))
+     (raise (exn:fail:contract error-msg cms srclocs))]))
 
 (define (verify-error blm name val)
   (define error-msg

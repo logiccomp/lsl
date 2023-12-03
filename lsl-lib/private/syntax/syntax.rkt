@@ -20,6 +20,7 @@
                      racket/base
                      racket/function
                      racket/list
+                     racket/match
                      racket/set
                      racket/sequence
                      syntax/id-table
@@ -66,8 +67,8 @@
      #:with ?new-body ((attribute ?head.make-body) #'?body)
      (if ctc
          #`(define ?head.name
-             (let ([pos (positive-blame-struct (quote-module-name))]
-                   [neg (negative-blame-struct (quote-module-name))]
+             (let ([pos (positive-blame-struct '?head.name (quote-module-name))]
+                   [neg (negative-blame-struct '?head.name (quote-module-name))]
                    [compiled (compile* #,(flip-intro-scope ctc))])
                (((contract-struct-protect compiled) ?new-body pos) neg)))
          #'(define ?head.name ?new-body))]))
@@ -122,7 +123,7 @@
      #'(define-syntax name
          (contract-macro
           (syntax-parser
-            [_ (syntax-property #'ctc 'inferred-name (syntax->datum #'name))])))]))
+            [_ #'ctc])))]))
 
 ;;
 ;; `compile`
@@ -135,39 +136,46 @@
          ([contract-var-class immutable-reference-compiler])
          (compile ctc))]))
 
+(begin-for-syntax
+  (define get-name
+    (syntax-parser
+      [(_ ctc)
+       (match (syntax-property #'ctc 'origin)
+         [(list _ ... orig-stx)
+          #:when (identifier? orig-stx)
+          orig-stx]
+         [_ #f])]
+      [_ #f])))
+
 (define-syntax (compile stx)
+  (define name (get-name stx))
   (syntax-parse stx
     #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
-    [(_ (~and (Flat (~alt (~optional (domain dom-ctc))
-                          (~optional (check check-expr))
-                          (~optional (generate gen-expr))
-                          (~optional (symbolic sym-expr))) ...)
-              flat-stx))
-     #:with name (syntax-property #'flat-stx 'inferred-name)
-     #'(flat-contract
-        'name
+    [(_ (Flat (~alt (~optional (domain dom-ctc))
+                    (~optional (check check-expr))
+                    (~optional (generate gen-expr))
+                    (~optional (symbolic sym-expr))) ...))
+     #`(flat-contract
+        #'#,name
         (~? (compile dom-ctc) #false)
         (~? check-expr #false)
         (~? gen-expr #false)
         (~? sym-expr #false))]
-    [(_ (~and (Function [x a] ... r) fun-stx))
+    [(_ (Function [x a] ... r))
      #:with (k ...) (function-dependencies (syntax->list #'([x a] ...)))
-     #:with name (syntax-property #'fun-stx 'inferred-name)
-     #'(function-contract
-          'name
+     #`(function-contract
+          '#,name
           (list (#%datum . k) ...)
           (list (λ* (x ...) (compile a)) ...)
           (λ* (x ...) (compile r)))]
-    [(_ (~and (OneOf ctc ...) or-stx))
-     #:with name (syntax-property #'or-stx 'inferred-name)
-     #'(or-contract 'name (list (compile ctc) ...))]
-    [(_ (~and (Struct sname:struct-id ctc ...) sstx))
-     #:with name (syntax-property #'sstx 'inferred-name)
-     #'(struct-contract 'name
+    [(_ (OneOf ctc ...))
+     #`(or-contract '#,name (list (compile ctc) ...))]
+    [(_ (Struct sname:struct-id ctc ...))
+     #`(struct-contract '#,name
                         sname.constructor-id
                         sname.predicate-id
                         (list (compile ctc) ...))]
-    [(_ (~and (Recursive x:id ctc) rstx))
+    [(_ (Recursive x:id ctc))
      #'(letrec ([x (compile ctc)]) x)]
     [(_ name:id)
      #'(recursive-contract (λ () name))]))
