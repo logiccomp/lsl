@@ -8,7 +8,7 @@
                      racket/string
                      racket/list)
          racket/provide
-         rackunit
+         (except-in rackunit check)
          rackunit/text-ui)
 
 (begin-for-syntax
@@ -19,8 +19,7 @@
 (provide (filtered-out
           (strip "$")
           (combine-out $require
-                       ;; from contract.rkt`
-                       ;$define
+                       $define
                        $define-struct
                        $lambda
                        $λ
@@ -44,7 +43,7 @@
 
                        $empty
                        $#%module-begin
-                       $#%top))
+                       #;$#%top))
           (filtered-out
           (strip "^")
           (combine-out ^true
@@ -135,18 +134,27 @@
           #%app
           #%top-interaction
 
-         (for-space contract-space (all-from-out "private/syntax/syntax.rkt"))
-         (rename-out
-          [define-annotated define]
-          [annotate :])
-         Integer
-         Boolean
-         Real
-         ->
-         define-contract
-         contract-generate
-         contract-exercise
-         contract-verify)
+          Flat
+          Function
+          OneOf
+          Struct
+          Recursive
+
+          domain
+          check
+          generate
+          symbolic
+
+          Integer
+          Boolean
+          Real
+          ->
+
+          (rename-out [annotate :])
+          define-contract
+          contract-generate
+          check-contract
+          verify-contract)
 
 ;;
 ;; require
@@ -157,8 +165,8 @@
                      threading)
          (prefix-in ^ rosette/safe)
          (for-space contract-space "private/syntax/syntax.rkt")
-         racket/string
          rosette/solver/smt/z3
+         racket/string
          syntax/parse/define
          "private/syntax/syntax.rkt"
          "private/runtime/contract.rkt"
@@ -179,13 +187,6 @@
     [(_ form:expr ...)
      #'(#%module-begin form ... ($run-tests))]))
 
-(define-syntax $define
-  (syntax-parser
-    [(_ (name:id param:id ...) body:expr)
-     #'(^define (name param ...) body)]
-    [(_ name:id rhs:expr)
-     #'(^define name rhs)]))
-
 (begin-for-syntax
   (define (struct-name->contract-name stx)
     (~> stx
@@ -198,17 +199,16 @@
         (datum->syntax stx _)))
 
   (define (struct-contract-macro sname)
-    (contract-macro
-     (syntax-parser
-       [(_ ctc ...)
-        #`(Struct #,sname ctc ...)]))))
+    (syntax-parser
+      [(_ ctc ...)
+       #`(Struct #,sname ctc ...)])))
 
 (define-syntax $define-struct
   (syntax-parser
     [(_ name:id (field:id ...))
      #:with Name (struct-name->contract-name #'name)
      #'(begin
-         (define-syntax Name (struct-contract-macro #'name))
+         (define-contract-syntax Name (struct-contract-macro #'name))
          (^struct name (field ...) #:transparent))]))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
@@ -270,6 +270,11 @@
   (Flat (check ^real?)
         (symbolic (predicate->symbolic ^real?))
         (generate (λ () (- (* 200 (random)) 100)))))
+
+(define-contract-syntax ->
+  (syntax-parser
+    [(_ d:expr ... c:expr)
+     #'(Function [_ d] ... c)]))
 
 ;;
 ;; testing

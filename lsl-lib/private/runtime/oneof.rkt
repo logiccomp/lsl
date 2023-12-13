@@ -4,7 +4,7 @@
 ;; provide
 ;;
 
-(provide or-contract)
+(provide oneof-contract)
 
 ;;
 ;; require
@@ -29,10 +29,11 @@
 ;; syntax
 ;;
 
-(define (or-contract stx ctcs)
+(define (oneof-contract stx . ctcs)
   (define preds (map flat-contract-struct-predicate ctcs))
   (define (predicate val)
     (for/or ([pred (in-list preds)])
       (pred val)))
   (define protect (flat-contract-protect stx predicate))
-  (flat-contract-struct stx protect #f #f #f predicate))
+  (define self (flat-contract-struct (syntax->datum stx) stx protect #f #f #f predicate))
+  self)

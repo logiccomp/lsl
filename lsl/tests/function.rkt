@@ -20,28 +20,28 @@
  10
  #:? integer?
  (run ((contract-generate (-> Integer Integer)) 10))
- (run/var (-> Integer Integer) f (λ (x) x) (contract-exercise f))  (void)
- (run/var (-> Integer Integer) f (λ (x) x) (contract-verify f))  (void)
- (run/var (-> Integer Integer Integer) f (λ (x y) x) (contract-exercise f))  (void))
+ (run/var (-> Integer Integer) f (λ (x) x) (check-contract f))  (void)
+ (run/var (-> Integer Integer) f (λ (x) x) (verify-contract f))  (void)
+ (run/var (-> Integer Integer Integer) f (λ (x y) x) (check-contract f))  (void))
 
 ;; failure
 (chk
  #:x (run/var (-> Integer Boolean) f (λ (x) x) (f 10))
  "expected: Boolean"
- #:x (run/var (-> Integer Boolean) f (λ (x) x) (contract-exercise f))
+ #:x (run/var (-> Integer Boolean) f (λ (x) x) (check-contract f))
  "expected: Boolean"
  #:x (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
               f
               (λ (x) (+ x 1))
               (f 10))
- "expected: anonymous contract"
+ "expected: (Flat (check (λ (y) (eq? x y))))"
  #:x (run (define-contract Even
             (Flat
              (domain Integer)
              (check even?)))
           (: f (-> Even Even))
           (define (f x) (+ x 1))
-          (contract-verify f))
+          (verify-contract f))
  "expected: Even"
  #:x (run/var (Function [x (Flat (check (λ (z) (eq? y z))))]
                         [y (Flat (check (λ (z) (eq? x z))))]
@@ -69,13 +69,13 @@
  (run/sexp `(begin ,fb
                    (: f (-> (-> Integer Integer) FizzBuzz))
                    (define (f g) 4)
-                   (contract-exercise f)))
+                   (check-contract f)))
  (void)
 
  (run/sexp `(begin ,fb
                    (: f (-> Integer FizzBuzz))
                    (define (f x) (+ (* 15 x) 1))
-                   (contract-verify f)))
+                   (verify-contract f)))
  (void)
 
  #:x (run/sexp `(begin ,fb
@@ -87,5 +87,5 @@
  #:x (run/sexp `(begin ,fb
                        (: f (-> Integer FizzBuzz))
                        (define (f x) x)
-                       (contract-verify f)))
+                       (verify-contract f)))
  "expected: FizzBuzz")

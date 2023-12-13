@@ -19,16 +19,20 @@
 ;; syntax
 ;;
 
-(define (recursive-contract thk)
+(define (recursive-contract stx thk)
   (define (predicate val)
-    ((flat-contract-struct-predicate (thk)) val))
-  (define (protect val pos)
+    ((flat-contract-struct-predicate (thk self)) val))
+  (define ((protect self) val pos)
     (λ (neg)
-      (((contract-struct-protect (thk)) val pos) neg)))
-  (flat-contract-struct
-   #false
-   protect
-   #false
-   #false
-   #false
-   predicate))
+      (define ctc (thk self))
+      ((((contract-struct-protect ctc) ctc) val pos) neg)))
+  (define self
+    (flat-contract-struct
+     (syntax->datum stx)
+     stx
+     protect
+     #false
+     #false
+     #false
+     predicate))
+  self)

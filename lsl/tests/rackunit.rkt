@@ -13,7 +13,7 @@
       (define str (open-output-string))
       (parameterize ([sandbox-error-output str])
         (make-module-evaluator
-         '(module m lsl/lang
+         '(module m lsl
             (check-expect 1 1)
             (check-expect 1 2))))
       (get-output-string str))))

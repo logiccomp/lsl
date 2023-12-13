@@ -11,4 +11,4 @@
 ;; failure
 (chk
  #:x (run/var (OneOf Integer Boolean) x 1/2 x)
- "expected: anonymous contract")
+ "expected: (OneOf Integer Boolean)")

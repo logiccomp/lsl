@@ -14,8 +14,8 @@
  (run (contract-generate Real))
  #:? boolean?
  (run (contract-generate Boolean))
- (run/var Boolean x #t (contract-exercise x))  (void)
- (run/var Boolean x #t (contract-verify x))  (void))
+ (run/var Boolean x #t (check-contract x))  (void)
+ (run/var Boolean x #t (verify-contract x))  (void))
 
 ;; pre-defined flat failure
 (chk

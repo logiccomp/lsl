@@ -4,52 +4,193 @@
 ;; provide
 ;;
 
-(provide (for-space contract-space (all-defined-out))
-         (for-syntax contract-macro)
-         define-annotated
-         annotate
-         define-contract
-         contract-generate
-         ->
-         $#%top)
+(provide
+ ;; contract literals
+ Flat
+ OneOf
+ Struct
+ Recursive
+ Function
+
+ ;; flat literals
+ domain
+ check
+ generate
+ symbolic
+
+ ;; others
+ $define
+ annotate
+ define-contract
+ contract-generate
+ define-contract-syntax)
 
 ;;
 ;; require
 ;;
 
-(require (for-syntax (only-in ee-lib flip-intro-scope)
+(require (for-syntax ee-lib
+                     ee-lib/persistent-id-table
                      racket/base
                      racket/function
-                     racket/list
                      racket/match
-                     racket/set
+                     racket/list
                      racket/sequence
-                     racket/syntax
                      racket/syntax-srcloc
                      syntax/id-table
                      syntax/id-set
                      syntax/parse
                      syntax/parse/lib/function-header
                      syntax/parse/class/struct-id
-                     syntax/transformer
                      mischief/dict
-                     mischief/sort)
-         syntax-spec
+                     mischief/sort
+                     "unbound-vars.rkt")
+         ee-lib/define
          syntax/location
          "../runtime/contract.rkt"
-         "../runtime/or.rkt"
+         "../runtime/oneof.rkt"
          "../runtime/flat.rkt"
          "../runtime/function.rkt"
          "../runtime/recursive.rkt"
          "../runtime/struct.rkt")
 
 ;;
-;; `define-annotated`
+;; syntax
+;;
+
+(define-literal-forms contract-literals
+  "contract constructor must occur within a contract"
+  (Name Flat OneOf Struct Recursive Function))
+
+(define-literal-forms flat-literals
+  "literal clause must occur within Flat"
+  (domain check generate symbolic))
+
+(define-extensible-syntax contract-syntax)
+
+(begin-for-syntax
+  (define contract-table (make-free-id-table)))
+
+;;
+;; expander
 ;;
 
 (begin-for-syntax
-  (define ctc-sc (make-syntax-introducer))
+  (define rec-vars (make-parameter (immutable-free-id-set)))
 
+  (define/hygienic-metafunction (expand-contract this-stx)
+    #:expression
+    (define/syntax-parse (_ stx) this-stx)
+    (define/syntax-parse qstx #`#'stx)
+    (syntax-parse #'stx
+      #:literal-sets (contract-literals flat-literals)
+      [(Name name:id e:expr)
+       #'(Name name (expand-contract e))]
+      [(Flat (~alt (~optional (domain d:expr))
+                   (~optional (check c:expr))
+                   (~optional (generate g:expr))
+                   (~optional (symbolic s:expr))) ...)
+       #'(Flat qstx
+               (~? (expand-contract d) #f)
+               (~? c #f)
+               (~? g #f)
+               (~? s #f))]
+      [(Function [x:id a:expr] ... r:expr)
+       #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
+      [(OneOf e:expr ...)
+       #'(OneOf qstx (expand-contract e) ...)]
+      [(Struct s:struct-id e:expr ...)
+       #'(Struct qstx s (expand-contract e) ...)]
+      [(Recursive x:id e:expr)
+       (parameterize ([rec-vars (free-id-set-add (rec-vars) #'x)])
+         #'(Recursive qstx x (expand-contract e)))]
+      [head:id
+       #:when (free-id-set-member? (rec-vars) #'head)
+       #'head]
+      [(~or head:id (head:id e:expr ...))
+       #:when (lookup #'head)
+       #:do [(define (get stx) (contract-syntax-transform (lookup #'head) stx))]
+       #:with result (apply-as-transformer get #'head 'expression #'stx)
+       #'(expand-contract result)]))
+
+  (struct exn:fail:cyclic exn:fail (srclocs)
+    #:property prop:exn:srclocs
+    (λ (self) (exn:fail:cyclic-srclocs self)))
+
+  ;; TODO: no syntax-e?
+  (define (sort-indices stx ids fvs)
+    (define index-hash
+      (for/hash ([id (in-syntax ids)]
+                 [k (in-naturals)])
+        (values (syntax-e id) k)))
+    (define dep-hash
+      (for/hash ([id (in-syntax ids)]
+                 [fv (in-syntax fvs)])
+        (define deps
+          (for/list ([var (in-syntax fv)])
+            (hash-ref index-hash (syntax-e var) #f)))
+        (values (hash-ref index-hash (syntax-e id))
+                (filter values deps))))
+    (define neighbors
+      (dict->procedure #:failure (const '()) dep-hash))
+    (define (cycle _)
+      (raise (exn:fail:cyclic "cannot have cyclic dependency"
+                              (current-continuation-marks)
+                              (list (syntax-srcloc stx)))))
+    (topological-sort (range (hash-count index-hash)) neighbors
+                      #:cycle cycle)))
+
+;;
+;; compiler
+;;
+
+(begin-for-syntax
+  (define-syntax-class ctc
+    (pattern #f
+             #:with compiled #'#f)
+    (pattern e:expr
+             #:with compiled #'(compile-contract e)))
+
+  (define/hygienic-metafunction (compile-contract this-stx)
+    #:expression
+    (define/syntax-parse (_ stx) this-stx)
+    (syntax-parse #'stx
+      #:literal-sets (contract-literals flat-literals)
+      [(Name x e:ctc)
+       #'(name-contract 'x e.compiled)]
+      [(Flat q d:ctc c g s)
+       #'(flat-contract q d.compiled c g s)]
+      [(Function q ([x a:ctc] ...) r:ctc)
+       #:with (a* ...) #'((expand-racket (λ* (x ...) a.compiled)) ...)
+       #:with (y ...) #'((unbound-racket a*) ...)
+       #:with (k ...) (sort-indices #'stx #'(x ...) #'(y ...))
+       #:with r* #'(λ* (x ...) r.compiled)
+       #'(function-contract q (list (#%datum . k) ...) (list a* ...) r*)]
+      [(OneOf q e:ctc ...)
+       #'(oneof-contract q e.compiled ...)]
+      [(Struct q s:struct-id e:ctc ...)
+       #'(struct-contract q s.constructor-id s.predicate-id e.compiled ...)]
+      [(Recursive q x e:ctc)
+       #'(recursive-contract q (λ (x) e.compiled))]
+      [x:id #'x]))
+
+  (define/hygienic-metafunction (expand-racket this-stx)
+    #:expression
+    (define/syntax-parse (_ stx) this-stx)
+    (local-expand #'stx 'expression null))
+
+  (define/hygienic-metafunction (unbound-racket this-stx)
+    #:expression
+    (syntax-parse this-stx
+      #:literals (#%plain-lambda)
+      [(_ (#%plain-lambda (x ...) body))
+       (datum->syntax #f (unbound-vars #'body))])))
+
+;;
+;; interface macros
+;;
+
+(begin-for-syntax
   (define-syntax-class define-header
     (pattern x:function-header
              #:with name #'x.name
@@ -58,112 +199,36 @@
              #:with name #'x
              #:attr make-body (λ (body) body))))
 
-(define-syntax annotate
+(define-syntax expand+compile-contract
   (syntax-parser
-    [(_ name:id ctc:expr)
-     #`(: #,(ctc-sc #'name) ctc)]))
+    [(_ ctc)
+     #:with ctc* #`(expand-contract ctc)
+     #'(compile-contract ctc*)]))
 
-(define-syntax define-annotated
+(define-syntax $define
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
      #:with ?new-body ((attribute ?head.make-body) #'?body)
-     (match (syntax-local-value (ctc-sc #'?head.name) (const #f))
+     (match (free-id-table-ref contract-table #'?head.name #f)
        [(? not) #'(define ?head.name ?new-body)]
        [ctc     #`(define ?head.name
                     (let ([pos (positive-blame-struct '?head.name (quote-module-name))]
                           [neg (negative-blame-struct '?head.name (quote-module-name))]
-                          [compiled (compile-contract #,(flip-intro-scope ctc))])
-                      (((contract-struct-protect compiled) ?new-body pos) neg)))])]))
+                          [compiled (expand+compile-contract #,(flip-intro-scope ctc))])
+                      ((((contract-struct-protect compiled) compiled) ?new-body pos) neg)))])]))
 
-;;
-;; contract grammar
-;;
-
-(syntax-spec
- (binding-class contract-var)
- (extension-class contract-macro #:binding-space contract-space)
-
- (host-interface/definitions
-  (: name:id ctc:contract)
-  #`(define-syntax name (flip-intro-scope #'ctc)))
-
- (host-interface/expression
-  (contract-generate ctc:contract)
-  #'(contract-generate-function (compile-contract ctc)))
-
- (nonterminal contract
-   #:allow-extension contract-macro
-   #:binding-space contract-space
-   name:contract-var
-   (Flat opt:flat-clause ...)
-   (OneOf ctc:contract ...)
-   (Struct name:id ctc:contract ...)
-   (Recursive name:contract-var ctc:contract)
-   #:binding {(bind name) ctc}
-   (Function arg:function-clause ... res-ctc:contract))
-
- (nonterminal function-clause
-   [(~datum _) arg-ctc:contract]
-   [arg:id arg-ctc:contract])
-
- (nonterminal flat-clause
-   #:binding-space contract-space
-   (domain dom-ctc:contract)
-   (check check-expr:racket-expr)
-   (generate gen-expr:racket-expr)
-   (symbolic sym-expr:racket-expr)))
-
-;;
-;; `define-contract`
-;;
+(define-syntax annotate
+  (syntax-parser
+    [(_ name:id ctc:expr)
+     #'(begin-for-syntax
+         (free-id-table-set! contract-table #'name #'ctc))]))
 
 (define-syntax define-contract
   (syntax-parser
     [(_ name:id ctc:expr)
-     #'(define-syntax name
-         (contract-macro
-          (syntax-parser
-            [_ #'ctc])))]))
-
-;;
-;; `compile-contract`
-;;
-
-(define-syntax (compile-contract stx)
-  (define/with-syntax (_ ctc) stx)
-  (syntax-parse stx
-    #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
-    [(_ (Flat (~alt (~optional (domain dom-ctc))
-                    (~optional (check check-expr))
-                    (~optional (generate gen-expr))
-                    (~optional (symbolic sym-expr))) ...))
-     #`(flat-contract
-        #'ctc
-        (~? (compile-contract dom-ctc) #false)
-        (~? check-expr #false)
-        (~? gen-expr #false)
-        (~? sym-expr #false))]
-    [(_ (Function [x a] ... r))
-     #:with (k ...) (function-dependencies #'ctc (syntax->list #'([x a] ...)))
-     #`(function-contract
-        #'ctc
-        (list (#%datum . k) ...)
-        (list (λ* (x ...) (compile-contract a)) ...)
-        (λ* (x ...) (compile-contract r)))]
-    [(_ (OneOf disj ...))
-     #`(or-contract
-        #'ctc
-        (list (compile-contract disj) ...))]
-    [(_ (Struct sname:struct-id fld ...))
-     #`(struct-contract
-        #'ctc
-        sname.constructor-id
-        sname.predicate-id
-        (list (compile-contract fld) ...))]
-    [(_ (Recursive x:id body))
-     #'(letrec ([x (compile-contract body)]) x)]
-    [(_ name:id)
-     #'(recursive-contract (λ () name))]))
+     #'(define-contract-syntax name
+         (syntax-parser
+           [_:id #'(Name name ctc)]))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -173,96 +238,17 @@
        (if (eq? (syntax-e x) '_) (gensym) x))
      #'(λ (x* ...) e)]))
 
-;;
-;; free variables
-;;
-
-(begin-for-syntax
-  (define MT (immutable-bound-id-set))
-  (define fv
-    (syntax-parser
-      #:datum-literals (Flat domain check generate symbolic Function OneOf Struct Recursive)
-      [(Flat (~alt (~optional (domain dom-ctc))
-                   (~optional (check check-expr))
-                   (~optional (generate gen-expr))
-                   (~optional (symbolic sym-expr))) ...)
-       (bound-id-set-union
-        (if (attribute dom-ctc) (fv #'dom-ctc) MT)
-        (if (attribute check-expr) (free-variables #'check-expr) MT)
-        (if (attribute gen-expr) (free-variables #'gen-expr) MT)
-        (if (attribute sym-expr) (free-variables #'sym-expr) MT))]
-      [(Function [x a] ... r)
-       (for/fold ([acc MT])
-                 ([e (in-sequences (in-syntax #'(a ... r)))])
-         (bound-id-set-union acc (fv e)))]
-      [(Struct _ ctc ...)
-       (for/fold ([acc MT])
-                 ([e (in-sequences (in-syntax #'(ctc ...)))])
-         (bound-id-set-union acc (fv e)))]
-      [(OneOf ctc ...)
-       (for/fold ([acc MT])
-                 ([e (in-sequences (in-syntax #'(ctc ...)))])
-         (bound-id-set-union acc (fv e)))]
-      [(Recursive _ ctc) (fv #'ctc)]
-      [_:id MT])))
-
-;;
-;; macros
-;;
-
-(define-syntax ->
-  (contract-macro
-   (syntax-parser
-     [(_ x ... y)
-      #'(Function [_ x] ... y)])))
-
-;;
-;; dependency
-;;
-
-(begin-for-syntax
-  (struct exn:fail:cyclic exn:fail (srclocs)
-    #:property prop:exn:srclocs
-    (λ (self) (exn:fail:cyclic-srclocs self)))
-
-  (define (function-dependencies src-stx stxs)
-    (define id-index-table
-      (for/hash ([stx (in-list stxs)]
-                 [k (in-naturals)])
-        (syntax-parse stx
-          [(name:id body:expr)
-           (values (syntax-e #'name) k)])))
-    (define dep-hash
-      (for/hash ([stx (in-list stxs)])
-        (syntax-parse stx
-          [(name:id body:expr)
-           (define deps
-             (for/list ([var (in-bound-id-set (fv #'body))])
-               (hash-ref id-index-table (syntax-e var) #false)))
-           (values (hash-ref id-index-table (syntax-e #'name))
-                   (filter values deps))])))
-    (define neighbors
-      (dict->procedure
-       #:failure (const empty)
-       dep-hash))
-    (define (cycle _)
-      (raise (exn:fail:cyclic "cannot have cyclic dependency"
-                              (current-continuation-marks)
-                              (list (syntax-srcloc src-stx)))))
-    (topological-sort (range (length stxs)) neighbors #:cycle cycle))
-
-  (define current-free-variables (make-parameter #f))
-
-  (define (free-variables stx)
-    (parameterize ([current-free-variables (immutable-bound-id-set)])
-      (local-expand stx 'expression null)
-      (current-free-variables))))
-
-(define-syntax $#%top
+(define-syntax contract-generate
   (syntax-parser
-    [(_ . id)
-     (cond
-       [(current-free-variables)
-        (current-free-variables (bound-id-set-add (current-free-variables) #'id))
-        #''_]
-       [#'(#%top . id)])]))
+    [(_ ctc:expr)
+     #'(contract-generate-function
+        (expand+compile-contract ctc))]))
+
+
+(define-contract Integer
+  (Flat (check integer?)))
+
+(define-contract-syntax ->
+  (syntax-parser
+    [(_ d:expr ... c:expr)
+     #'(Function [_ d] ... c)]))

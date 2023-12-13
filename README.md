@@ -1,12 +1,8 @@
 ## LSL todo
 
-* rename contract-exercise to check-???
 * define-contract should check to make sure is actually contract...
-* check binding specs (esp. for `contract` nonterminal)
 * annotate should use lift to generate contract definition for reuse
-* record src loc for flat contract and use in error reporting
 * improve perf with tight boundary using weak hash table cache
-* don't use `datum-literals` (use literal set?)
 * have #false in the structs and only error on projection
 * better name for arrows (can use the names from stx of doms and cods instead of runtime)
 * split and DRY `function-dependency-graph`
@@ -36,3 +32,11 @@
 * mutual recursion
 * errors (invalid inputs) for check-*
 * recursive should have name too (or not?)
+
+
+```
+(: x (Trace (Flat (check increasing?))))
+(declare-trace x)
+
+(: time (-> (And Integer (Recording x))))
+```
