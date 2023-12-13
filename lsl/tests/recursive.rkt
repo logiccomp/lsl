@@ -9,7 +9,7 @@
  #:do (define int-tree-sexp
         '[(define-struct node (left value right))
           (define-contract IntTree
-            (Recursive T (OneOf Integer (Node T Integer T))))
+            (OneOf Integer (Node IntTree Integer IntTree)))
           (: sum (-> IntTree Integer))
           (define (sum x)
             (if (integer? x)

@@ -9,7 +9,6 @@
  Flat
  OneOf
  Struct
- Recursive
  Function
 
  ;; flat literals
@@ -77,6 +76,7 @@
 
 (begin-for-syntax
   (define rec-vars (make-parameter (immutable-free-id-set)))
+  (define used-vars (make-parameter (immutable-free-id-set)))
 
   (define/hygienic-metafunction (expand-contract this-stx)
     #:expression
@@ -102,10 +102,15 @@
       [(Struct s:struct-id e:expr ...)
        #'(Struct qstx s (expand-contract e) ...)]
       [(Recursive x:id e:expr)
-       (parameterize ([rec-vars (free-id-set-add (rec-vars) #'x)])
-         #'(Recursive qstx x (expand-contract e)))]
+       (parameterize ([rec-vars (free-id-set-add (rec-vars) #'x)]
+                      [used-vars (used-vars)])
+         (define/syntax-parse ^e #'(expand-contract e))
+         (if (free-id-set-empty? (used-vars))
+             #'^e
+             #'(Recursive qstx x ^e)))]
       [head:id
        #:when (free-id-set-member? (rec-vars) #'head)
+       #:do [(used-vars (free-id-set-add (used-vars) #'head))]
        #'head]
       [(~or head:id (head:id e:expr ...))
        #:when (lookup #'head)
@@ -228,7 +233,7 @@
     [(_ name:id ctc:expr)
      #'(define-contract-syntax name
          (syntax-parser
-           [_:id #'(Name name ctc)]))]))
+           [_:id #'(Name name (Recursive name ctc))]))]))
 
 (define-syntax λ*
   (syntax-parser
