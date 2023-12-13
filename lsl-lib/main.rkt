@@ -116,6 +116,9 @@
                        ^+
                        ^/
                        ^=
+                       ^sqr
+                       ^sqrt
+                       ^expt
 
                        ^andmap
                        ^apply
@@ -274,6 +277,21 @@
   (syntax-parser
     [(_ d:expr ... c:expr)
      #'(Function [_ d] ... c)]))
+
+;;
+;; math
+;;
+
+(define (^sqr x)
+  (^* x x))
+
+(define (^sqrt x)
+  (^for/all ([x x #:exhaustive])
+    (sqrt x)))
+
+(define (^expt z w)
+  (^for*/all ([z z #:exhaustive] [w w #:exhaustive])
+    (expt z w)))
 
 ;;
 ;; testing
