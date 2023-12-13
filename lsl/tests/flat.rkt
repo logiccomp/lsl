@@ -8,6 +8,7 @@
  (run/var Integer x 10 x)  10
  (run/var Real x 3.14 x)  3.14
  (run/var Boolean x #t x)  #t
+ (run/var (List Boolean) x (list #t #f) x) (list #t #f)
  #:? integer?
  (run (contract-generate Integer))
  #:? real?

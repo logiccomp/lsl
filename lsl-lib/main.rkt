@@ -150,6 +150,7 @@
           Integer
           Boolean
           Real
+          List
           ->
 
           (rename-out [annotate :])
@@ -272,6 +273,13 @@
   (Flat (check ^real?)
         (symbolic (predicate->symbolic ^real?))
         (generate (λ () (- (* 200 (random)) 100)))))
+
+
+(define-contract (List X)
+  (Flat (check (lambda (l) (and (list? l)
+                                (andmap (contract-predicate X) l))))
+        (generate (λ () (let ([n (random 0 100)])
+                          (build-list (contract-generate X) n))))))
 
 (define-contract-syntax ->
   (syntax-parser

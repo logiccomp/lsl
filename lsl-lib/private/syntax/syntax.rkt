@@ -22,6 +22,7 @@
  annotate
  define-contract
  contract-generate
+ contract-predicate
  define-contract-syntax)
 
 ;;
@@ -272,6 +273,12 @@
   (syntax-parser
     [(_ ctc:expr)
      #'(contract-generate-function
+        (expand+compile-contract ctc))]))
+
+(define-syntax contract-predicate
+  (syntax-parser
+    [(_ ctc:expr)
+     #'(flat-contract-struct-predicate
         (expand+compile-contract ctc))]))
 
 
