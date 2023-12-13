@@ -18,6 +18,11 @@
           (λ (x) x)
           (f 10))
  10
+ (run/var (Function [x Integer] (λ (y) (eq? x y)))
+          f
+          (λ (x) x)
+          (f 10))
+ 10
  #:? integer?
  (run ((contract-generate (-> Integer Integer)) 10))
  (run/var (-> Integer Integer) f (λ (x) x) (check-contract f))  (void)

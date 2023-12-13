@@ -131,10 +131,12 @@
          (raise-syntax-error #f err-str #'stx))
        #'head]
       [(~or head:id (head:id e:expr ...))
-       #:when (lookup #'head)
+       #:when (contract-syntax-rep? (lookup #'head))
        #:do [(define (get stx) (contract-syntax-transform (lookup #'head) stx))]
        #:with result (apply-as-transformer get #'head 'expression #'stx)
-       #'(expand-contract result)]))
+       #'(expand-contract result)]
+      [e:expr
+       #'(expand-contract (Flat (check e)))]))
 
   (struct exn:fail:cyclic exn:fail (srclocs)
     #:property prop:exn:srclocs
