@@ -8,6 +8,7 @@
                      racket/string
                      racket/list)
          racket/provide
+         (prefix-in @ racket/contract)
          (except-in rackunit check)
          rackunit/text-ui)
 
@@ -33,6 +34,8 @@
                        $or
                        $quote
                        $#%datum
+                       $...
+                       ;$explode
 
                        $check-expect
                        $check-within
@@ -149,6 +152,7 @@
 
           Integer
           Boolean
+          True
           Real
           List
           ->
@@ -157,7 +161,36 @@
           define-contract
           contract-generate
           check-contract
-          verify-contract)
+          verify-contract
+
+          (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
+
+          #|format
+          implode
+          int->string
+          list->string
+          make-string
+          replicate
+          string
+          string->int
+          string->list
+          string->number
+          string->symbol
+          string-alphabetic?
+          string-contains-ci?
+          string-contains?
+          string-copy
+          string-downcase
+          string-ith
+          string-length
+          string-lower-case?
+          string-numeric?
+          string-ref
+          string-upcase
+          string-upper-case?
+          string-whitespace?
+          string?
+          substring|#)
 
 ;;
 ;; require
@@ -181,6 +214,11 @@
 ;;
 ;; syntax
 ;;
+
+(define-syntax $...
+  (syntax-parser
+    [_
+     #'(error "error: expected a finished expression, but found a template")]))
 
 (define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
   (^require mod ...))
@@ -264,6 +302,11 @@
         (symbolic (predicate->symbolic ^boolean?))
         (generate (λ () (< (random) 1/2)))))
 
+(define-contract True
+  (Flat (check (lambda (x) (equal? x #t)))
+        (symbolic #t)
+        (generate (λ () #t))))
+
 (define-contract Integer
   (Flat (check ^integer?)
         (symbolic (predicate->symbolic ^integer?))
@@ -300,6 +343,13 @@
 (define (^expt z w)
   (^for*/all ([z z #:exhaustive] [w w #:exhaustive])
     (expt z w)))
+
+;; strings
+
+#;(define ($explode s)
+  (^for/all ([s s #:exhaustive])
+    (drop-right (drop (string-split s "") 1) 1)))
+
 
 ;;
 ;; testing
@@ -366,6 +416,9 @@
 ;;
 
 (define $empty ^null)
+
+(define ($boolean=? b1 b2)
+  (^equal? b1 b2))
 
 ;;
 ;; reader
