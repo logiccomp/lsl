@@ -76,6 +76,7 @@
 
 (begin-for-syntax
   (define rec-vars (make-parameter (immutable-free-id-set)))
+  (define rec-table (make-parameter (make-immutable-free-id-table)))
   (define used-vars (make-parameter (immutable-free-id-set)))
 
   (define/hygienic-metafunction (expand-contract this-stx)
@@ -108,9 +109,26 @@
          (if (free-id-set-empty? (used-vars))
              #'^e
              #'(Recursive qstx x ^e)))]
+      [(Recursive (x:id y:id ...) e:expr)
+       (parameterize ([rec-table (free-id-table-set (rec-table) #'x (syntax-e #'(y ...)))]
+                      [used-vars (used-vars)])
+         (define/syntax-parse ^e #'(expand-contract e))
+         (if (free-id-set-empty? (used-vars))
+             #'^e
+             #'(Recursive qstx x ^e)))]
       [head:id
        #:when (free-id-set-member? (rec-vars) #'head)
        #:do [(used-vars (free-id-set-add (used-vars) #'head))]
+       #'head]
+      [(head:id var:id ...)
+       #:do [(define vars (syntax-e #'(var ...)))]
+       #:do [(define args (free-id-table-ref (rec-table) #'head #f))]
+       #:when args
+       #:do [(used-vars (free-id-set-add (used-vars) #'head))]
+       (unless (and (= (length args) (length vars))
+                    (andmap free-identifier=? args vars))
+         (define err-str (format "recursive call must be exactly ~a" (map syntax-e (cons #'head args))))
+         (raise-syntax-error #f err-str #'stx))
        #'head]
       [(~or head:id (head:id e:expr ...))
        #:when (lookup #'head)
@@ -233,7 +251,12 @@
     [(_ name:id ctc:expr)
      #'(define-contract-syntax name
          (syntax-parser
-           [_:id #'(Name name (Recursive name ctc))]))]))
+           [_:id #'(Name name (Recursive name ctc))]))]
+    [(_ (name:id param:id ...) ctc:expr)
+     #'(define-contract-syntax name
+         (syntax-parser
+           [(_:id param ...)
+            #'(Name name (Recursive (name param ...) ctc))]))]))
 
 (define-syntax λ*
   (syntax-parser

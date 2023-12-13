@@ -6,28 +6,53 @@
 ;; recursive
 
 (chk
- #:do (define int-tree-sexp
-        '[(define-struct node (left value right))
-          (define-contract IntTree
-            (OneOf Integer (Node IntTree Integer IntTree)))
-          (: sum (-> IntTree Integer))
-          (define (sum x)
-            (if (integer? x)
-                x
-                (+ (sum (node-left x))
-                   (node-value x)
-                   (sum (node-right x)))))])
+ #:do (define node '(define-struct node (left value right)))
+ #:do (define sum-sexp
+        '(define (sum x)
+           (if (integer? x)
+               x
+               (+ (sum (node-left x))
+                  (node-value x)
+                  (sum (node-right x))))))
 
  ;; success
- (run/sexp
-  `(begin ,@int-tree-sexp
-          (sum (node (node 1 2 3) 0 (node (node 4 5 6) 7 8)))))
+ (run/sexp `(begin ,node
+                   (define-contract IntTree
+                     (OneOf Integer (Node IntTree Integer IntTree)))
+                   (: sum (-> IntTree Integer))
+                   ,sum-sexp
+                   (sum (node (node 1 2 3) 0 (node (node 4 5 6) 7 8)))))
+ 36
+ (run/sexp `(begin ,node
+                   (define-contract (Tree X)
+                     (OneOf X (Node (Tree X) X (Tree X))))
+                   (: sum (-> (Tree Integer) Integer))
+                   ,sum-sexp
+                   (sum (node (node 1 2 3) 0 (node (node 4 5 6) 7 8)))))
  36
 
  ;; failure
  #:x
- (run/sexp
-  `(begin ,@int-tree-sexp
-          (sum (node (node 1 2 #f) 0 (node (node 4 5 6) 7 8)))))
+ (run/sexp `(begin ,node
+                   (define-contract IntTree
+                     (OneOf Integer (Node IntTree Integer IntTree)))
+                   (: sum (-> IntTree Integer))
+                   ,sum-sexp
+                   (sum (node (node 1 2 #f) 0 (node (node 4 5 6) 7 8)))))
  "contract violation"
+ #:x
+ (run/sexp `(begin ,node
+                   (define-contract (Tree X)
+                     (OneOf X (Node (Tree X) X (Tree X))))
+                   (: sum (-> (Tree Integer) Integer))
+                   ,sum-sexp
+                   (sum (node (node 1 2 #f) 0 (node (node 4 5 6) 7 8)))))
+ "contract violation"
+ #:x
+ (run/sexp `(begin ,node
+                   (define-contract (Tree X)
+                     (OneOf X (Node (Tree Boolean) X (Tree X))))
+                   (: sum (-> (Tree Integer) Integer))
+                   ,sum-sexp))
+ "must be exactly (Tree Integer)"
  )
