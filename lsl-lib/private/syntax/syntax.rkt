@@ -80,6 +80,9 @@
   (define rec-table (make-parameter (make-immutable-free-id-table)))
   (define used-vars (make-parameter (immutable-free-id-set)))
 
+  (define (non-wildcard? x)
+    (not (eq? (syntax-e x) '_)))
+
   (define/hygienic-metafunction (expand-contract this-stx)
     #:expression
     (define/syntax-parse (_ stx) this-stx)
@@ -98,6 +101,11 @@
                (~? g #f)
                (~? s #f))]
       [(Function [x:id a:expr] ... r:expr)
+       #:cut
+       #:fail-when
+       (check-duplicate-identifier
+        (filter non-wildcard? (syntax-e #'(x ...))))
+       "duplicate identifier"
        #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
       [(OneOf e:expr ...)
        #'(OneOf qstx (expand-contract e) ...)]
@@ -143,8 +151,8 @@
     #:property prop:exn:srclocs
     (λ (self) (exn:fail:cyclic-srclocs self)))
 
-  ;; TODO: no syntax-e?
   (define (sort-indices stx ids fvs)
+    (define n (length (syntax-e ids)))
     (define index-hash
       (for/hash ([id (in-syntax ids)]
                  [k (in-naturals)])
@@ -163,7 +171,7 @@
       (raise (exn:fail:cyclic "cannot have cyclic dependency"
                               (current-continuation-marks)
                               (list (syntax-srcloc stx)))))
-    (topological-sort (range (hash-count index-hash)) neighbors
+    (topological-sort (range n) neighbors
                       #:cycle cycle)))
 
 ;;
