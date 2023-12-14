@@ -155,6 +155,7 @@
           True
           Real
           Natural
+          String
           List
           ->
 
@@ -331,6 +332,15 @@
         (symbolic (predicate->symbolic natural?))
         (generate (λ () (random 0 200)))))
 
+(define (random-alpha-char)
+  (integer->char (random 33 127)))
+
+(define (random-string)
+  (build-string (random 0 100) (λ (_) (random-alpha-char))))
+
+(define-contract String
+  (Flat (check string?)
+        (generate (λ () (random-string)))))
 
 (define-contract (List X)
   (Flat (check (λ (l) (and (list? l)
