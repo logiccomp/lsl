@@ -121,9 +121,6 @@
                        ^+
                        ^/
                        ^=
-                       ^sqr
-                       ^sqrt
-                       ^expt
 
                        ^andmap
                        ^apply
@@ -326,7 +323,7 @@
         (generate (λ () (< (random) 1/2)))))
 
 (define-contract True
-  (Flat (check (λ (x) (equal? x #t)))
+  (Flat (check (λ (x) (^equal? x #t)))
         (symbolic #t)
         (generate (λ () #t))))
 
@@ -341,7 +338,7 @@
         (generate (λ () (- (* 200 (random)) 100)))))
 
 (define (natural? n)
-  (and (integer? n) (or (positive? n) (zero? n))))
+  (^and (^integer? n) (^or (^positive? n) (^zero? n))))
 
 (define-contract Natural
   (Flat (check natural?)
@@ -355,12 +352,12 @@
   (build-string (random 0 100) (λ (_) (random-alpha-char))))
 
 (define-contract String
-  (Flat (check string?)
+  (Flat (check ^string?)
         (generate (λ () (random-string)))))
 
 (define-contract (List X)
-  (Flat (check (λ (l) (and (list? l)
-                           (andmap (contract-predicate X) l))))
+  (Flat (check (λ (l) (and (^list? l)
+                           (^andmap (contract-predicate X) l))))
         (generate (λ () (let ([n (random 0 100)])
                           (build-list n (λ (_) (contract-generate X))))))))
 
