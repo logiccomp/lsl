@@ -154,43 +154,49 @@
           Boolean
           True
           Real
+          Natural
           List
           ->
 
           (rename-out [annotate :])
           define-contract
           contract-generate
+          contract-predicate
           check-contract
           verify-contract
 
           (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
 
-          #|format
-          implode
-          int->string
+          build-list
+
+          (@contract-out (rename equal? string=? (@-> string? string? boolean?)))
+          ;explode
+          format
+          ;implode
+          ;int->string
           list->string
           make-string
-          replicate
+          ;replicate
           string
-          string->int
+          ;string->int
           string->list
           string->number
           string->symbol
-          string-alphabetic?
-          string-contains-ci?
+          ;string-alphabetic?
+          ;string-contains-ci?
           string-contains?
           string-copy
           string-downcase
-          string-ith
+          ;string-ith
           string-length
-          string-lower-case?
-          string-numeric?
+          ;string-lower-case?
+          ;string-numeric?
           string-ref
           string-upcase
-          string-upper-case?
-          string-whitespace?
+          ;string-upper-case?
+          ;string-whitespace?
           string?
-          substring|#)
+          substring)
 
 ;;
 ;; require
@@ -303,7 +309,7 @@
         (generate (λ () (< (random) 1/2)))))
 
 (define-contract True
-  (Flat (check (lambda (x) (equal? x #t)))
+  (Flat (check (λ (x) (equal? x #t)))
         (symbolic #t)
         (generate (λ () #t))))
 
@@ -317,12 +323,20 @@
         (symbolic (predicate->symbolic ^real?))
         (generate (λ () (- (* 200 (random)) 100)))))
 
+(define (natural? n)
+  (and (integer? n) (or (positive? n) (zero? n))))
+
+(define-contract Natural
+  (Flat (check natural?)
+        (symbolic (predicate->symbolic natural?))
+        (generate (λ () (random 0 200)))))
+
 
 (define-contract (List X)
-  (Flat (check (lambda (l) (and (list? l)
-                                (andmap (contract-predicate X) l))))
+  (Flat (check (λ (l) (and (list? l)
+                           (andmap (contract-predicate X) l))))
         (generate (λ () (let ([n (random 0 100)])
-                          (build-list (contract-generate X) n))))))
+                          (build-list n (λ (_) (contract-generate X))))))))
 
 (define-contract-syntax ->
   (syntax-parser
