@@ -36,6 +36,8 @@
                        $quote
                        $#%datum
                        $...
+                       $member
+                       $member?
                        ;$explode
 
                        $check-expect
@@ -99,7 +101,6 @@
                        ^list
                        ^list-ref
                        ^list?
-                       ^member
                        ^memq
                        ^null
                        ^null?
@@ -383,6 +384,12 @@
   (^for/all ([s s #:exhaustive])
     (drop-right (drop (string-split s "") 1) 1)))
 
+;; lists
+(define ($member x l)
+  (not (^false? (^member x l))))
+
+(define $member? $member)
+
 
 ;;
 ;; testing
@@ -408,7 +415,7 @@
 (define-syntax $check-member-of
   (syntax-parser
     [(_ actual expecteds ...)
-     (push-form! #'(check-true (member actual (list expecteds ...))))]))
+     (push-form! #'(check-true ($member actual (list expecteds ...))))]))
 
 (define-syntax $check-range
   (syntax-parser
