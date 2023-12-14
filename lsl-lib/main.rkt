@@ -10,7 +10,8 @@
          racket/provide
          (prefix-in @ racket/contract)
          (except-in rackunit check)
-         rackunit/text-ui)
+         rackunit/text-ui
+         "private/syntax/lifting.rkt")
 
 (begin-for-syntax
   (define ((strip pre) str)
@@ -172,33 +173,38 @@
           build-list
 
           (@contract-out (rename equal? string=? (@-> string? string? boolean?)))
-          ;explode
-          format
-          ;implode
-          ;int->string
-          list->string
-          make-string
-          ;replicate
-          string
-          ;string->int
-          string->list
-          string->number
-          string->symbol
-          ;string-alphabetic?
-          ;string-contains-ci?
-          string-contains?
-          string-copy
-          string-downcase
-          ;string-ith
-          string-length
-          ;string-lower-case?
-          ;string-numeric?
-          string-ref
-          string-upcase
-          ;string-upper-case?
-          ;string-whitespace?
-          string?
-          substring)
+          (lift-out
+           sqrt
+           expt
+
+           string-length
+           ;explode
+           format
+           ;implode
+           ;int->string
+           list->string
+           make-string
+           ;replicate
+           string
+           ;string->int
+           string->list
+           string->number
+           string->symbol
+           ;string-alphabetic?
+           ;string-contains-ci?
+           string-contains?
+           string-copy
+           string-downcase
+           ;string-ith
+           #;string-length
+           ;string-lower-case?
+           ;string-numeric?
+           string-ref
+           string-upcase
+           ;string-upper-case?
+           ;string-whitespace?
+           string?
+           substring))
 
 ;;
 ;; require
@@ -369,14 +375,6 @@
 
 (define (^sqr x)
   (^* x x))
-
-(define (^sqrt x)
-  (^for/all ([x x #:exhaustive])
-    (sqrt x)))
-
-(define (^expt z w)
-  (^for*/all ([z z #:exhaustive] [w w #:exhaustive])
-    (expt z w)))
 
 ;; strings
 

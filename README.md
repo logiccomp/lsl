@@ -32,7 +32,7 @@
 * mutual recursion
 * errors (invalid inputs) for check-*
 * recursive should have name too (or not?)
-
+* lifted is probably quite slow, can do more at compile time?
 
 ```
 (: x (Trace (Flat (check increasing?))))
