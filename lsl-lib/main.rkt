@@ -277,7 +277,7 @@
   (^let* ([var rhs] ...) body))
 
 (define-syntax-parse-rule ($cond [guard:expr arm:expr] ...+)
-  (^cond [guard arm] ...))
+  (^cond [guard arm] ... [else (error "cond: all question results were false")]))
 
 (define-syntax-parse-rule ($if guard:expr then:expr else:expr)
   (^if guard then else))
