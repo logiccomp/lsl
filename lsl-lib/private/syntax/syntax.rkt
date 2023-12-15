@@ -76,7 +76,6 @@
 ;;
 
 (begin-for-syntax
-  (define rec-vars (make-parameter (immutable-free-id-set)))
   (define rec-table (make-parameter (make-immutable-free-id-table)))
   (define used-vars (make-parameter (immutable-free-id-set)))
 
@@ -110,33 +109,20 @@
        #'(OneOf qstx (expand-contract e) ...)]
       [(Struct ~! s:struct-id e:expr ...)
        #'(Struct qstx s (expand-contract e) ...)]
-      [(Recursive x:id ~! e:expr)
-       (parameterize ([rec-vars (free-id-set-add (rec-vars) #'x)]
+      [(Recursive ~! (~and (~or head:id (head:id a:expr ...)) self:expr) e:expr)
+       (parameterize ([rec-table (free-id-table-set (rec-table) #'head #'self)]
                       [used-vars (used-vars)])
          (define/syntax-parse ^e #'(expand-contract e))
          (if (free-id-set-empty? (used-vars))
              #'^e
-             #'(Recursive qstx x ^e)))]
-      [(Recursive (x:id y:id ...) ~! e:expr)
-       (parameterize ([rec-table (free-id-table-set (rec-table) #'x (syntax-e #'(y ...)))]
-                      [used-vars (used-vars)])
-         (define/syntax-parse ^e #'(expand-contract e))
-         (if (free-id-set-empty? (used-vars))
-             #'^e
-             #'(Recursive qstx x ^e)))]
-      [head:id
-       #:when (free-id-set-member? (rec-vars) #'head)
-       #:do [(used-vars (free-id-set-add (used-vars) #'head))]
-       #'head]
-      [(head:id var:id ...)
-       #:do [(define vars (syntax-e #'(var ...)))]
-       #:do [(define args (free-id-table-ref (rec-table) #'head #f))]
-       #:when args
-       #:do [(used-vars (free-id-set-add (used-vars) #'head))]
-       (unless (and (= (length args) (length vars))
-                    (andmap free-identifier=? args vars))
-         (define err-str (format "recursive call must be exactly ~a" (map syntax-e (cons #'head args))))
+             #'(Recursive qstx head ^e)))]
+      [(~or head:id (head:id e:expr ...))
+       #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
+       #:when self
+       (unless (equal? (syntax->datum self) (syntax->datum #'stx))
+         (define err-str (format "recursive call must be exactly ~a" (syntax->datum #'stx)))
          (raise-syntax-error #f err-str #'stx))
+       (used-vars (free-id-set-add (used-vars) #'head))
        #'head]
       [(~or head:id (head:id e:expr ...))
        #:when (contract-syntax-rep? (lookup #'head))
