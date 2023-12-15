@@ -58,11 +58,11 @@
 ;; syntax
 ;;
 
-(define-literal-forms contract-literals
+(define-literal-forms contract-literal
   "contract constructor must occur within a contract"
   (Name Flat OneOf Struct Recursive Function))
 
-(define-literal-forms flat-literals
+(define-literal-forms flat-literal
   "literal clause must occur within Flat"
   (domain check generate symbolic))
 
@@ -88,37 +88,36 @@
     (define/syntax-parse (_ stx) this-stx)
     (define/syntax-parse qstx #`#'stx)
     (syntax-parse #'stx
-      #:literal-sets (contract-literals flat-literals)
-      [(Name name:id e:expr)
+      #:literal-sets (contract-literal flat-literal)
+      [(Name ~! name:id e:expr)
        #'(Name name (expand-contract e))]
-      [(Flat (~alt (~optional (domain d:expr))
-                   (~optional (check c:expr))
-                   (~optional (generate g:expr))
-                   (~optional (symbolic s:expr))) ...)
+      [(Flat ~! (~alt (~optional (domain d:expr))
+                      (~optional (check c:expr))
+                      (~optional (generate g:expr))
+                      (~optional (symbolic s:expr))) ...)
        #'(Flat qstx
                (~? (expand-contract d) #f)
                (~? c #f)
                (~? g #f)
                (~? s #f))]
-      [(Function [x:id a:expr] ... r:expr)
-       #:cut
+      [(Function ~! [x:id a:expr] ... r:expr)
        #:fail-when
        (check-duplicate-identifier
         (filter non-wildcard? (syntax-e #'(x ...))))
        "duplicate identifier"
        #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
-      [(OneOf e:expr ...)
+      [(OneOf ~! e:expr ...)
        #'(OneOf qstx (expand-contract e) ...)]
-      [(Struct s:struct-id e:expr ...)
+      [(Struct ~! s:struct-id e:expr ...)
        #'(Struct qstx s (expand-contract e) ...)]
-      [(Recursive x:id e:expr)
+      [(Recursive x:id ~! e:expr)
        (parameterize ([rec-vars (free-id-set-add (rec-vars) #'x)]
                       [used-vars (used-vars)])
          (define/syntax-parse ^e #'(expand-contract e))
          (if (free-id-set-empty? (used-vars))
              #'^e
              #'(Recursive qstx x ^e)))]
-      [(Recursive (x:id y:id ...) e:expr)
+      [(Recursive (x:id y:id ...) ~! e:expr)
        (parameterize ([rec-table (free-id-table-set (rec-table) #'x (syntax-e #'(y ...)))]
                       [used-vars (used-vars)])
          (define/syntax-parse ^e #'(expand-contract e))
@@ -189,7 +188,7 @@
     #:expression
     (define/syntax-parse (_ stx) this-stx)
     (syntax-parse #'stx
-      #:literal-sets (contract-literals flat-literals)
+      #:literal-sets (contract-literal flat-literal)
       [(Name x e:ctc)
        #'(name-contract 'x e.compiled)]
       [(Flat q d:ctc c g s)
