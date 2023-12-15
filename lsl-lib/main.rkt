@@ -158,6 +158,7 @@
           Natural
           String
           List
+          Constant
           ->
 
           (rename-out [annotate :])
@@ -328,10 +329,12 @@
         (symbolic (predicate->symbolic ^boolean?))
         (generate (λ () (< (random) 1/2)))))
 
-(define-contract True
-  (Flat (check (λ (x) (^equal? x #t)))
-        (symbolic #t)
-        (generate (λ () #t))))
+(define-contract (Constant v)
+  (Flat (check (λ (x) (^equal? x v)))
+        (symbolic v) ;; Questionable decision...
+        (generate (λ () v))))
+
+(define-contract True (Constant #t))
 
 (define-contract Integer
   (Flat (check ^integer?)
