@@ -120,7 +120,7 @@
        #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
        #:when self
        (unless (equal? (syntax->datum self) (syntax->datum #'stx))
-         (define err-str (format "recursive call must be exactly ~a" (syntax->datum #'stx)))
+         (define err-str (format "recursive call must be exactly ~a" (syntax->datum self)))
          (raise-syntax-error #f err-str #'stx))
        (used-vars (free-id-set-add (used-vars) #'head))
        #'head]

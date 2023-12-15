@@ -21,14 +21,14 @@
                      (OneOf Integer (Node IntTree Integer IntTree)))
                    (: sum (-> IntTree Integer))
                    ,sum-sexp
-                   (sum (node (node 1 2 3) 0 (node (node 4 5 6) 7 8)))))
+                   (sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8)))))
  36
  (run/sexp `(begin ,node
                    (define-contract (Tree X)
                      (OneOf X (Node (Tree X) X (Tree X))))
                    (: sum (-> (Tree Integer) Integer))
                    ,sum-sexp
-                   (sum (node (node 1 2 3) 0 (node (node 4 5 6) 7 8)))))
+                   (sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8)))))
  36
 
  ;; failure
@@ -38,7 +38,7 @@
                      (OneOf Integer (Node IntTree Integer IntTree)))
                    (: sum (-> IntTree Integer))
                    ,sum-sexp
-                   (sum (node (node 1 2 #f) 0 (node (node 4 5 6) 7 8)))))
+                   (sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8)))))
  "contract violation"
  #:x
  (run/sexp `(begin ,node
@@ -46,7 +46,7 @@
                      (OneOf X (Node (Tree X) X (Tree X))))
                    (: sum (-> (Tree Integer) Integer))
                    ,sum-sexp
-                   (sum (node (node 1 2 #f) 0 (node (node 4 5 6) 7 8)))))
+                   (sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8)))))
  "contract violation"
  #:x
  (run/sexp `(begin ,node
