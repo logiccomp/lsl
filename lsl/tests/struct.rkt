@@ -8,7 +8,7 @@
  (run (define-struct foo (x))
       (: f (-> (Foo Integer) Integer))
       (define (f st) (foo-x st))
-      (f (foo 10)))
+      (f (make-foo 10)))
  10)
 
 ;; failure
@@ -17,5 +17,5 @@
  (run (define-struct foo (x))
       (: f (-> (Foo Integer) Integer))
       (define (f st) (foo-x st))
-      (f (foo 1/2)))
+      (f (make-foo 1/2)))
  "expected: Integer")

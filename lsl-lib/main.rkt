@@ -6,6 +6,7 @@
 
 (require (for-syntax racket/base
                      racket/string
+                     racket/syntax
                      racket/list)
          racket/provide
          (prefix-in @ racket/contract)
@@ -259,9 +260,12 @@
   (syntax-parser
     [(_ name:id (field:id ...))
      #:with Name (struct-name->contract-name #'name)
+     #:with ctor (format-id #'name "make-~a" #'name)
      #'(begin
          (define-contract-syntax Name (struct-contract-macro #'name))
-         (^struct name (field ...) #:transparent))]))
+         (^struct name (field ...)
+                  #:transparent
+                  #:constructor-name ctor))]))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
   (^lambda (param ...) body))
