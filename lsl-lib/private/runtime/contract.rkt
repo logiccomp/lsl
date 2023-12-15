@@ -14,6 +14,7 @@
          check-contract
          verify-contract
          contract-error
+         custom-error
          verify-error
          generate-error
          value->contract
@@ -97,13 +98,26 @@
      "blaming: ~a")
    "\n  "))
 
-(define (contract-error self blm stx val)
+(define (contract-error self stx blm val)
   (define error-msg
     (format CTC-FMT
             (blame-struct-name blm)
             (contract-struct-name self)
             val
             (blame-struct-path blm)))
+  (custom-error self stx error-msg))
+
+(define (verify-error self blm stx val)
+  (define error-msg
+    (format VERIFY-FMT
+            (contract-struct-name self)
+            val
+            (blame-struct-path blm)))
+  (custom-error self stx error-msg))
+
+(define (custom-error self pre-stx msg)
+  (define stx
+    (or (syntax-property pre-stx 'original) pre-stx))
   (define stx-srclocs
     (cond
       [(and stx (syntax-srcloc stx)) => list]
@@ -114,15 +128,7 @@
       [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
       [_ null]))
   (define srclocs (append stx-srclocs cm-srclocs))
-  (raise (exn:fail:contract error-msg cms srclocs)))
-
-(define (verify-error self blm stx val)
-  (define error-msg
-    (format VERIFY-FMT
-            (contract-struct-name self)
-            val
-            (blame-struct-path blm)))
-  (raise-user-error error-msg))
+  (raise (exn:fail:contract msg cms srclocs)))
 
 (define GEN-FMT
   "cannot generate ~a")

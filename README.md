@@ -1,5 +1,6 @@
 ## LSL todo
 
+* restore error locs
 * define-contract should check to make sure is actually contract...
 * annotate should use lift to generate contract definition for reuse
 * improve perf with tight boundary using weak hash table cache

@@ -362,9 +362,10 @@
                           (build-list n (λ (_) (contract-generate X))))))))
 
 (define-contract-syntax ->
-  (syntax-parser
-    [(_ d:expr ... c:expr)
-     #'(Function [_ d] ... c)]))
+  (λ (stx)
+    (syntax-parse stx
+      [(_ d:expr ... c:expr)
+       (syntax-property #'(Function [_ d] ... c) 'original stx)])))
 
 ;;
 ;; math

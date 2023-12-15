@@ -33,7 +33,7 @@
 (define (struct-contract stx make struct-pred? . ctcs)
   (define ((protect self) val pos)
     (unless (struct-pred? val)
-      (contract-error self pos stx val))
+      (contract-error self stx pos val))
     (λ (neg)
       (define fields (struct->list val))
       (define new-fields

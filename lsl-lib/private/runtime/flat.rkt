@@ -56,5 +56,5 @@
           (verify-error self pos stx counter-eg)))
       (when (concrete? val)
         (unless (predicate val)
-          (contract-error self pos stx val)))
+          (contract-error self stx pos val)))
       (λ (neg) val))))

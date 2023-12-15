@@ -11,6 +11,7 @@
 ;;
 
 (require racket/list
+         racket/string
          "contract.rkt")
 
 ;;
@@ -21,9 +22,9 @@
   (define n (length doms))
   (define ((protect self) val pos)
     (unless (procedure? val)
-      (contract-error self pos stx val))
+      (contract-error self stx pos val))
     (unless (procedure-arity-includes? val n)
-      (contract-error self pos stx val))
+      (arity-error self stx pos val n))
     (λ (neg)
       (define (wrapper . args)
         (define ((dom-apply acc k) arg)
@@ -61,3 +62,19 @@
   (for/fold ([acc xs])
             ([k (in-list ks)])
     (list-update acc k (f acc k))))
+
+(define ARITY-FMT
+  (string-join
+   '("~a: contract violation"
+     "expected: ~a-arity function"
+     "given: ~a-arity function"
+     "blaming: ~a")
+   "\n  "))
+
+(define (arity-error self stx blm val n)
+  (define error-msg
+    (format ARITY-FMT
+            (blame-struct-name blm)
+            n (procedure-arity val)
+            (blame-struct-path blm)))
+  (custom-error self stx error-msg))

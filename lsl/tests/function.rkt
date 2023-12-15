@@ -54,7 +54,10 @@
               f
               (λ (x y) (+ x y))
               (f 10 20))
- "cannot have cyclic dependency")
+ "cannot have cyclic dependency"
+ #:x (run (: f (-> Integer Integer))
+          (define (f x y) x))
+ "expected: 1-arity function")
 
 ;; fizzbuzz
 (chk

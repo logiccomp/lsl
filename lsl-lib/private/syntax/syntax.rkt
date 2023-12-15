@@ -261,13 +261,15 @@
   (syntax-parser
     [(_ name:id ctc:expr)
      #'(define-contract-syntax name
-         (syntax-parser
-           [_:id #'(Name name (Recursive name ctc))]))]
+         (λ (stx)
+           (syntax-parse stx
+             [_:id #'(Name name (Recursive name ctc))])))]
     [(_ (name:id param:id ...) ctc:expr)
      #'(define-contract-syntax name
-         (syntax-parser
-           [(_:id param ...)
-            #'(Name name (Recursive (name param ...) ctc))]))]))
+         (λ (stx)
+           (syntax-parse stx
+             [(_:id param ...)
+              #'(Name name (Recursive (name param ...) ctc))])))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -288,12 +290,3 @@
     [(_ ctc:expr)
      #'(flat-contract-struct-predicate
         (expand+compile-contract ctc))]))
-
-
-(define-contract Integer
-  (Flat (check integer?)))
-
-(define-contract-syntax ->
-  (syntax-parser
-    [(_ d:expr ... c:expr)
-     #'(Function [_ d] ... c)]))
