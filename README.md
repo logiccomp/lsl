@@ -34,6 +34,7 @@
 * errors (invalid inputs) for check-*
 * recursive should have name too (or not?)
 * lifted is probably quite slow, can do more at compile time?
+* calling static struct info leads to bad error message (rosette doesn't support `#:name` though)
 
 ```
 (: x (Trace (Flat (check increasing?))))

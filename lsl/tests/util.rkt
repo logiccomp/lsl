@@ -4,6 +4,9 @@
          run/sexp
          run/var)
 
+(require racket/port
+         racket/string)
+
 (define-syntax-rule (run/var ctc var val body ...)
   (run (: var ctc)
        (define var val)
@@ -16,4 +19,14 @@
   (define ns (make-base-empty-namespace))
   (parameterize ([current-namespace ns])
     (namespace-require 'lsl))
-  (eval sexp ns))
+  (define result #f)
+  (define output
+    (call-with-output-string
+     (λ (p)
+       (parameterize ([current-output-port (open-output-string)]
+                      [current-error-port p])
+         (set! result (eval sexp ns))
+         (eval '(run-tests) ns)))))
+  (if (string-contains? output "FAILURE")
+      (error output)
+      result))

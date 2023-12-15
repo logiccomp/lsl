@@ -11,8 +11,8 @@
          (struct-out contract-struct)
          contract-generate-function
          name-contract
-         check-contract
-         verify-contract
+         check-contract-function
+         verify-contract-function
          contract-error
          custom-error
          verify-error
@@ -65,7 +65,7 @@
       (generate)
       (generate-error (contract-struct-name ctc))))
 
-(define (check-contract val [n 1])
+(define (check-contract-function val n)
   (define ctc (value->contract val))
   (define mode contract-generate-function)
   (when ctc
@@ -77,7 +77,7 @@
   (define msg (format "symbolic ~a" (contract-struct-name ctc)))
   (if generate (generate) (generate-error msg)))
 
-(define (verify-contract val)
+(define (verify-contract-function val)
   (define ctc (value->contract val))
   (define mode contract-symbolic-function)
   (when ctc ((contract-struct-interact ctc) mode val)))
