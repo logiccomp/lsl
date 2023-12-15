@@ -9,6 +9,7 @@
                      racket/syntax
                      racket/list)
          racket/provide
+         racket/local
          (prefix-in @ racket/contract)
          (except-in rackunit check)
          rackunit/text-ui
@@ -165,6 +166,7 @@
           contract-predicate
           check-contract
           verify-contract
+          local
 
           (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
 
