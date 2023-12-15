@@ -1,0 +1,14 @@
+on: [push, pull_request]
+name: build
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: Bogdanp/setup-racket@v1.7
+        with:
+          architecture: 'x64'
+          distribution: 'full'
+          version: 'current'
+      - run: raco pkg install --auto lsl-lib/ lsl/
+      - run: raco test --drdr lsl/

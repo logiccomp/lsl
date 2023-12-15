@@ -1,4 +1,8 @@
-## LSL todo
+## LSL
+
+[![Build Status][build-badge]][build]
+
+## Todo
 
 * restore error locs
 * define-contract should check to make sure is actually contract...
@@ -42,3 +46,6 @@
 
 (: time (-> (And Integer (Recording x))))
 ```
+
+[build-badge]: https://github.com/logiccomp/lsl/actions/workflows/build.yml/badge.svg
+[build]: https://github.com/logiccomp/lsl/actions/workflows/build.yml?query=workflow%3Abuild

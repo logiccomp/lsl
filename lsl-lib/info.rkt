@@ -11,7 +11,9 @@
 ;; dependencies
 
 (define deps
-  '("https://github.com/michaelballantyne/syntax-spec.git"
+  '("rackunit-lib"
+    "struct-set"
+    "threading-lib"
     "base"
     "ee-lib"
     "errortrace-lib"
