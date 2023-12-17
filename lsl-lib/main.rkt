@@ -42,6 +42,7 @@
                        $member
                        $member?
                        ;$explode
+                       $build-list
 
                        $check-expect
                        $check-contract
@@ -163,7 +164,6 @@
 
           (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
 
-          build-list
 
           (@contract-out (rename equal? string=? (@-> string? string? boolean?)))
           (lift-out
@@ -328,6 +328,15 @@
   (not (^false? (^member x l))))
 
 (define $member? $member)
+
+(define ($build-list n f)
+  (local ([define (bl-helper m)
+            (cond [(^equal? m n) $empty]
+                  [else (^cons (f m) (bl-helper (^add1 m)))])])
+    (if (or (^not (^integer? n)) (^< n 0))
+        ;; Hook this into contract system?
+        (error "build-list: must be passed a non-negative integer")
+        (bl-helper 0))))
 
 
 ;;

@@ -22,7 +22,8 @@
                   integer->char
                   random
                   build-string
-                  string?)
+                  string?
+                  build-list)
          "private/syntax/syntax.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
