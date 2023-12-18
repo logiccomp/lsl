@@ -39,8 +39,6 @@
                        $quote
                        $#%datum
                        $...
-                       $member
-                       $member?
                        ;$explode
                        $build-list
 
@@ -324,10 +322,9 @@
     (drop-right (drop (string-split s "") 1) 1)))
 
 ;; lists
-(define ($member x l)
-  (not (^false? (^member x l))))
 
-(define $member? $member)
+(define (member? x l)
+  (not (equal? #f (member x l))))
 
 (define ($build-list n f)
   (local ([define (bl-helper m)
@@ -338,6 +335,9 @@
         (error "build-list: must be passed a non-negative integer")
         (bl-helper 0))))
 
+(provide
+ (lift-out member?
+           member))
 
 ;;
 ;; testing

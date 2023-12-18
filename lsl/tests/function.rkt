@@ -27,7 +27,20 @@
  (run ((contract-generate (-> Integer Integer)) 10))
  (run/var (-> Integer Integer) f (λ (x) x) (check-contract f))  (void)
  (run/var (-> Integer Integer) f (λ (x) x) (verify-contract f))  (void)
- (run/var (-> Integer Integer Integer) f (λ (x y) x) (check-contract f))  (void))
+ (run/var (-> Integer Integer Integer) f (λ (x y) x) (check-contract f))  (void)
+
+ (run (: letter-grade (-> Integer String))
+      (define (letter-grade n)
+        (cond [(>= n 90) "A"]
+              [(>= n 80) "B"]
+              [else "C"]))
+
+      (: letter-grade-prop (-> Integer True))
+      (define (letter-grade-prop n)
+        (member? (letter-grade n) (list "A" "B" "C")))
+
+      (verify-contract letter-grade-prop))
+ (void))
 
 ;; failure
 (chk
