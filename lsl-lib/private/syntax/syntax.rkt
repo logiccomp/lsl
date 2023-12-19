@@ -5,6 +5,8 @@
 ;;
 
 (provide
+ (for-syntax contract-table)
+
  ;; contract literals
  Flat
  OneOf

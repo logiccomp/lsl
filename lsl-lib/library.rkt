@@ -11,13 +11,15 @@
          Natural
          String
          List
+         Record
          ->)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require (for-syntax racket/base
-                     syntax/parse)
+                     syntax/parse
+                     syntax/id-table)
          (only-in racket/base
                   integer->char
                   random
@@ -77,7 +79,6 @@
   (build-string (random 0 100) (λ (_) (random-alpha-char))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 
 (define-contract (List X)
   (Flat (check (λ (l) (and (list? l)
@@ -90,3 +91,15 @@
     (syntax-parse stx
       [(_ d:expr ... c:expr)
        (syntax-property #'(Function [_ d] ... c) 'original stx)])))
+
+(define-contract-syntax Record
+  (syntax-parser
+    [(_ tr:id)
+     #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
+     #:fail-unless ctc
+     (format "unknown contract for ~a" (syntax-e #'tr))
+     #`(Flat
+        (check
+         (λ (val)
+           (set! tr (append tr (list val)))
+           ((contract-predicate #,ctc) tr))))]))
