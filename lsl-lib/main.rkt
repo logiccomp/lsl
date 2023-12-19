@@ -9,6 +9,7 @@
                      racket/syntax
                      racket/list)
          racket/provide
+         racket/list
          racket/local
          (prefix-in @ racket/contract)
          (except-in rackunit check)
@@ -39,7 +40,6 @@
                        $quote
                        $#%datum
                        $...
-                       ;$explode
                        $build-list
 
                        $check-expect
@@ -158,6 +158,7 @@
           define-contract
           contract-generate
           contract-predicate
+          visualize
           local
 
           (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
@@ -169,7 +170,6 @@
            expt
 
            string-length
-           ;explode
            format
            ;implode
            ;int->string
@@ -213,7 +213,8 @@
          "private/syntax/syntax.rkt"
          "private/runtime/contract.rkt"
          "private/runtime/flat.rkt"
-         "private/runtime/function.rkt")
+         "private/runtime/function.rkt"
+         "private/runtime/visualize.rkt")
 
 (^current-solver (z3 #:path (find-executable-path "z3")))
 
@@ -317,9 +318,11 @@
 
 ;; strings
 
-#;(define ($explode s)
-  (^for/all ([s s #:exhaustive])
-    (drop-right (drop (string-split s "") 1) 1)))
+(define (explode s)
+  (drop-right (drop (string-split s "") 1) 1))
+
+(provide
+ (lift-out explode))
 
 ;; lists
 
