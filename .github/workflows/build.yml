@@ -10,7 +10,5 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: 'current'
-      - uses: GabrielBB/xvfb-action@v1
-        with:
-          run: raco pkg install --auto lsl-lib/ lsl/
-          run: raco test --drdr lsl/
+      - run: xvfb-run raco pkg install --auto lsl-lib/ lsl/
+      - run: xvfb-run raco test --drdr lsl/
