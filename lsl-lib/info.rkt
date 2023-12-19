@@ -11,7 +11,9 @@
 ;; dependencies
 
 (define deps
-  '("rackunit-lib"
+  '("plot-gui-lib"
+    "plot-lib"
+    "rackunit-lib"
     "struct-set"
     "threading-lib"
     "base"
