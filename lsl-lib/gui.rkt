@@ -18,15 +18,12 @@
 (define SYMS '(fullcircle fullsquare fulldiamond full5star))
 (define POINT-SIZE 8)
 
-(define-syntax-parse-rule (visualize args:expr f:id ...)
-  (visualize-fn args (list f ...) (list 'f ...)))
-
-(define (visualize-fn args fs names)
+(define (visualize args . fs)
   (define pts
     (for/list ([f (in-list fs)]
-               [name (in-list names)]
                [k (in-naturals)]
                [sym (in-cycle SYMS)])
+      (define name (or (object-name f) '???))
       (define results
         (for/list ([arg (in-list args)])
           (ticks (λ () (f arg)))))

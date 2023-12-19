@@ -18,7 +18,7 @@
 (define (run/sexp sexp)
   (define ns (make-base-empty-namespace))
   (parameterize ([current-namespace ns])
-    (namespace-require 'lsl))
+    (namespace-require 'lsl/no-gui))
   (define result #f)
   (define output
     (call-with-output-string
