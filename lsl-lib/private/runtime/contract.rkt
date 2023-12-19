@@ -10,6 +10,7 @@
          (struct-out flat-contract-struct)
          (struct-out contract-struct)
          contract-generate-function
+         contract-symbolic-function
          name-contract
          check-contract-function
          verify-contract-function

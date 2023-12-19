@@ -157,6 +157,7 @@
           (rename-out [annotate :])
           define-contract
           contract-generate
+          contract-symbolic
           contract-predicate
           local
 
@@ -167,6 +168,8 @@
           (lift-out
            sqrt
            expt
+
+           random
 
            string-length
            format
