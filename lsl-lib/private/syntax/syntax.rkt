@@ -10,6 +10,7 @@
  ;; contract literals
  Flat
  OneOf
+ And
  Struct
  Function
 
@@ -53,6 +54,7 @@
          syntax/location
          "../runtime/contract.rkt"
          "../runtime/oneof.rkt"
+         "../runtime/and.rkt"
          "../runtime/flat.rkt"
          "../runtime/function.rkt"
          "../runtime/recursive.rkt"
@@ -64,7 +66,7 @@
 
 (define-literal-forms contract-literal
   "contract constructor must occur within a contract"
-  (Name Flat OneOf Struct Recursive Function))
+  (Name Flat OneOf And Struct Recursive Function))
 
 (define-literal-forms flat-literal
   "literal clause must occur within Flat"
@@ -111,6 +113,8 @@
        #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
       [(OneOf ~! e:expr ...)
        #'(OneOf qstx (expand-contract e) ...)]
+      [(And ~! e:expr ...)
+       #'(And qstx (expand-contract e) ...)]
       [(Struct ~! s:struct-id e:expr ...)
        #'(Struct qstx s (expand-contract e) ...)]
       [(Recursive ~! (~and (~or head:id (head:id a:expr ...)) self:expr) e:expr)
@@ -191,6 +195,8 @@
        #'(function-contract q (list (#%datum . k) ...) (list a* ...) r*)]
       [(OneOf q e:ctc ...)
        #'(oneof-contract q e.compiled ...)]
+      [(And q e:ctc ...)
+       #'(and-contract q e.compiled ...)]
       [(Struct q s:struct-id e:ctc ...)
        #'(struct-contract q s.constructor-id s.predicate-id e.compiled ...)]
       [(Recursive q x e:ctc)

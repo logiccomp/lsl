@@ -146,6 +146,7 @@
           Flat
           Function
           OneOf
+          And
           Struct
 
           domain

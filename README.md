@@ -4,7 +4,7 @@
 
 ## Todo
 
-* restore error locs
+* check error source location for -> flat failure
 * define-contract should check to make sure is actually contract...
 * annotate should use lift to generate contract definition for reuse
 * improve perf with tight boundary using weak hash table cache
@@ -38,6 +38,7 @@
 * recursive should have name too (or not?)
 * lifted is probably quite slow, can do more at compile time?
 * calling static struct info leads to bad error message (rosette doesn't support `#:name` though)
+* generation with empty oneof/and contracts
 
 [build-badge]: https://github.com/logiccomp/lsl/actions/workflows/build.yml/badge.svg
 [build]: https://github.com/logiccomp/lsl/actions/workflows/build.yml?query=workflow%3Abuild
