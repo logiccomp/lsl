@@ -10,6 +10,7 @@
          Real
          Natural
          String
+         Symbol
          List
          FiniteList
          Record
@@ -26,6 +27,8 @@
                   random
                   build-string
                   string?
+                  symbol?
+                  string->symbol
                   build-list)
          "private/syntax/syntax.rkt")
 
@@ -78,6 +81,15 @@
 
 (define (random-string)
   (build-string (random 0 100) (λ (_) (random-alpha-char))))
+
+(define-contract Symbol
+  (Flat (check lifted-symbol?)
+        (generate (λ () (string->symbol (random-string))))))
+
+
+(define (lifted-symbol? x)
+  (for/all ([x x])
+    (symbol? x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
