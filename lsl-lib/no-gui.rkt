@@ -53,6 +53,9 @@
                        $run-tests
 
                        $empty
+
+                       $error
+
                        $#%module-begin))
           (filtered-out
           (strip "^")
@@ -432,3 +435,8 @@
 
 (define ($boolean=? b1 b2)
   (^equal? b1 b2))
+
+(define-syntax $error
+  (syntax-parser
+    [(_ v ...)
+     #'(^assert #f (string-append (format "~a " v) ...))]))
