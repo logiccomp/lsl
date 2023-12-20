@@ -111,9 +111,9 @@
         (filter non-wildcard? (syntax-e #'(x ...))))
        "duplicate identifier"
        #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
-      [(OneOf ~! e:expr ...)
+      [(OneOf ~! e:expr ...+)
        #'(OneOf qstx (expand-contract e) ...)]
-      [(And ~! e:expr ...)
+      [(And ~! e:expr ...+)
        #'(And qstx (expand-contract e) ...)]
       [(Struct ~! s:struct-id e:expr ...)
        #'(Struct qstx s (expand-contract e) ...)]
@@ -164,8 +164,7 @@
       (raise (exn:fail:cyclic "cannot have cyclic dependency"
                               (current-continuation-marks)
                               (list (syntax-srcloc stx)))))
-    (topological-sort (range n) neighbors
-                      #:cycle cycle)))
+    (topological-sort (range n) neighbors #:cycle cycle)))
 
 ;;
 ;; compiler
@@ -173,10 +172,13 @@
 
 (begin-for-syntax
   (define-syntax-class ctc
+    #:attributes (compiled compiled.c)
     (pattern #f
-             #:with compiled #'#f)
+             #:with compiled #'#f
+             #:declare compiled (expr/c #'any/c))
     (pattern e:expr
-             #:with compiled #'(compile-contract e)))
+             #:with compiled #'(compile-contract e)
+             #:declare compiled (expr/c #'flat-contract-struct?)))
 
   (define/hygienic-metafunction (compile-contract this-stx)
     #:expression
@@ -194,9 +196,9 @@
        #:with r* #'(λ* (x ...) r.compiled)
        #'(function-contract q (list (#%datum . k) ...) (list a* ...) r*)]
       [(OneOf q e:ctc ...)
-       #'(oneof-contract q e.compiled ...)]
+       #'(oneof-contract q e.compiled.c ...)]
       [(And q e:ctc ...)
-       #'(and-contract q e.compiled ...)]
+       #'(and-contract q e.compiled.c ...)]
       [(Struct q s:struct-id e:ctc ...)
        #'(struct-contract q s.constructor-id s.predicate-id e.compiled ...)]
       [(Recursive q x e:ctc)
