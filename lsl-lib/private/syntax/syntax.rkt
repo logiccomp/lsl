@@ -47,6 +47,7 @@
                      syntax/parse/class/struct-id
                      mischief/dict
                      mischief/sort
+                     "loc.rkt"
                      "unbound-vars.rkt")
          ee-lib/define
          syntax/location
@@ -251,13 +252,13 @@
      #'(define-contract-syntax name
          (λ (stx)
            (syntax-parse stx
-             [_:id #'(Name name (Recursive name ctc))])))]
+             [_:id (syntax/whole-loc stx (Name name (Recursive name ctc)))])))]
     [(_ (name:id param:id ...) ctc:expr)
      #'(define-contract-syntax name
          (λ (stx)
            (syntax-parse stx
              [(_:id param ...)
-              #'(Name name (Recursive (name param ...) ctc))])))]))
+              (syntax/whole-loc stx (Name name (Recursive (name param ...) ctc)))])))]))
 
 (define-syntax λ*
   (syntax-parser
@@ -284,4 +285,3 @@
     [(_ ctc:expr)
      #'(flat-contract-struct-predicate
         (expand+compile-contract ctc))]))
-
