@@ -22,6 +22,7 @@
                   evaluate
                   complete-solution)
          racket/bool
+         racket/random
          "contract.rkt"
          "flat.rkt")
 
@@ -34,6 +35,16 @@
   (define (predicate val)
     (for/or ([pred (in-list preds)])
       (pred val)))
+  (define (generate)
+    ((random-ref (map contract-struct-generate ctcs))))
   (define protect (flat-contract-protect stx predicate))
-  (define self (flat-contract-struct (syntax->datum stx) stx protect #f #f #f predicate))
+  (define self
+    (flat-contract-struct
+     (syntax->datum stx)
+     stx
+     protect
+     generate
+     #f
+     #f
+     predicate))
   self)
