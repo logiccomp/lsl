@@ -358,57 +358,66 @@
     (set! expect-forms (cons stx expect-forms))
     #'(void)))
 
-(define-syntax $check-expect
-  (syntax-parser
+(define-syntax ($check-expect stx)
+  (syntax-parse stx
     [(_ actual expected)
-     (push-form! #'(check-equal? actual expected))]))
+     (push-form!
+      (syntax/loc stx (check-equal? actual expected)))]))
 
-(define-syntax $check-contract
-  (syntax-parser
+(define-syntax ($check-contract stx)
+  (syntax-parse stx
     [(_ val:expr (~optional n:number #:defaults ([n #'1])))
-     (push-form! #'(check-contract (λ () (check-contract-function val n))))]))
+     (push-form!
+      (syntax/loc stx (check-contract (λ () (check-contract-function val n)))))]))
 
 (define-check (check-contract thk)
   (let ([result (with-handlers ([exn? exn-message]) (thk) #f)])
     (when result
       (fail-check result))))
 
-(define-syntax $verify-contract
-  (syntax-parser
+(define-syntax ($verify-contract stx)
+  (syntax-parse stx
     [(_ val:expr)
-     (push-form! #'(verify-contract (λ () (verify-contract-function val))))]))
+     (push-form!
+      (syntax/loc stx (verify-contract (λ () (verify-contract-function val)))))]))
 
 (define-check (verify-contract thk)
   (let ([result (with-handlers ([exn? exn-message]) (thk) #f)])
     (when result
       (fail-check result))))
 
-(define-syntax $check-within
-  (syntax-parser
+(define-syntax ($check-within stx)
+  (syntax-parse stx
     [(_ actual expected ϵ)
-     (push-form! #'(check-within actual expected ϵ))]))
+     (push-form!
+      (syntax/loc stx (check-within actual expected ϵ)))]))
 
-(define-syntax $check-member-of
-  (syntax-parser
+(define-syntax ($check-member-of stx)
+  (syntax-parse stx
     [(_ actual expecteds ...)
-     (push-form! #'(check-true ($member actual (list expecteds ...))))]))
+     (push-form!
+      (syntax/loc stx (check-true ($member actual (list expecteds ...)))))]))
 
-(define-syntax $check-range
-  (syntax-parser
+(define-syntax ($check-range stx)
+  (syntax-parse stx
     [(_ actual low high)
-     (push-form! #'(check-true (<= low actual high)))]))
+     (push-form!
+      (syntax/loc stx (check-true (<= low actual high))))]))
 
-(define-syntax $check-satisfied
-  (syntax-parser
+(define-syntax ($check-satisfied stx)
+  (syntax-parse stx
     [(_ actual pred)
-     (push-form! #'(check-pred pred actual))]))
+     (push-form!
+      (syntax/loc stx (check-pred pred actual)))]))
 
-(define-syntax $check-error
-  (syntax-parser
+(define-syntax ($check-error stx)
+  (syntax-parse stx
     [(_ body:expr)
-     (push-form! #'(check-exn always (λ () body)))]
+     (push-form!
+      (syntax/loc stx (check-exn always (λ () body))))]
     [(_ body:expr msg:expr)
-     (push-form! #'(check-exn (matches? msg) (λ () body)))]))
+     (push-form!
+      (syntax/loc stx (check-exn (matches? msg) (λ () body))))]))
 
 (define-syntax $run-tests
   (syntax-parser
