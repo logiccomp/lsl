@@ -11,8 +11,6 @@
          Natural
          String
          Symbol
-         List
-         FiniteList
          Record
          ->)
 
@@ -92,19 +90,6 @@
     (symbol? x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-contract (List X)
-  (Flat (check (λ (l) (and (list? l)
-                           (andmap (contract-predicate X) l))))
-        (generate (λ () (let ([n (random 0 100)])
-                          (build-list n (λ (_) (contract-generate X))))))))
-
-(define-contract (FiniteList n X)
-  (Flat (check (λ (l) (and (list? l)
-                           (= (length l) n)
-                           (andmap (contract-predicate X) l))))
-        (generate (λ () (build-list n (λ (_) (contract-generate X)))))))
-
 
 (define-contract-syntax ->
   (λ (stx)

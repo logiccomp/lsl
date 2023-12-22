@@ -25,6 +25,7 @@
 * recursive should have name too (or not?)
 * lifted is probably quite slow, can do more at compile time?
 * calling static struct info leads to bad error message (rosette doesn't support `#:name` though)
+* generalize List to non-flat elements
 
 [build-badge]: https://github.com/logiccomp/lsl/actions/workflows/build.yml/badge.svg
 [build]: https://github.com/logiccomp/lsl/actions/workflows/build.yml?query=workflow%3Abuild

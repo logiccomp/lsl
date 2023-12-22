@@ -5,7 +5,8 @@
 ;;
 
 (provide flat-contract
-         flat-contract-protect)
+         flat-contract-protect
+         list-contract)
 
 ;;
 ;; require
@@ -27,7 +28,7 @@
          "contract.rkt")
 
 ;;
-;; syntax
+;; definitions
 ;;
 
 (define (flat-contract stx dom check generate symbolic)
@@ -58,3 +59,13 @@
         (unless (predicate val)
           (contract-error self stx pos val)))
       (λ (neg) val))))
+
+(define (list-contract stx maybe-n ctc)
+  (define (check l)
+    (and (list? l)
+         (implies maybe-n (= (length l) maybe-n))
+         (andmap (flat-contract-struct-predicate ctc) l)))
+  (define (generate)
+    (let ([n (or maybe-n (random 0 100))])
+      (build-list n (λ (_) (contract-struct-generate ctc)))))
+  (flat-contract stx #f check generate #f))

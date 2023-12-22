@@ -147,6 +147,7 @@
           #%top-interaction
 
           Flat
+          List
           Function
           OneOf
           And

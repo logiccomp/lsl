@@ -9,6 +9,7 @@
 
  ;; contract literals
  Flat
+ List
  OneOf
  And
  Struct
@@ -66,7 +67,7 @@
 
 (define-literal-forms contract-literal
   "contract constructor must occur within a contract"
-  (Name Flat OneOf And Struct Recursive Function))
+  (Name Flat List OneOf And Struct Recursive Function))
 
 (define-literal-forms flat-literal
   "literal clause must occur within Flat"
@@ -105,6 +106,8 @@
                (~? c #f)
                (~? g #f)
                (~? s #f))]
+      [(List ~! (~optional n:expr #:defaults ([n #'#f])) e:expr)
+       #'(List qstx n (expand-contract e))]
       [(Function ~! [x:id a:expr] ... r:expr)
        #:fail-when
        (check-duplicate-identifier
@@ -189,6 +192,8 @@
        #'(name-contract 'x e.compiled)]
       [(Flat q d:ctc c g s)
        #'(flat-contract q d.compiled c g s)]
+      [(List q n:expr e:ctc)
+       #'(list-contract q n e.compiled)]
       [(Function q ([x a:ctc] ...) r:ctc)
        #:with (a* ...) #'((expand-racket (λ* (x ...) a.compiled)) ...)
        #:with (y ...) #'((unbound-racket a*) ...)

@@ -9,6 +9,7 @@
  (run/var Real x 3.14 x)  3.14
  (run/var Boolean x #t x)  #t
  (run/var (List Boolean) x (list #t #f) x) (list #t #f)
+ (run/var (List 2 Boolean) x (list #t #f) x) (list #t #f)
  #:? integer?
  (run (contract-generate Integer))
  #:? real?
@@ -20,6 +21,10 @@
 
 ;; pre-defined flat failure
 (chk
+ #:x (run/var (List 2 Boolean) x (list #t) x)
+ "expected: (List 2 Boolean)"
+ #:x (run/var (List Boolean) x (list 1 2) x)
+ "expected: (List Boolean)"
  #:x (run/var Integer x 1/2 x)
  "expected: Integer"
  #:x (run/var Real x #t x)
