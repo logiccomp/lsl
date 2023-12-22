@@ -18,7 +18,6 @@
 * counterexample generation for unions doesn't work properly
 * struct should do as many flat contracts as possible early
 * recursive check inside "productive" constructors
-* performance is atrocious
 * recursive must be over flat stuff
 * mutual recursion
 * errors (invalid inputs) for check-*

@@ -4,15 +4,18 @@
 ;; provide
 ;;
 
-(provide (all-from-out "gui.rkt")
-         (all-from-out "no-gui.rkt"))
+(provide (all-from-out "no-gui.rkt")
+         visualize)
 
 ;;
 ;; require
 ;;
 
-(require "gui.rkt"
+(require racket/lazy-require
          "no-gui.rkt")
+
+(lazy-require
+ ["gui.rkt" (visualize)])
 
 ;;
 ;; reader
