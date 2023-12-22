@@ -10,6 +10,8 @@
  (run/var Boolean x #t x)  #t
  (run/var (List Boolean) x (list #t #f) x) (list #t #f)
  (run/var (List 2 Boolean) x (list #t #f) x) (list #t #f)
+ #:? (λ (xs) (andmap integer? xs))
+ (run (contract-generate (List Integer)))
  #:? integer?
  (run (contract-generate Integer))
  #:? real?
