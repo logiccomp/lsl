@@ -390,8 +390,13 @@
 (define-syntax ($check-within stx)
   (syntax-parse stx
     [(_ actual expected ϵ)
+     #:declare actual (expr/c #'number?)
+     #:declare expected (expr/c #'number?)
+     #:declare ϵ (expr/c #'number?)
      (push-form!
-      (syntax/loc stx (check-within actual expected ϵ)))]))
+      (syntax/loc stx
+        (let ([a actual.c] [e expected.c] [v ϵ.c])
+          (check-within a e v))))]))
 
 (define-syntax ($check-member-of stx)
   (syntax-parse stx
@@ -402,23 +407,34 @@
 (define-syntax ($check-range stx)
   (syntax-parse stx
     [(_ actual low high)
+     #:declare low (expr/c #'number?)
+     #:declare high (expr/c #'number?)
+     #:declare actual (expr/c #'number?)
      (push-form!
-      (syntax/loc stx (check-true (<= low actual high))))]))
+      (syntax/loc stx
+        (let ([l low.c] [a actual.c] [h high.c])
+          (check-true (<= l a h)))))]))
 
 (define-syntax ($check-satisfied stx)
   (syntax-parse stx
     [(_ actual pred)
+     #:declare pred (expr/c #'@predicate/c)
      (push-form!
-      (syntax/loc stx (check-pred pred actual)))]))
+      (syntax/loc stx
+        (let ([v pred.c])
+          (check-pred v actual))))]))
 
 (define-syntax ($check-error stx)
   (syntax-parse stx
     [(_ body:expr)
      (push-form!
       (syntax/loc stx (check-exn always (λ () body))))]
-    [(_ body:expr msg:expr)
+    [(_ body:expr msg)
+     #:declare msg (expr/c #'string?)
      (push-form!
-      (syntax/loc stx (check-exn (matches? msg) (λ () body))))]))
+      (syntax/loc stx
+        (let ([v msg.c])
+          (check-exn (matches? v) (λ () body)))))]))
 
 (define-syntax $run-tests
   (syntax-parser
