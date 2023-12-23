@@ -54,7 +54,6 @@
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct
-     (syntax->datum stx)
      stx
      protect
      generate

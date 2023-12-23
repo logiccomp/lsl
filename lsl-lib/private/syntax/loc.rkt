@@ -44,7 +44,7 @@
 (define (replace-whole-loc stx old-source new-loc)
   (fold-syntax
    (λ (stx rec)
-     (datum->syntax stx (syntax-e (rec stx)) new-loc stx))
+     (datum->syntax stx (syntax-e (rec stx)) new-loc new-loc))
    stx))
 
 (define-syntax (syntax/whole-loc stx)

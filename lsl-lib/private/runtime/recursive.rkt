@@ -28,7 +28,6 @@
       ((((contract-struct-protect ctc) ctc) val pos) neg)))
   (define self
     (flat-contract-struct
-     (syntax->datum stx)
      stx
      protect
      #false

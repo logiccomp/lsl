@@ -47,5 +47,5 @@
                    [field (in-list (struct->list val))])
            ((flat-contract-struct-predicate ctc) field))))
   (if (andmap flat-contract-struct? ctcs)
-      (flat-contract-struct (syntax->datum stx) stx protect #f #f #f predicate)
-      (contract-struct (syntax->datum stx) stx protect #f #f #f)))
+      (flat-contract-struct stx protect #f #f #f predicate)
+      (contract-struct stx protect #f #f #f)))

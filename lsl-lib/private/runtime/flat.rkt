@@ -33,7 +33,6 @@
 
 (define (flat-contract stx dom check generate symbolic)
   (define dom-pred (and dom (flat-contract-struct-predicate dom)))
-  (define dom-name (and dom (contract-struct-name dom)))
   (define (predicate x)
     (and (implies dom-pred (dom-pred x))
          (implies check (check x))))
@@ -44,7 +43,7 @@
     x)
   (define symbolic* (or symbolic (and dom default-symbolic)))
   (define (interact mode val) (void))
-  (define self (flat-contract-struct (syntax->datum stx) stx protect generate symbolic* interact predicate))
+  (define self (flat-contract-struct stx protect generate symbolic* interact predicate))
   self)
 
 (define (flat-contract-protect stx predicate)

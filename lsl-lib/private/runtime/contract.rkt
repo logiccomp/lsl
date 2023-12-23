@@ -11,7 +11,6 @@
          (struct-out contract-struct)
          contract-generate-function
          contract-symbolic-function
-         name-contract
          check-contract-function
          verify-contract-function
          contract-error
@@ -31,8 +30,7 @@
          racket/list
          racket/match
          racket/syntax-srcloc
-         errortrace/errortrace-key
-         struct-set)
+         errortrace/errortrace-key)
 
 ;;
 ;; data
@@ -41,8 +39,8 @@
 (struct blame-struct (name path))
 (struct positive-blame-struct blame-struct ())
 (struct negative-blame-struct blame-struct ())
-(struct/set contract-struct (name syntax protect generate symbolic interact))
-(struct/set flat-contract-struct contract-struct (predicate))
+(struct contract-struct (syntax protect generate symbolic interact))
+(struct flat-contract-struct contract-struct (predicate))
 
 (struct exn:fail:contract exn:fail (srclocs)
   #:property prop:exn:srclocs
@@ -57,14 +55,11 @@
 ;; functions
 ;;
 
-(define (name-contract name-val ctc)
-  (struct-set contract-struct ctc [name name-val]))
-
 (define (contract-generate-function ctc)
   (define generate (contract-struct-generate ctc))
   (if generate
       (generate)
-      (generate-error (contract-struct-name ctc))))
+      (generate-error (contract-struct-syntax ctc))))
 
 (define (check-contract-function val n)
   (define ctc (value->contract val))
@@ -75,7 +70,8 @@
 
 (define (contract-symbolic-function ctc)
   (define generate (contract-struct-symbolic ctc))
-  (define msg (format "symbolic ~a" (contract-struct-name ctc)))
+  (define stx (original-syntax (contract-struct-syntax ctc)))
+  (define msg (format "symbolic ~a" (syntax->datum stx)))
   (if generate (generate) (generate-error msg)))
 
 (define (verify-contract-function val)
@@ -99,26 +95,29 @@
      "blaming: ~a")
    "\n  "))
 
-(define (contract-error self stx blm val)
+(define (original-syntax stx)
+  (or (syntax-property stx 'original) stx))
+
+(define (contract-error self pre-stx blm val)
+  (define stx (original-syntax pre-stx))
   (define error-msg
     (format CTC-FMT
             (blame-struct-name blm)
-            (contract-struct-name self)
+            (syntax->datum stx)
             val
             (blame-struct-path blm)))
   (custom-error self stx error-msg))
 
-(define (verify-error self blm stx val)
+(define (verify-error self blm pre-stx val)
+  (define stx (original-syntax pre-stx))
   (define error-msg
     (format VERIFY-FMT
-            (contract-struct-name self)
+            (syntax->datum stx)
             val
             (blame-struct-path blm)))
   (custom-error self stx error-msg))
 
-(define (custom-error self pre-stx msg)
-  (define stx
-    (or (syntax-property pre-stx 'original) pre-stx))
+(define (custom-error self stx msg)
   (define stx-srclocs
     (cond
       [(and stx (syntax-srcloc stx)) => list]
@@ -134,8 +133,8 @@
 (define GEN-FMT
   "cannot generate ~a")
 
-(define ((generate-error name))
-  (raise-user-error (format GEN-FMT name)))
+(define ((generate-error stx))
+  (raise-user-error (format GEN-FMT (syntax->datum stx))))
 
 (define (value->contract val)
   (and (has-impersonator-prop:contract? val)

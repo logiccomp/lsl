@@ -103,16 +103,19 @@
      #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'tr))
-     (if (attribute folder)
-         (quasisyntax/loc ctc
-           (Flat
-            (check
-             (λ (val)
-               (set! tr (folder tr val))
-               ((contract-predicate #,ctc) tr)))))
-         (quasisyntax/loc ctc
-           (Flat
-            (check
-             (λ (val)
-               (set! tr (append tr (list val)))
-               ((contract-predicate #,ctc) tr))))))]))
+     (syntax-property
+      (if (attribute folder)
+          (quasisyntax/loc ctc
+            (Flat
+             (check
+              (λ (val)
+                (set! tr (folder tr val))
+                ((contract-predicate #,ctc) tr)))))
+          (quasisyntax/loc ctc
+            (Flat
+             (check
+              (λ (val)
+                (set! tr (append tr (list val)))
+                ((contract-predicate #,ctc) tr))))))
+      'original
+      ctc)]))

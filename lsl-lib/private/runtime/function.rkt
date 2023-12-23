@@ -50,7 +50,6 @@
     (void))
   (define self
     (contract-struct
-     (syntax->datum stx)
      stx
      protect
      (λ () (procedure-reduce-arity generated n))

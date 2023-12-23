@@ -67,7 +67,7 @@
 
 (define-literal-forms contract-literal
   "contract constructor must occur within a contract"
-  (Name Flat List OneOf And Struct Recursive Function))
+  (Flat List OneOf And Struct Recursive Function))
 
 (define-literal-forms flat-literal
   "literal clause must occur within Flat"
@@ -92,41 +92,40 @@
   (define/hygienic-metafunction (expand-contract this-stx)
     #:expression
     (define/syntax-parse (_ stx) this-stx)
-    (define/syntax-parse qstx #`#'stx)
+    (define/syntax-parse qstx
+      (or (syntax-property #'stx 'original) #'stx))
     (syntax-parse #'stx
       #:literal-sets (contract-literal flat-literal)
-      [(Name ~! name:id e:expr)
-       #'(Name name (expand-contract e))]
       [(Flat ~! (~alt (~optional (domain d:expr))
                       (~optional (check c:expr))
                       (~optional (generate g:expr))
                       (~optional (symbolic s:expr))) ...)
-       #'(Flat qstx
+       #'(Flat #'qstx
                (~? (expand-contract d) #f)
                (~? c #f)
                (~? g #f)
                (~? s #f))]
       [(List ~! (~optional n:expr #:defaults ([n #'#f])) e:expr)
-       #'(List qstx n (expand-contract e))]
+       #'(List #'qstx n (expand-contract e))]
       [(Function ~! [x:id a:expr] ... r:expr)
        #:fail-when
        (check-duplicate-identifier
         (filter non-wildcard? (syntax-e #'(x ...))))
        "duplicate identifier"
-       #'(Function qstx ([x (expand-contract a)] ...) (expand-contract r))]
+       #'(Function #'qstx ([x (expand-contract a)] ...) (expand-contract r))]
       [(OneOf ~! e:expr ...+)
-       #'(OneOf qstx (expand-contract e) ...)]
+       #'(OneOf #'qstx (expand-contract e) ...)]
       [(And ~! e:expr ...+)
-       #'(And qstx (expand-contract e) ...)]
+       #'(And #'qstx (expand-contract e) ...)]
       [(Struct ~! s:struct-id e:expr ...)
-       #'(Struct qstx s (expand-contract e) ...)]
+       #'(Struct #'qstx s (expand-contract e) ...)]
       [(Recursive ~! (~and (~or head:id (head:id a:expr ...)) self:expr) e:expr)
        (parameterize ([rec-table (free-id-table-set (rec-table) #'head #'self)]
                       [used-vars (used-vars)])
          (define/syntax-parse ^e #'(expand-contract e))
          (if (free-id-set-empty? (used-vars))
              #'^e
-             #'(Recursive qstx head ^e)))]
+             #'(Recursive #'qstx head ^e)))]
       [(~or head:id (head:id e:expr ...))
        #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
        #:when self
@@ -188,8 +187,6 @@
     (define/syntax-parse (_ stx) this-stx)
     (syntax-parse #'stx
       #:literal-sets (contract-literal flat-literal)
-      [(Name x e:ctc)
-       #'(name-contract 'x e.compiled)]
       [(Flat q d:ctc c g s)
        #'(flat-contract q d.compiled c g s)]
       [(List q n:expr e:ctc)
@@ -265,13 +262,16 @@
      #'(define-contract-syntax name
          (λ (stx)
            (syntax-parse stx
-             [_:id (syntax/whole-loc stx (Name name (Recursive name ctc)))])))]
+             [_:id
+              (define stx* (syntax-property stx 'original stx))
+              (syntax/whole-loc stx* (Recursive name ctc))])))]
     [(_ (name:id param:id ...) ctc:expr)
      #'(define-contract-syntax name
          (λ (stx)
            (syntax-parse stx
              [(_:id param ...)
-              (syntax/whole-loc stx (Name name (Recursive (name param ...) ctc)))])))]))
+              (define stx* (syntax-property stx 'original stx))
+              (syntax/whole-loc stx* (Recursive (name param ...) ctc))])))]))
 
 (define-syntax λ*
   (syntax-parser
