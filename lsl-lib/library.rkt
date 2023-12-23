@@ -99,12 +99,20 @@
 
 (define-contract-syntax Record
   (syntax-parser
-    [(_ tr:id)
+    [(_ (~optional folder:expr) tr:id)
      #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'tr))
-     #`(Flat
-        (check
-         (λ (val)
-           (set! tr (append tr (list val)))
-           ((contract-predicate #,ctc) tr))))]))
+     (if (attribute folder)
+         (quasisyntax/loc ctc
+           (Flat
+            (check
+             (λ (val)
+               (set! tr (folder tr val))
+               ((contract-predicate #,ctc) tr)))))
+         (quasisyntax/loc ctc
+           (Flat
+            (check
+             (λ (val)
+               (set! tr (append tr (list val)))
+               ((contract-predicate #,ctc) tr))))))]))

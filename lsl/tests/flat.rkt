@@ -21,6 +21,29 @@
  (run/var Boolean x #t (check-contract x))  (void)
  (run/var Boolean x #t (verify-contract x))  (void))
 
+;; record
+(chk
+ #:do (define no-fold-sexp
+        '(begin
+           (: t (List Integer))
+           (define t null)
+           (: f (-> (Record t) Integer))
+           (define (f x) x)))
+ (run/sexp `(begin ,no-fold-sexp (f 1) (f 2) (f 3)))  3
+ #:x (run/sexp `(begin ,no-fold-sexp (f 1) (f 2) (f #f)))
+ "expected: (List Integer)"
+
+ #:do (define fold-sexp
+        '(begin
+           (: t (Flat (check positive?)))
+           (define t 1)
+           (: f (-> (Record + t) Integer))
+           (define (f x) x)))
+ (run/sexp `(begin ,fold-sexp (f 1) (f 2) (f 3)))  3
+ #:x (run/sexp `(begin ,fold-sexp (f 1) (f 2) (f -10)))
+ "expected: (Flat (check positive?))"
+ )
+
 ;; pre-defined flat failure
 (chk
  #:x (run/var (List 2 Boolean) x (list #t) x)
