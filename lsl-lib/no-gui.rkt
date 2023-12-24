@@ -327,8 +327,13 @@
 (define (explode s)
   (drop-right (drop (string-split s "") 1) 1))
 
+(define (implode l)
+  (^apply string-append l))
+
+
 (provide
- (lift-out explode))
+ (lift-out explode)
+ (lift-out implode))
 
 ;; lists
 

@@ -5,7 +5,8 @@
 ;;
 
 (provide (all-from-out "no-gui.rkt")
-         visualize)
+         visualize
+         ticks)
 
 ;;
 ;; require
@@ -15,7 +16,7 @@
          "no-gui.rkt")
 
 (lazy-require
- ["gui.rkt" (visualize)])
+ ["gui.rkt" (visualize ticks)])
 
 ;;
 ;; reader
