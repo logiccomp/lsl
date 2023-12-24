@@ -11,7 +11,8 @@
 ;; dependencies
 
 (define deps
-  '("plot-gui-lib"
+  '("automata-lib"
+    "plot-gui-lib"
     "plot-lib"
     "rackunit-lib"
     "struct-set"

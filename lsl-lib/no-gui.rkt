@@ -37,7 +37,6 @@
                        $if
                        $and
                        $or
-                       $quote
                        $#%datum
                        $...
                        $build-list
@@ -57,9 +56,10 @@
                        $error
 
                        $#%module-begin))
-          (filtered-out
+         (filtered-out
           (strip "^")
-          (combine-out ^true
+          (combine-out ^quote
+                       ^true
                        ^false
 
                        ^-
@@ -167,7 +167,7 @@
           local
 
           (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
-
+          (@contract-out [next (@-> machine? @any/c machine?)])
 
           (@contract-out (rename equal? string=? (@-> string? string? boolean?)))
           (lift-out
@@ -213,6 +213,7 @@
                      threading)
          (prefix-in ^ rosette/safe)
          (for-space contract-space "private/syntax/syntax.rkt")
+         automata/machine
          rosette/solver/smt/z3
          racket/string
          syntax/parse/define
@@ -306,9 +307,6 @@
 
 (define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
   (^or arg0 arg ...))
-
-(define-syntax-parse-rule ($quote body:expr)
-  (^quote body))
 
 (define-syntax $#%datum
   (syntax-parser
@@ -466,6 +464,9 @@
 
 (define ($boolean=? b1 b2)
   (^equal? b1 b2))
+
+(define (next mach x)
+  (mach x))
 
 (define-syntax $error
   (syntax-parser

@@ -42,6 +42,16 @@
  (run/sexp `(begin ,fold-sexp (f 1) (f 2) (f 3)))  3
  #:x (run/sexp `(begin ,fold-sexp (f 1) (f 2) (f -10)))
  "expected: (Flat (check positive?))"
+
+ #:do (define re-sexp
+        '(begin
+           (: t (Flat (check accepting?)))
+           (define t (regular-expression (seq-prefix 'a (star 'b) 'a)))
+           (: f (-> (Record next t) Symbol))
+           (define (f x) x)))
+ (run/sexp `(begin ,re-sexp (f 'a) (f 'b) (f 'b) (f 'a)))  'a
+ #:x (run/sexp `(begin ,re-sexp (f 'a) (f 'b) (f 'a) (f 'a)))
+ "expected: (Flat (check accepting?))"
  )
 
 ;; pre-defined flat failure
