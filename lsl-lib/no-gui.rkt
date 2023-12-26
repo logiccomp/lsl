@@ -89,6 +89,7 @@
                        ^sgn
                        ^sub1
                        ^zero?
+                       ^sqr
 
                        ^boolean?
                        ^not
@@ -177,6 +178,7 @@
            random
 
            string-length
+           string-append
            format
            ;implode
            ;int->string
