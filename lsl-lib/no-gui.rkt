@@ -167,10 +167,11 @@
           contract-predicate
           local
 
-          (@contract-out (rename $boolean=? boolean=? (@-> boolean? boolean? boolean?)))
-          (@contract-out [next (@-> machine? @any/c machine?)])
+          (@contract-out
+           [rename $boolean=? boolean=? (@-> ^boolean? ^boolean? ^boolean?)]
+           [next (@-> machine? @any/c machine?)]
+           [rename equal? string=? (@-> string? string? boolean?)])
 
-          (@contract-out (rename equal? string=? (@-> string? string? boolean?)))
           (lift-out
            sqrt
            expt
