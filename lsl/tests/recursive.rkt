@@ -31,6 +31,18 @@
                    (sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8)))))
  36
 
+ #:t
+ (for/and ([_ (in-range 10)])
+   (run/sexp `(begin ,node
+                     (define-contract (Tree X)
+                       (OneOf X (Node (Tree X) X (Tree X))))
+                     (define (int-tree? x)
+                       (or (integer? x)
+                           (and (int-tree? (node-left x))
+                                (integer? (node-value x))
+                                (int-tree? (node-right x)))))
+                     (int-tree? (contract-generate (Tree Integer))))))
+
  ;; failure
  #:x
  (run/sexp `(begin ,node

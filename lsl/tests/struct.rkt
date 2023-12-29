@@ -9,7 +9,11 @@
       (: f (-> (Foo Integer) Integer))
       (define (f st) (foo-x st))
       (f (make-foo 10)))
- 10)
+ 10
+
+ #:? integer?
+ (run (define-struct foo (x))
+      (foo-x (contract-generate (Foo Integer)))))
 
 ;; failure
 (chk
