@@ -227,7 +227,7 @@
   (define-syntax-class define-header
     (pattern x:function-header
              #:with name #'x.name
-             #:attr make-body (λ (body) #`(λ x.params #,body)))
+             #:attr make-body (λ (body) #`(procedure-rename (λ x.params #,body) 'name)))
     (pattern x:id
              #:with name #'x
              #:attr make-body (λ (body) body))))

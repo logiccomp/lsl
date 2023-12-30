@@ -64,6 +64,19 @@
           (define (f x) (+ x 1))
           (verify-contract f))
  "expected: Even"
+
+ #:x (run (: bad-mult (-> Real Real Real))
+          (define (bad-mult x y)
+            (if (= x 10417)
+                0
+                (* x y)))
+          (: bad-mult-prop (-> Real Real True))
+          (define (bad-mult-prop x y)
+            (= (bad-mult x y)
+               (* x y)))
+          (verify-contract bad-mult-prop))
+ "counterexample: (bad-mult-prop 10417.0"
+
  #:x (run/var (Function [x (Flat (check (λ (z) (eq? y z))))]
                         [y (Flat (check (λ (z) (eq? x z))))]
                         Integer)

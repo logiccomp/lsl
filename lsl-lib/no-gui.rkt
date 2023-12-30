@@ -384,14 +384,18 @@
 
 (define-syntax ($verify-contract stx)
   (syntax-parse stx
-    [(_ val:expr)
+    [(_ val:id)
      (push-form!
-      (syntax/loc stx (verify-contract (λ () (verify-contract-function val)))))]))
+      (syntax/loc stx
+        (with-default-check-info*
+          (list (make-check-params (list val)))
+          (λ ()
+            (verify-contract 'val (λ () (verify-contract-function val)))))))]))
 
-(define-check (verify-contract thk)
-  (let ([result (with-handlers ([exn? exn-message]) (thk) #f)])
-    (when result
-      (fail-check result))))
+(define-check (verify-contract name thk)
+  (parameterize ([current-verify-name name])
+    (let ([result (with-handlers ([exn? exn-message]) (thk) #f)])
+      (when result (fail-check result)))))
 
 (define-syntax ($check-within stx)
   (syntax-parse stx

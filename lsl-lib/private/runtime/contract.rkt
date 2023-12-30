@@ -9,6 +9,8 @@
          (struct-out negative-blame-struct)
          (struct-out flat-contract-struct)
          (struct-out contract-struct)
+         current-verify-name
+         current-verify-arguments
          contract-generate-function
          contract-symbolic-function
          check-contract-function
@@ -51,6 +53,12 @@
                 get-impersonator-prop:contract)
   (make-impersonator-property 'contract))
 
+(define current-verify-arguments
+  (make-parameter #f))
+
+(define current-verify-name
+  (make-parameter #f))
+
 ;;
 ;; functions
 ;;
@@ -83,7 +91,7 @@
   (string-join
    '("verification failure"
      "expected: ~a"
-     "counterexample: ~v"
+     "counterexample: ~a"
      "blaming: ~a")
    "\n  "))
 
@@ -108,12 +116,12 @@
             (blame-struct-path blm)))
   (custom-error self stx error-msg))
 
-(define (verify-error self blm pre-stx val)
+(define (verify-error self blm pre-stx args)
   (define stx (original-syntax pre-stx))
   (define error-msg
     (format VERIFY-FMT
             (syntax->datum stx)
-            val
+            (cons (current-verify-name) args)
             (blame-struct-path blm)))
   (custom-error self stx error-msg))
 

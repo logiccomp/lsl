@@ -23,7 +23,8 @@
                   verify
                   sat?
                   evaluate
-                  complete-solution)
+                  complete-solution
+                  model)
          racket/bool
          "contract.rkt")
 
@@ -52,8 +53,10 @@
       (when (symbolic? val)
         (define result (verify (assert (predicate val))))
         (when (sat? result)
-          (define counter-eg (evaluate val (complete-solution result (list val))))
-          (verify-error self pos stx counter-eg)))
+          (define counter-args
+            (for/list ([arg (in-list (current-verify-arguments))])
+              (evaluate arg result)))
+          (verify-error self pos stx counter-args)))
       (when (concrete? val)
         (unless (predicate val)
           (contract-error self stx pos val)))
