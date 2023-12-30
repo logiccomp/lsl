@@ -22,9 +22,7 @@
                   assume
                   verify
                   sat?
-                  evaluate
-                  complete-solution
-                  model)
+                  evaluate)
          racket/bool
          "contract.rkt")
 

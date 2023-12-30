@@ -5,6 +5,7 @@
 ;;
 
 (require (for-syntax racket/base
+                     racket/match
                      racket/string
                      racket/syntax
                      racket/list)
@@ -362,8 +363,16 @@
   (define expect-forms null)
 
   (define (push-form! stx)
-    (set! expect-forms (cons stx expect-forms))
-    #'(void)))
+    (match (syntax-local-context)
+      [(or 'module 'module-begin)
+       (set! expect-forms (cons stx expect-forms))
+       #'(void)]
+      [(or 'top-level 'expression (? list?))
+       #`(void
+          (run-tests
+           (test-suite
+            "top-level tests"
+            (test-begin #,stx))))])))
 
 (define-syntax ($check-expect stx)
   (syntax-parse stx
@@ -450,13 +459,15 @@
   (syntax-parser
     [(_)
      #:with (form ...) expect-forms
-     (if (empty? expect-forms)
-         #'(void)
-         #'(void
-            (run-tests
-             (test-suite
-              "unit tests"
-              (test-begin form) ...))))]))
+     (begin0
+       (if (empty? expect-forms)
+           #'(void)
+           #'(void
+              (run-tests
+               (test-suite
+                "module-level tests"
+                (test-begin form) ...))))
+       (set! expect-forms null))]))
 
 (define (always _) #t)
 
