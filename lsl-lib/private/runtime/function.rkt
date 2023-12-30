@@ -10,7 +10,9 @@
 ;; require
 ;;
 
-(require racket/list
+(require (for-syntax racket/base
+                     syntax/parse)
+         racket/list
          racket/string
          "contract.rkt")
 
@@ -41,21 +43,24 @@
       (chaperone-procedure
        val wrapper
        impersonator-prop:contract self)))
-  (define (generated . args)
-    (contract-generate-function (apply cod args)))
+  (define (generate)
+    (define gen
+      (λ/memoize args
+        (contract-generate-function (apply cod args))))
+    (procedure-reduce-arity gen n))
   (define (interact mode val)
     (define ((dom-apply acc k) dom)
       (mode (apply dom acc)))
     (apply val (list-update-many doms dom-order dom-apply))
     (void))
-  (define self
-    (contract-struct
-     stx
-     protect
-     (λ () (procedure-reduce-arity generated n))
-     #false
-     interact))
+  (define self (contract-struct stx protect generate #false interact))
   self)
+
+(define-syntax λ/memoize
+  (syntax-parser
+    [(_ args:id body:expr)
+     #'(let ([table (make-hash)])
+         (λ args (hash-ref! table args (λ () body))))]))
 
 (define (list-update-many xs ks f)
   (for/fold ([acc xs])

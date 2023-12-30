@@ -25,6 +25,9 @@
  10
  #:? integer?
  (run ((contract-generate (-> Integer Integer)) 10))
+ #:t
+ (run (let ([f (contract-generate (-> Integer Integer))])
+        (= (f 0) (f 0))))
  (run/var (-> Integer Integer) f (λ (x) x) (check-contract f))  (void)
  (run/var (-> Integer Integer) f (λ (x) x) (verify-contract f))  (void)
  (run/var (-> Integer Integer Integer) f (λ (x y) x) (check-contract f))  (void)
