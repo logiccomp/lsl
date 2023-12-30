@@ -42,7 +42,7 @@
        val wrapper
        impersonator-prop:contract self)))
   (define (generated . args)
-    ((contract-struct-generate (apply cod args))))
+    (contract-generate-function (apply cod args)))
   (define (interact mode val)
     (define ((dom-apply acc k) dom)
       (mode (apply dom acc)))

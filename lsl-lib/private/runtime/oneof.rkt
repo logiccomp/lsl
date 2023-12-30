@@ -36,7 +36,10 @@
     (for/or ([pred (in-list preds)])
       (pred val)))
   (define (generate)
-    ((random-ref (map contract-struct-generate ctcs))))
+    (define fns
+      (for/list ([ctc (in-list ctcs)])
+        (contract-generate-function ctc #t)))
+    ((random-ref fns)))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

@@ -66,5 +66,5 @@
          (andmap (flat-contract-struct-predicate ctc) l)))
   (define (generate)
     (let ([n (or maybe-n (random 0 100))])
-      (build-list n (λ (_) ((contract-struct-generate ctc))))))
+      (build-list n (λ (_) (contract-generate-function ctc)))))
   (flat-contract stx #f check generate #f))

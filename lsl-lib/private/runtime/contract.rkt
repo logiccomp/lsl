@@ -55,10 +55,10 @@
 ;; functions
 ;;
 
-(define (contract-generate-function ctc)
+(define (contract-generate-function ctc [fn? #f])
   (define generate (contract-struct-generate ctc))
   (if generate
-      (generate)
+      (if fn? generate (generate))
       (generate-error (contract-struct-syntax ctc))))
 
 (define (check-contract-function val n)
@@ -133,7 +133,7 @@
 (define GEN-FMT
   "cannot generate ~a")
 
-(define ((generate-error stx))
+(define (generate-error stx)
   (raise-user-error (format GEN-FMT (syntax->datum stx))))
 
 (define (value->contract val)

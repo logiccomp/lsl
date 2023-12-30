@@ -41,7 +41,7 @@
       (pred val)))
   (define (generate)
     (match-define (cons fst-ctc rst-ctc) ctcs)
-    (define gen (contract-struct-generate fst-ctc))
+    (define gen (contract-generate-function fst-ctc #t))
     (let go ([k ATTEMPTS])
       (cond
         [(zero? k) (error "generator failed")]

@@ -27,7 +27,7 @@
       (define ctc (thk self))
       ((((contract-struct-protect ctc) ctc) val pos) neg)))
   (define (generate)
-    ((contract-struct-generate (thk self))))
+    (contract-generate-function (thk self)))
   (define self
     (flat-contract-struct
      stx

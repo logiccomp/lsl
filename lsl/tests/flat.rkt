@@ -78,4 +78,6 @@
  #:x (run/sexp `(begin ,even-sexp (: x Even) (define x 1) x))
  "expected: Even"
  #:? even?
- (run/sexp `(begin ,even-sexp (contract-generate Even))))
+ (run/sexp `(begin ,even-sexp (contract-generate Even)))
+ #:x (run (contract-generate (Flat (domain Integer) (check even?))))
+ "cannot generate")

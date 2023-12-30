@@ -49,7 +49,7 @@
   (define (generate)
     (define fields
       (for/list ([ctc (in-list ctcs)])
-        ((contract-struct-generate ctc))))
+        (contract-generate-function ctc)))
     (apply make fields))
   (if (andmap flat-contract-struct? ctcs)
       (flat-contract-struct stx protect generate #f #f predicate)
