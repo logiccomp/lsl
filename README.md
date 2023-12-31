@@ -14,14 +14,12 @@
 * error if symbolic not present
 * name for or error reporting
 * restrict names of struct to lowercase kebab case
-* define-contract needs "function" form for abstraction in dependency case
 * counterexample generation for unions doesn't work properly
 * struct should do as many flat contracts as possible early
 * recursive check inside "productive" constructors
 * recursive must be over flat stuff
 * mutual recursion
 * errors (invalid inputs) for check-*
-* recursive should have name too (or not?)
 * lifted is probably quite slow, can do more at compile time?
 * calling static struct info leads to bad error message (rosette doesn't support `#:name` though)
 * generalize List to non-flat elements

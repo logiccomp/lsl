@@ -14,6 +14,11 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
+         mischief/stream
+         racket/bool
+         racket/function
+         racket/list
+         racket/stream
          (only-in rosette/safe
                   concrete?
                   solvable?
@@ -23,14 +28,13 @@
                   verify
                   sat?
                   evaluate)
-         racket/bool
          "contract.rkt")
 
 ;;
 ;; definitions
 ;;
 
-(define (flat-contract stx dom check generate symbolic)
+(define (flat-contract stx dom check generate shrink symbolic)
   (define dom-pred (and dom (flat-contract-struct-predicate dom)))
   (define (predicate x)
     (and (implies dom-pred (dom-pred x))
@@ -42,7 +46,7 @@
     x)
   (define symbolic* (or symbolic (and dom default-symbolic)))
   (define (interact mode val) (void))
-  (define self (flat-contract-struct stx protect generate symbolic* interact predicate))
+  (define self (flat-contract-struct stx protect generate shrink symbolic* interact predicate))
   self)
 
 (define (flat-contract-protect stx predicate)
@@ -72,4 +76,13 @@
     (if (ormap contract-generate-failure? result)
         (contract-generate-failure)
         result))
-  (flat-contract stx #f check generate #f))
+  (define (shrink-length val)
+    (for/stream ([k (in-range (length val))])
+      (append (take val k) (drop val (add1 k)))))
+  (define (shrink-elems val)
+    (stream-zip (map (curry contract-shrink-function ctc) val)))
+  (define (shrink val)
+    (if maybe-n
+        (shrink-elems val)
+        (stream-interleave (shrink-length val) (shrink-elems val))))
+  (flat-contract stx #f check generate shrink #f))

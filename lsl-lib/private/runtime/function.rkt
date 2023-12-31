@@ -58,7 +58,7 @@
     (parameterize ([current-verify-arguments args])
       (apply val args))
     (void))
-  (define self (contract-struct stx protect generate #false interact))
+  (define self (contract-struct stx protect generate #f #f interact))
   self)
 
 (define-syntax λ/memoize

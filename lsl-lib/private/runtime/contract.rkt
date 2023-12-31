@@ -14,6 +14,7 @@
          current-verify-arguments
          contract-generate-function
          contract-symbolic-function
+         contract-shrink-function
          check-contract-function
          verify-contract-function
          contract-error
@@ -32,6 +33,7 @@
 (require racket/string
          racket/list
          racket/match
+         racket/stream
          racket/syntax-srcloc
          errortrace/errortrace-key)
 
@@ -42,7 +44,7 @@
 (struct blame-struct (name path))
 (struct positive-blame-struct blame-struct ())
 (struct negative-blame-struct blame-struct ())
-(struct contract-struct (syntax protect generate symbolic interact))
+(struct contract-struct (syntax protect generate shrink symbolic interact))
 (struct flat-contract-struct contract-struct (predicate))
 (struct contract-generate-failure ())
 
@@ -149,3 +151,8 @@
 (define (value->contract val)
   (and (has-impersonator-prop:contract? val)
        (get-impersonator-prop:contract val)))
+
+(define (contract-shrink-function ctc val)
+  (cond
+    [(contract-struct-shrink ctc) => (λ (f) (f val))]
+    [else empty-stream]))

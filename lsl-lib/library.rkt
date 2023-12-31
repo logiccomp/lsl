@@ -28,6 +28,9 @@
                   symbol?
                   string->symbol
                   build-list)
+         (only-in racket/stream
+                  stream
+                  empty-stream)
          "private/syntax/syntax.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -51,7 +54,8 @@
 (define-contract Integer
   (Flat (check integer?)
         (symbolic (predicate->symbolic integer?))
-        (generate (λ (fuel) (random -100 100)))))
+        (generate (λ (fuel) (random -100 100)))
+        (shrink (λ (val) (if (zero? val) empty-stream (stream (floor (/ val 2))))))))
 
 (define-contract Real
   (Flat (check real?)

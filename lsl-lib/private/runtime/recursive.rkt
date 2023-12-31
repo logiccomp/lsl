@@ -28,11 +28,14 @@
       ((((contract-struct-protect ctc) ctc) val pos) neg)))
   (define (generate fuel)
     (contract-generate-function (thk self) (sub1 fuel)))
+  (define (shrink val)
+    (contract-shrink-function (thk self) val))
   (define self
     (flat-contract-struct
      stx
      protect
      generate
+     shrink
      #false
      #false
      predicate))

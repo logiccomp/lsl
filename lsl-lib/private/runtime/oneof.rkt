@@ -45,12 +45,18 @@
          (if (contract-generate-failure? result)
              (go ctc-rest)
              result)])))
+  (define (shrink val)
+    (for/first ([ctc (in-list ctcs)]
+                [pred (in-list preds)]
+                #:when (pred val))
+      (contract-shrink-function ctc val)))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct
      stx
      protect
      generate
+     shrink
      #f
      #f
      predicate))

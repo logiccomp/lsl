@@ -19,6 +19,7 @@
  domain
  check
  generate
+ shrink
  symbolic
 
  ;; others
@@ -28,6 +29,7 @@
  contract-generate
  contract-symbolic
  contract-predicate
+ contract-shrink
  define-contract-syntax)
 
 ;;
@@ -51,6 +53,7 @@
                      mischief/sort
                      "loc.rkt"
                      "unbound-vars.rkt")
+         racket/stream
          ee-lib/define
          syntax/location
          "../runtime/contract.rkt"
@@ -71,7 +74,7 @@
 
 (define-literal-forms flat-literal
   "literal clause must occur within Flat"
-  (domain check generate symbolic))
+  (domain check generate shrink symbolic))
 
 (define-extensible-syntax contract-syntax)
 
@@ -99,11 +102,13 @@
       [(Flat ~! (~alt (~optional (domain d:expr))
                       (~optional (check c:expr))
                       (~optional (generate g:expr))
+                      (~optional (shrink h:expr))
                       (~optional (symbolic s:expr))) ...)
        #'(Flat #'qstx
                (~? (expand-contract d) #f)
                (~? c #f)
                (~? g #f)
+               (~? h #f)
                (~? s #f))]
       [(List ~! (~optional n:expr #:defaults ([n #'#f])) e:expr)
        #'(List #'qstx n (expand-contract e))]
@@ -187,8 +192,8 @@
     (define/syntax-parse (_ stx) this-stx)
     (syntax-parse #'stx
       #:literal-sets (contract-literal flat-literal)
-      [(Flat q d:ctc c g s)
-       #'(flat-contract q d.compiled c g s)]
+      [(Flat q d:ctc c g h s)
+       #'(flat-contract q d.compiled c g h s)]
       [(List q n:expr e:ctc)
        #'(list-contract q n e.compiled)]
       [(Function q ([x a:ctc] ...) r:ctc)
@@ -305,3 +310,16 @@
     [(_ ctc:expr)
      #'(flat-contract-struct-predicate
         (expand+compile-contract ctc))]))
+
+(define-syntax contract-shrink
+  (syntax-parser
+    [(_ ctc:expr val:expr)
+     #'(contract-shrink-function/error
+        (expand+compile-contract ctc)
+        val)]))
+
+(define (contract-shrink-function/error ctc val)
+  (unless ((flat-contract-struct-predicate ctc) val)
+    (error 'contract-shrink "can only shrink with a flat contract"))
+  (define shrunk-stream (contract-shrink-function ctc val))
+  (if (stream-empty? shrunk-stream) val (stream-first shrunk-stream)))

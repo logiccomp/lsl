@@ -160,6 +160,7 @@
           domain
           check
           generate
+          shrink
           symbolic
 
           (all-from-out "library.rkt")
@@ -168,6 +169,7 @@
           contract-generate
           contract-symbolic
           contract-predicate
+          contract-shrink
           local
 
           (@contract-out

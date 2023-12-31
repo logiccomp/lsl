@@ -21,6 +21,7 @@
                   sat?
                   evaluate
                   complete-solution)
+         mischief/stream
          racket/bool
          racket/match
          racket/list
@@ -49,12 +50,18 @@
                 (for/and ([pred (in-list (rest preds))])
                   (pred v))))
          (if v-good? v (go (sub1 k)))])))
+  (define (shrink val)
+    (define smaller-streams
+      (for/list ([ctc (in-list ctcs)])
+        (contract-shrink-function ctc val)))
+    (apply stream-interleave smaller-streams))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct
      stx
      protect
      generate
+     shrink
      #f
      #f
      predicate))
