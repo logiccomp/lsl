@@ -22,7 +22,7 @@
     (and (string-prefix? str pre)
          (substring str (string-length pre)))))
 
-(provide set-delay-tests!
+(provide with-tests
 
          (filtered-out
           (strip "$")
@@ -363,28 +363,36 @@
 
 (begin-for-syntax
   (define expect-forms null)
-  (define override-top-level #f)
+  (define dont-push? (make-parameter #f))
 
   (define (push-form! stx)
-    (match (syntax-local-context)
-      [(or 'module 'module-begin)
-       (set! expect-forms (cons stx expect-forms))
-       #'(void)]
-      [(or 'top-level 'expression (? list?))
-       (if override-top-level
-           (begin (set! expect-forms (cons stx expect-forms))
-                  #'(void))
+    (define stx* #`(test-begin #,stx))
+    (if (dont-push?)
+        stx*
+        (match (syntax-local-context)
+          [(or 'module 'module-begin)
+           (set! expect-forms (cons stx* expect-forms))
+           #'(void)]
+          [(or 'top-level 'expression (? list?))
            #`(void
               (run-tests
                (test-suite
                 "top-level tests"
-                (test-begin #,stx)))))])))
+                #,stx*)))]))))
 
-(define-syntax set-delay-tests!
+(define-syntax with-tests
   (syntax-parser
-    [(_)
-     (set! override-top-level #t)
-     #'(void)]))
+    [(_ e:expr ...)
+     (parameterize ([dont-push? #t])
+       (local-expand
+        #'(let ([result (void)])
+            (run-tests
+             (test-suite
+              "local tests"
+              (set! result (let () e ...))))
+            result)
+        (syntax-local-context)
+        null))]))
 
 (define-syntax ($check-expect stx)
   (syntax-parse stx
@@ -478,7 +486,7 @@
               (run-tests
                (test-suite
                 "module-level tests"
-                (test-begin form) ...))))
+                form ...))))
        (set! expect-forms null))]))
 
 (define (always _) #t)
