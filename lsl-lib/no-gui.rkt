@@ -22,7 +22,9 @@
     (and (string-prefix? str pre)
          (substring str (string-length pre)))))
 
-(provide (filtered-out
+(provide set-delay-tests!
+
+         (filtered-out
           (strip "$")
           (combine-out $require
                        $define
@@ -361,6 +363,7 @@
 
 (begin-for-syntax
   (define expect-forms null)
+  (define override-top-level #f)
 
   (define (push-form! stx)
     (match (syntax-local-context)
@@ -368,11 +371,20 @@
        (set! expect-forms (cons stx expect-forms))
        #'(void)]
       [(or 'top-level 'expression (? list?))
-       #`(void
-          (run-tests
-           (test-suite
-            "top-level tests"
-            (test-begin #,stx))))])))
+       (if override-top-level
+           (begin (set! expect-forms (cons stx expect-forms))
+                  #'(void))
+           #`(void
+              (run-tests
+               (test-suite
+                "top-level tests"
+                (test-begin #,stx)))))])))
+
+(define-syntax set-delay-tests!
+  (syntax-parser
+    [(_)
+     (set! override-top-level #t)
+     #'(void)]))
 
 (define-syntax ($check-expect stx)
   (syntax-parse stx
