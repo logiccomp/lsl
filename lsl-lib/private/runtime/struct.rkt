@@ -46,11 +46,13 @@
          (for/and ([ctc (in-list ctcs)]
                    [field (in-list (struct->list val))])
            ((flat-contract-struct-predicate ctc) field))))
-  (define (generate)
+  (define (generate fuel)
     (define fields
       (for/list ([ctc (in-list ctcs)])
-        (contract-generate-function ctc)))
-    (apply make fields))
+        (contract-generate-function ctc fuel)))
+    (if (ormap contract-generate-failure? fields)
+        (contract-generate-failure)
+        (apply make fields)))
   (if (andmap flat-contract-struct? ctcs)
       (flat-contract-struct stx protect generate #f #f predicate)
       (contract-struct stx protect generate #f #f)))

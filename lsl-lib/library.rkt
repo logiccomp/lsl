@@ -39,24 +39,24 @@
 (define-contract Boolean
   (Flat (check boolean?)
         (symbolic (predicate->symbolic boolean?))
-        (generate (λ () (< (random) 1/2)))))
+        (generate (λ (fuel) (< (random) 1/2)))))
 
 (define-contract (Constant v)
   (Flat (check (λ (x) (equal? x v)))
         (symbolic v) ;; Questionable decision...
-        (generate (λ () v))))
+        (generate (λ (fuel) v))))
 
 (define-contract True (Constant #t))
 
 (define-contract Integer
   (Flat (check integer?)
         (symbolic (predicate->symbolic integer?))
-        (generate (λ () (random -100 100)))))
+        (generate (λ (fuel) (random -100 100)))))
 
 (define-contract Real
   (Flat (check real?)
         (symbolic (predicate->symbolic real?))
-        (generate (λ () (- (* 200 (random)) 100)))))
+        (generate (λ (fuel) (- (* 200 (random)) 100)))))
 
 (define (natural? n)
   (and (integer? n) (or (positive? n) (zero? n))))
@@ -64,14 +64,14 @@
 (define-contract Natural
   (Flat (check natural?)
         (symbolic (predicate->symbolic natural?))
-        (generate (λ () (random 0 200)))))
+        (generate (λ (fuel) (random 0 200)))))
 
 (define (random-alpha-char)
   (integer->char (random 33 127)))
 
 (define-contract String
   (Flat (check lifted-string?)
-        (generate (λ () (random-string)))))
+        (generate (λ (fuel) (random-string)))))
 
 (define (lifted-string? x)
   (for/all ([x x])
@@ -82,7 +82,7 @@
 
 (define-contract Symbol
   (Flat (check lifted-symbol?)
-        (generate (λ () (string->symbol (random-string))))))
+        (generate (λ (fuel) (string->symbol (random-string))))))
 
 
 (define (lifted-symbol? x)

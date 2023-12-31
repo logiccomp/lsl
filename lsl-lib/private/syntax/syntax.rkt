@@ -283,9 +283,16 @@
 
 (define-syntax contract-generate
   (syntax-parser
-    [(_ ctc:expr)
-     #'(contract-generate-function
-        (expand+compile-contract ctc))]))
+    [(_ ctc:expr (~optional fuel:expr))
+     #'(contract-generate-function/error
+        (expand+compile-contract ctc)
+        (~? fuel))]))
+
+(define (contract-generate-function/error ctc [fuel 5])
+  (define result (contract-generate-function ctc fuel))
+  (if (contract-generate-failure? result)
+      (generate-error (contract-struct-syntax ctc))
+      result))
 
 (define-syntax contract-symbolic
   (syntax-parser

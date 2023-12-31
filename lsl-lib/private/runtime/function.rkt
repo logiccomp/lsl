@@ -43,10 +43,13 @@
       (chaperone-procedure
        val wrapper
        impersonator-prop:contract self)))
-  (define (generate)
+  (define (generate fuel)
     (define gen
       (λ/memoize args
-        (contract-generate-function (apply cod args))))
+        (let ([result (contract-generate-function (apply cod args) fuel)])
+          (when (contract-generate-failure? result)
+            (generate-error stx))
+          result)))
     (procedure-reduce-arity gen n))
   (define (interact mode val)
     (define ((dom-apply acc k) dom)

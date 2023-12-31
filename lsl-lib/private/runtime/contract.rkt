@@ -9,6 +9,7 @@
          (struct-out negative-blame-struct)
          (struct-out flat-contract-struct)
          (struct-out contract-struct)
+         (struct-out contract-generate-failure)
          current-verify-name
          current-verify-arguments
          contract-generate-function
@@ -43,6 +44,7 @@
 (struct negative-blame-struct blame-struct ())
 (struct contract-struct (syntax protect generate symbolic interact))
 (struct flat-contract-struct contract-struct (predicate))
+(struct contract-generate-failure ())
 
 (struct exn:fail:contract exn:fail (srclocs)
   #:property prop:exn:srclocs
@@ -63,11 +65,11 @@
 ;; functions
 ;;
 
-(define (contract-generate-function ctc [fn? #f])
-  (define generate (contract-struct-generate ctc))
-  (if generate
-      (if fn? generate (generate))
-      (generate-error (contract-struct-syntax ctc))))
+(define (contract-generate-function ctc [fuel 5])
+  (define gen (contract-struct-generate ctc))
+  (if (or (zero? fuel) (not gen))
+      (contract-generate-failure)
+      (gen fuel)))
 
 (define (check-contract-function val n)
   (define ctc (value->contract val))

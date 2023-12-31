@@ -73,7 +73,7 @@
         '(define-contract Even
            (Flat (domain Integer)
                  (check even?)
-                 (generate (λ () (* 2 (contract-generate Integer)))))))
+                 (generate (λ (fuel) (* 2 (contract-generate Integer)))))))
  (run/sexp `(begin ,even-sexp (: x Even) (define x 2) x))  2
  #:x (run/sexp `(begin ,even-sexp (: x Even) (define x 1) x))
  "expected: Even"

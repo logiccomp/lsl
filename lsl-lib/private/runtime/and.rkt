@@ -32,25 +32,23 @@
 ;; syntax
 ;;
 
-(define ATTEMPTS 100)
-
 (define (and-contract stx . ctcs)
   (define preds (map flat-contract-struct-predicate ctcs))
   (define (predicate val)
     (for/and ([pred (in-list preds)])
       (pred val)))
-  (define (generate)
+  (define (generate fuel)
     (match-define (cons fst-ctc rst-ctc) ctcs)
-    (define gen (contract-generate-function fst-ctc #t))
-    (let go ([k ATTEMPTS])
+    (let go ([k (* 10 fuel)])
       (cond
-        [(zero? k) (error "generator failed")]
+        [(zero? k) (contract-generate-failure)]
         [else
-         (define v (gen))
-         (define v-satisfies?
-           (for/and ([pred (in-list (rest preds))])
-             (pred v)))
-         (if v-satisfies? v (go (sub1 k)))])))
+         (define v (contract-generate-function fst-ctc fuel))
+         (define v-good?
+           (and (not (contract-generate-failure? v))
+                (for/and ([pred (in-list (rest preds))])
+                  (pred v))))
+         (if v-good? v (go (sub1 k)))])))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

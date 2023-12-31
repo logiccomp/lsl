@@ -22,7 +22,8 @@
                   evaluate
                   complete-solution)
          racket/bool
-         racket/random
+         racket/list
+         racket/match
          "contract.rkt"
          "flat.rkt")
 
@@ -35,11 +36,15 @@
   (define (predicate val)
     (for/or ([pred (in-list preds)])
       (pred val)))
-  (define (generate)
-    (define fns
-      (for/list ([ctc (in-list ctcs)])
-        (contract-generate-function ctc #t)))
-    ((random-ref fns)))
+  (define (generate fuel)
+    (let go ([ctcs (shuffle ctcs)])
+      (match ctcs
+        [(list) (contract-generate-failure)]
+        [(cons ctc ctc-rest)
+         (define result (contract-generate-function ctc fuel))
+         (if (contract-generate-failure? result)
+             (go ctc-rest)
+             result)])))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

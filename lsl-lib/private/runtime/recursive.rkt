@@ -26,8 +26,8 @@
     (λ (neg)
       (define ctc (thk self))
       ((((contract-struct-protect ctc) ctc) val pos) neg)))
-  (define (generate)
-    (contract-generate-function (thk self)))
+  (define (generate fuel)
+    (contract-generate-function (thk self) (sub1 fuel)))
   (define self
     (flat-contract-struct
      stx
