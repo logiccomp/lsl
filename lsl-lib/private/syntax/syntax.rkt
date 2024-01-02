@@ -258,8 +258,8 @@
 (define-syntax annotate
   (syntax-parser
     [(_ name:id ctc:expr)
-     #'(begin-for-syntax
-         (free-id-table-set! contract-table #'name #'ctc))]))
+     (free-id-table-set! contract-table #'name #'ctc)
+     #'(void)]))
 
 (define-syntax define-contract
   (syntax-parser
