@@ -166,7 +166,13 @@
   (and (has-impersonator-prop:contract? val)
        (get-impersonator-prop:contract val)))
 
-(define (contract-shrink-function ctc val)
-  (cond
-    [(contract-struct-shrink ctc) => (λ (f) (f val))]
-    [else val]))
+(define (contract-shrink-function ctc val [attempts 10])
+  (define shrinker (contract-struct-shrink ctc))
+  (if shrinker
+      (let go ([attempts attempts])
+        (define val* (shrinker val))
+        (cond
+          [(zero? attempts) val*]
+          [(equal? val val*) (go (sub1 attempts))]
+          [else val*]))
+      val))

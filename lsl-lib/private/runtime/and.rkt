@@ -55,7 +55,9 @@
         [(list) val]
         [(cons ctc ctcs-rest)
          (define val* (contract-shrink-function ctc val))
-         (if (predicate val*) val (go ctcs-rest))])))
+         (if (and (predicate val*) (not (equal? val val*)))
+             val*
+             (go ctcs-rest))])))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

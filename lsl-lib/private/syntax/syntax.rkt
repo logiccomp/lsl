@@ -312,7 +312,8 @@
 
 (define-syntax contract-shrink
   (syntax-parser
-    [(_ ctc:expr val:expr)
+    [(_ ctc:expr val:expr (~optional attempts:expr))
      #'(contract-shrink-function
         (expand+compile-contract ctc)
-        val)]))
+        val
+        (~? attempts))]))

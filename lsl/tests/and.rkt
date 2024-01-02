@@ -8,7 +8,8 @@
 (chk
  (run/var (And Integer (Flat (check positive?))) x 10 x)  10
  #:? (and/c integer? positive?)
- (run (contract-generate (And Integer (Flat (check positive?))))))
+ (run (contract-generate (And Integer (Flat (check positive?)))))
+ (run (contract-shrink (And (Flat (check positive?)) Integer) 10))  5)
 
 ;; failure
 (chk

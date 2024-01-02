@@ -73,11 +73,13 @@
         '(define-contract Even
            (Flat (domain Integer)
                  (check even?)
+                 (shrink (λ (val) (floor (/ val 2))))
                  (generate (λ (fuel) (* 2 (contract-generate Integer)))))))
  (run/sexp `(begin ,even-sexp (: x Even) (define x 2) x))  2
  #:x (run/sexp `(begin ,even-sexp (: x Even) (define x 1) x))
  "expected: Even"
  #:? even?
  (run/sexp `(begin ,even-sexp (contract-generate Even)))
+ (run/sexp `(begin ,even-sexp (contract-shrink Even 6)))  3
  #:x (run (contract-generate (Flat (domain Integer) (check even?))))
  "cannot generate")

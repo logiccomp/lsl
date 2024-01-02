@@ -13,7 +13,11 @@
 
  #:? integer?
  (run (define-struct foo (x))
-      (foo-x (contract-generate (Foo Integer)))))
+      (foo-x (contract-generate (Foo Integer))))
+
+ (run (define-struct foo (x))
+      (foo-x (contract-shrink (Foo Integer) (make-foo 10))))
+ 5)
 
 ;; failure
 (chk
