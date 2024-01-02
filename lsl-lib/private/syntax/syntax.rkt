@@ -314,12 +314,11 @@
 (define-syntax contract-shrink
   (syntax-parser
     [(_ ctc:expr val:expr)
-     #'(contract-shrink-function/error
+     #'(contract-maybe-shrink-function
         (expand+compile-contract ctc)
         val)]))
 
 (define (contract-shrink-function/error ctc val)
   (unless ((flat-contract-struct-predicate ctc) val)
     (error 'contract-shrink "can only shrink with a flat contract"))
-  (define shrunk-stream (contract-shrink-function ctc val))
-  (if (stream-empty? shrunk-stream) val (stream-first shrunk-stream)))
+  (contract-maybe-shrink-function ctc val))

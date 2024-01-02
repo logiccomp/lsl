@@ -10,11 +10,13 @@
          (struct-out flat-contract-struct)
          (struct-out contract-struct)
          (struct-out contract-generate-failure)
+         (struct-out exn:fail:contract)
          current-verify-name
          current-verify-arguments
          contract-generate-function
          contract-symbolic-function
          contract-shrink-function
+         contract-maybe-shrink-function
          check-contract-function
          verify-contract-function
          contract-error
@@ -32,6 +34,7 @@
 
 (require racket/string
          racket/list
+         racket/random
          racket/match
          racket/stream
          racket/syntax-srcloc
@@ -107,17 +110,30 @@
      "blaming: ~a")
    "\n  "))
 
+(define EXERCISE-FMT
+  (string-join
+   '("~a: contract violation"
+     "expected: ~a"
+     "given: ~v"
+     "counterexample: ~a"
+     "blaming: ~a")
+   "\n  "))
+
 (define (original-syntax stx)
   (or (syntax-property stx 'original) stx))
 
 (define (contract-error self pre-stx blm val)
   (define stx (original-syntax pre-stx))
+  (define fmt-args
+    (append (list (blame-struct-name blm) (syntax->datum stx) val)
+            (cond
+              [(current-verify-arguments) => (λ (args) (list (cons (current-verify-name) args)))]
+              [else null])
+            (list (blame-struct-path blm))))
   (define error-msg
-    (format CTC-FMT
-            (blame-struct-name blm)
-            (syntax->datum stx)
-            val
-            (blame-struct-path blm)))
+    (apply format
+           (if (current-verify-arguments) EXERCISE-FMT CTC-FMT)
+           fmt-args))
   (custom-error self stx error-msg))
 
 (define (verify-error self blm pre-stx args)
@@ -156,3 +172,11 @@
   (cond
     [(contract-struct-shrink ctc) => (λ (f) (f val))]
     [else empty-stream]))
+
+(define (contract-maybe-shrink-function ctc val)
+  (define shrink (contract-struct-shrink ctc))
+  (if shrink
+      (match (shrink val)
+        [(? stream-empty?) val]
+        [st (stream-first st)])
+      val))

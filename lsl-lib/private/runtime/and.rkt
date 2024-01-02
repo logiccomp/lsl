@@ -25,6 +25,7 @@
          racket/bool
          racket/match
          racket/list
+         racket/stream
          racket/random
          "contract.rkt"
          "flat.rkt")
@@ -54,7 +55,7 @@
     (define smaller-streams
       (for/list ([ctc (in-list ctcs)])
         (contract-shrink-function ctc val)))
-    (apply stream-interleave smaller-streams))
+    (stream-filter predicate (apply stream-interleave smaller-streams)))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

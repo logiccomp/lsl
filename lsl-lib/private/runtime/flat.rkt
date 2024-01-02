@@ -80,7 +80,9 @@
     (for/stream ([k (in-range (length val))])
       (append (take val k) (drop val (add1 k)))))
   (define (shrink-elems val)
-    (stream-zip (map (curry contract-shrink-function ctc) val)))
+    (if (empty? val)
+        empty-stream
+        (apply stream-zip (map (curry contract-shrink-function ctc) val))))
   (define (shrink val)
     (if maybe-n
         (shrink-elems val)
