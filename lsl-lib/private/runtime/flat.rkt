@@ -14,11 +14,9 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         mischief/stream
          racket/bool
          racket/function
          racket/list
-         racket/stream
          (only-in rosette/safe
                   concrete?
                   solvable?
@@ -77,14 +75,15 @@
         (contract-generate-failure)
         result))
   (define (shrink-length val)
-    (for/stream ([k (in-range (length val))])
-      (append (take val k) (drop val (add1 k)))))
+    (define k (random (length val)))
+    (append (take val k) (drop val (add1 k))))
   (define (shrink-elems val)
-    (if (empty? val)
-        empty-stream
-        (apply stream-zip (map (curry contract-shrink-function ctc) val))))
+    (map (curry contract-shrink-function ctc) val))
   (define (shrink val)
-    (if maybe-n
-        (shrink-elems val)
-        (stream-interleave (shrink-length val) (shrink-elems val))))
+    (cond
+      [maybe-n (shrink-length val)]
+      [(empty? val) (shrink-elems val)]
+      [else (if (< (random) 1/2)
+                (shrink-length val)
+                (shrink-elems val))]))
   (flat-contract stx #f check generate shrink #f))

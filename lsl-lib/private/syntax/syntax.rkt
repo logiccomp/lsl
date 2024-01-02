@@ -53,7 +53,6 @@
                      mischief/sort
                      "loc.rkt"
                      "unbound-vars.rkt")
-         racket/stream
          ee-lib/define
          syntax/location
          "../runtime/contract.rkt"
@@ -314,11 +313,6 @@
 (define-syntax contract-shrink
   (syntax-parser
     [(_ ctc:expr val:expr)
-     #'(contract-maybe-shrink-function
+     #'(contract-shrink-function
         (expand+compile-contract ctc)
         val)]))
-
-(define (contract-shrink-function/error ctc val)
-  (unless ((flat-contract-struct-predicate ctc) val)
-    (error 'contract-shrink "can only shrink with a flat contract"))
-  (contract-maybe-shrink-function ctc val))

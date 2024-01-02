@@ -20,6 +20,8 @@
 ;; function
 ;;
 
+(define MAX-ATTEMPTS 10)
+
 (define (function-contract stx dom-order doms cod)
   (define n (length doms))
   (define ((protect self) val pos)
@@ -51,27 +53,35 @@
             (generate-error stx))
           result)))
     (procedure-reduce-arity gen n))
-  (define (interact mode val)
+  (define (interact mode val [shrink? #t])
     (define ((dom-apply acc k) dom)
       (mode (apply dom acc)))
     (define init-args (list-update-many doms dom-order dom-apply))
     (define (shrink-args args)
       (define ((shrink-apply acc k) dom)
-        (contract-maybe-shrink-function (apply dom acc) (list-ref args k)))
+        (contract-shrink-function (apply dom acc) (list-ref args k)))
       (list-update-many doms dom-order shrink-apply))
-    (define best-args
-      (let go ([args init-args])
-        (define failed?
-          (with-handlers ([exn:fail:contract? (λ _ #t)])
-            (apply val args)
-            #f))
-        (if failed?
-            (let ([next-args (shrink-args args)])
-              (if (equal? next-args args) args (go next-args)))
-            args)))
-    (parameterize ([current-verify-arguments best-args])
-      (apply val best-args))
-    (void))
+    (define (fails? args)
+      (parameterize ([current-verify-arguments args])
+        (with-handlers ([exn:fail:contract? (λ _ #t)])
+          (apply val args)
+          #f)))
+    (cond
+      [(fails? init-args)
+       (define best-args
+         (if shrink?
+             (let go ([args init-args])
+               (define args*
+                 (for*/first ([fuel (in-range MAX-ATTEMPTS)]
+                              [shrink-args (in-value (shrink-args args))]
+                              #:when (not (equal? shrink-args args))
+                              #:when (fails? shrink-args))
+                   shrink-args))
+               (if args* (go args*) args))
+             init-args))
+       (parameterize ([current-verify-arguments best-args])
+         (apply val best-args))]
+      [else (void)]))
   (define self (contract-struct stx protect generate #f #f interact))
   self)
 

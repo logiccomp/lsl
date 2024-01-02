@@ -21,11 +21,9 @@
                   sat?
                   evaluate
                   complete-solution)
-         mischief/stream
          racket/bool
          racket/match
          racket/list
-         racket/stream
          racket/random
          "contract.rkt"
          "flat.rkt")
@@ -52,10 +50,12 @@
                   (pred v))))
          (if v-good? v (go (sub1 k)))])))
   (define (shrink val)
-    (define smaller-streams
-      (for/list ([ctc (in-list ctcs)])
-        (contract-shrink-function ctc val)))
-    (stream-filter predicate (apply stream-interleave smaller-streams)))
+    (let go ([ctcs ctcs])
+      (match ctcs
+        [(list) val]
+        [(cons ctc ctcs-rest)
+         (define val* (contract-shrink-function ctc val))
+         (if (predicate val*) val (go ctcs-rest))])))
   (define protect (flat-contract-protect stx predicate))
   (define self
     (flat-contract-struct

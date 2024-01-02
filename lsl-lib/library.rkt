@@ -55,7 +55,7 @@
   (Flat (check integer?)
         (symbolic (predicate->symbolic integer?))
         (generate (λ (fuel) (random -100 100)))
-        (shrink (λ (val) (if (zero? val) empty-stream (stream (floor (/ val 2))))))))
+        (shrink (λ (val) (if (zero? val) 0 (floor (/ val 2)))))))
 
 (define-contract Real
   (Flat (check real?)

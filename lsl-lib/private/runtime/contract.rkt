@@ -16,7 +16,6 @@
          contract-generate-function
          contract-symbolic-function
          contract-shrink-function
-         contract-maybe-shrink-function
          check-contract-function
          verify-contract-function
          contract-error
@@ -36,7 +35,6 @@
          racket/list
          racket/random
          racket/match
-         racket/stream
          racket/syntax-srcloc
          errortrace/errortrace-key)
 
@@ -92,7 +90,7 @@
 (define (verify-contract-function val)
   (define ctc (value->contract val))
   (define mode contract-symbolic-function)
-  (when ctc ((contract-struct-interact ctc) mode val)))
+  (when ctc ((contract-struct-interact ctc) mode val #f)))
 
 (define VERIFY-FMT
   (string-join
@@ -171,12 +169,4 @@
 (define (contract-shrink-function ctc val)
   (cond
     [(contract-struct-shrink ctc) => (λ (f) (f val))]
-    [else empty-stream]))
-
-(define (contract-maybe-shrink-function ctc val)
-  (define shrink (contract-struct-shrink ctc))
-  (if shrink
-      (match (shrink val)
-        [(? stream-empty?) val]
-        [st (stream-first st)])
-      val))
+    [else val]))

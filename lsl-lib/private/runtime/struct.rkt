@@ -21,9 +21,7 @@
                   sat?
                   evaluate
                   complete-solution)
-         mischief/stream
          racket/bool
-         racket/stream
          racket/struct
          "contract.rkt"
          "flat.rkt")
@@ -56,12 +54,11 @@
         (contract-generate-failure)
         (apply make fields)))
   (define (shrink val)
-    (define field-streams
+    (define fields
       (for/list ([ctc (in-list ctcs)]
                  [field (in-list (struct->list val))])
         (contract-shrink-function ctc field)))
-    (stream-map (λ (fields) (apply make fields))
-                (stream-zip field-streams)))
+    (apply make fields))
   (if (andmap flat-contract-struct? ctcs)
       (flat-contract-struct stx protect generate shrink #f #f predicate)
       (contract-struct stx protect generate shrink #f #f)))
