@@ -8,7 +8,8 @@
                      racket/match
                      racket/string
                      racket/syntax
-                     racket/list)
+                     racket/list
+                     syntax/parse/class/struct-id)
          racket/provide
          racket/list
          racket/local
@@ -52,6 +53,7 @@
                        $check-range
                        $check-satisfied
                        $check-error
+                       $check-raises
                        $run-tests
 
                        $empty
@@ -481,6 +483,18 @@
       (syntax/loc stx
         (let ([v msg.c])
           (check-exn (matches? v) (λ () body)))))]))
+
+(define-syntax ($check-raises stx)
+  (syntax-parse stx
+    [(_ body:expr)
+     (push-form!
+      (syntax/loc stx (check-exn exn:fail:user? (λ () body))))]
+    [(_ body:expr exn:struct-id)
+     (push-form!
+      (syntax/loc stx
+        (check-exn (λ (e) (and (exn:fail:user? e) (exn.predicate-id (exn:fail:user-value e))))
+                   (λ () body))))]))
+
 
 (define-syntax $run-tests
   (syntax-parser
