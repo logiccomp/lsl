@@ -6,19 +6,21 @@
 ;; success
 (chk
  (run/var (-> Integer Integer) f (λ (x) x) (f 10))  10
- (run/var (Function [x Integer]
-                    [y (Flat (check (λ (z) (eq? x z))))]
-                    Integer)
+ (run/var (Function (arguments [x Integer]
+                               [y (Flat (check (λ (z) (eq? x z))))])
+                    (result Integer))
           f
           (λ (x y) (+ x y))
           (f 10 10))
  20
- (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
+ (run/var (Function (arguments [x Integer])
+                    (result (Flat (check (λ (y) (eq? x y))))))
           f
           (λ (x) x)
           (f 10))
  10
- (run/var (Function [x Integer] (λ (y) (eq? x y)))
+ (run/var (Function (arguments [x Integer])
+                    (result (λ (y) (eq? x y))))
           f
           (λ (x) x)
           (f 10))
@@ -43,6 +45,15 @@
         (member? (letter-grade n) (list "A" "B" "C")))
 
       (verify-contract letter-grade-prop))
+ (void)
+
+ (run (define-struct bad ())
+      (: f (Function (arguments [_ (OneOf Boolean Integer)])
+                     (result Integer)
+                     (raises bad)))
+      (define (f e)
+        (if (integer? e) e (raise (make-bad))))
+      (check-contract f))
  (void))
 
 ;; failure
@@ -51,7 +62,8 @@
  "expected: Boolean"
  #:x (run/var (-> Integer Boolean) f (λ (x) x) (check-contract f))
  "expected: Boolean"
- #:x (run/var (Function [x Integer] (Flat (check (λ (y) (eq? x y)))))
+ #:x (run/var (Function (arguments [x Integer])
+                        (result (Flat (check (λ (y) (eq? x y))))))
               f
               (λ (x) (+ x 1))
               (f 10))
@@ -77,9 +89,17 @@
           (verify-contract bad-mult-prop))
  "counterexample: (bad-mult-prop 10417.0"
 
- #:x (run/var (Function [x (Flat (check (λ (z) (eq? y z))))]
-                        [y (Flat (check (λ (z) (eq? x z))))]
-                        Integer)
+ #:x (run (define-struct bad ())
+          (: f (Function (arguments [_ (OneOf Boolean Integer)])
+                         (result Integer)))
+          (define (f e)
+            (if (integer? e) e (raise (make-bad))))
+          (check-contract f 20))
+ "exception raised: (bad)"
+
+ #:x (run/var (Function (arguments [x (Flat (check (λ (z) (eq? y z))))]
+                                   [y (Flat (check (λ (z) (eq? x z))))])
+                        (result Integer))
               f
               (λ (x y) (+ x y))
               (f 10 20))

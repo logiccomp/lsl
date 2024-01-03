@@ -11,6 +11,7 @@
          (struct-out contract-struct)
          (struct-out contract-generate-failure)
          (struct-out exn:fail:contract)
+         (struct-out exn:fail:user)
          current-verify-name
          current-verify-arguments
          contract-generate-function
@@ -48,6 +49,8 @@
 (struct contract-struct (syntax protect generate shrink symbolic interact))
 (struct flat-contract-struct contract-struct (predicate))
 (struct contract-generate-failure ())
+
+(struct exn:fail:user exn:fail (value))
 
 (struct exn:fail:contract exn:fail (srclocs)
   #:property prop:exn:srclocs

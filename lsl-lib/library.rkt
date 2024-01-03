@@ -88,7 +88,6 @@
   (Flat (check lifted-symbol?)
         (generate (λ (fuel) (string->symbol (random-string))))))
 
-
 (define (lifted-symbol? x)
   (for/all ([x x])
     (symbol? x)))
@@ -99,7 +98,9 @@
   (λ (stx)
     (syntax-parse stx
       [(_ d:expr ... c:expr)
-       (syntax-property #'(Function [_ d] ... c) 'original stx)])))
+       (syntax-property #'(Function (arguments [_ d] ...)
+                                    (result c))
+                        'original stx)])))
 
 (define-contract-syntax Record
   (syntax-parser

@@ -12,6 +12,8 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
+         (only-in racket/contract or/c)
+         racket/function
          racket/list
          racket/string
          "contract.rkt")
@@ -22,7 +24,7 @@
 
 (define MAX-ATTEMPTS 10)
 
-(define (function-contract stx dom-order doms cod)
+(define (function-contract stx dom-order doms cod exns)
   (define n (length doms))
   (define ((protect self) val pos)
     (unless (procedure? val)
@@ -63,7 +65,9 @@
       (list-update-many doms dom-order shrink-apply))
     (define (fails? args)
       (parameterize ([current-verify-arguments args])
-        (with-handlers ([exn:fail:contract? (λ _ #t)])
+        (with-handlers ([exn:fail:contract? (λ _ #t)]
+                        [exn:fail:user?
+                         (λ (e) (not ((apply or/c exns) (exn:fail:user-value e))))])
           (apply val args)
           #f)))
     (cond
@@ -80,7 +84,11 @@
                (if args* (go args*) args))
              init-args))
        (parameterize ([current-verify-arguments best-args])
-         (apply val best-args))]
+         (with-handlers ([(λ (e)
+                            (and (exn:fail:user? e)
+                                 ((apply or/c exns) (exn:fail:user-value e))))
+                          (λ _ (void))])
+           (apply val best-args)))]
       [else (void)]))
   (define self (contract-struct stx protect generate #f #f interact))
   self)

@@ -56,6 +56,7 @@
 
                        $empty
 
+                       $raise
                        $error
 
                        $#%module-begin))
@@ -162,6 +163,10 @@
           generate
           shrink
           symbolic
+
+          arguments
+          result
+          raises
 
           (all-from-out "library.rkt")
           (rename-out [annotate :])
@@ -507,6 +512,11 @@
 
 (define (next mach x)
   (mach x))
+
+(define ($raise v)
+  (raise (exn:fail:user (format "exception raised: ~v" v)
+                        (current-continuation-marks)
+                        v)))
 
 (define-syntax $error
   (syntax-parser

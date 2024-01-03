@@ -22,6 +22,11 @@
  shrink
  symbolic
 
+ ;; function literals
+ arguments
+ result
+ raises
+
  ;; others
  $define
  annotate
@@ -75,6 +80,10 @@
   "literal clause must occur within Flat"
   (domain check generate shrink symbolic))
 
+(define-literal-forms function-literal
+  "literal clause must occur within Function"
+  (arguments result raises))
+
 (define-extensible-syntax contract-syntax)
 
 (begin-for-syntax
@@ -97,7 +106,7 @@
     (define/syntax-parse qstx
       (or (syntax-property #'stx 'original) #'stx))
     (syntax-parse #'stx
-      #:literal-sets (contract-literal flat-literal)
+      #:literal-sets (contract-literal flat-literal function-literal)
       [(Flat ~! (~alt (~optional (domain d:expr))
                       (~optional (check c:expr))
                       (~optional (generate g:expr))
@@ -111,12 +120,17 @@
                (~? s #f))]
       [(List ~! (~optional n:expr #:defaults ([n #'#f])) e:expr)
        #'(List #'qstx n (expand-contract e))]
-      [(Function ~! [x:id a:expr] ... r:expr)
+      [(Function ~! (~alt (~optional (arguments [x:id a:expr] ...))
+                          (~once (result r:expr))
+                          (~optional (raises exn:struct-id ...))) ...)
        #:fail-when
        (check-duplicate-identifier
-        (filter non-wildcard? (syntax-e #'(x ...))))
+        (filter non-wildcard? (syntax-e #'(~? (x ...) ()))))
        "duplicate identifier"
-       #'(Function #'qstx ([x (expand-contract a)] ...) (expand-contract r))]
+       #'(Function #'qstx
+                   (~? ([x (expand-contract a)] ...) ())
+                   (expand-contract r)
+                   (~? (exn ...) ()))]
       [(OneOf ~! e:expr ...+)
        #'(OneOf #'qstx (expand-contract e) ...)]
       [(And ~! e:expr ...+)
@@ -141,8 +155,8 @@
       [(~or head:id (head:id e:expr ...))
        #:when (contract-syntax-rep? (lookup #'head))
        #:do [(define (get stx) (contract-syntax-transform (lookup #'head) stx))]
-       #:with result (apply-as-transformer get #'head 'expression #'stx)
-       #'(expand-contract result)]
+       #:with res (apply-as-transformer get #'head 'expression #'stx)
+       #'(expand-contract res)]
       [e:expr
        #'(expand-contract (Flat (check e)))]))
 
@@ -195,12 +209,12 @@
        #'(flat-contract q d.compiled c g h s)]
       [(List q n:expr e:ctc)
        #'(list-contract q n e.compiled)]
-      [(Function q ([x a:ctc] ...) r:ctc)
+      [(Function q ([x a:ctc] ...) r:ctc (exn:struct-id ...))
        #:with (a* ...) #'((expand-racket (λ* (x ...) a.compiled)) ...)
        #:with (y ...) #'((unbound-racket a*) ...)
        #:with (k ...) (sort-indices #'stx #'(x ...) #'(y ...))
        #:with r* #'(λ* (x ...) r.compiled)
-       #'(function-contract q (list (#%datum . k) ...) (list a* ...) r*)]
+       #'(function-contract q (list (#%datum . k) ...) (list a* ...) r* (list exn.predicate-id ...))]
       [(OneOf q e:ctc ...)
        #'(oneof-contract q e.compiled.c ...)]
       [(And q e:ctc ...)
