@@ -150,74 +150,75 @@
                        ^ormap
                        ^procedure?
                        ^sort))
-          #%app
-          #%top-interaction
+         #%app
+         #%top
+         #%top-interaction
 
-          Flat
-          List
-          Function
-          OneOf
-          And
-          Struct
+         Flat
+         List
+         Function
+         OneOf
+         And
+         Struct
 
-          domain
-          check
-          generate
-          shrink
-          symbolic
+         domain
+         check
+         generate
+         shrink
+         symbolic
 
-          arguments
-          result
-          raises
+         arguments
+         result
+         raises
 
-          (all-from-out "library.rkt")
-          (rename-out [annotate :])
-          define-contract
-          contract-generate
-          contract-symbolic
-          contract-predicate
-          contract-shrink
-          local
+         (all-from-out "library.rkt")
+         (rename-out [annotate :])
+         define-contract
+         contract-generate
+         contract-symbolic
+         contract-predicate
+         contract-shrink
+         local
 
-          (@contract-out
-           [rename $boolean=? boolean=? (@-> ^boolean? ^boolean? ^boolean?)]
-           [next (@-> machine? @any/c machine?)]
-           [rename equal? string=? (@-> string? string? boolean?)])
+         (@contract-out
+          [rename $boolean=? boolean=? (@-> ^boolean? ^boolean? ^boolean?)]
+          [next (@-> machine? @any/c machine?)]
+          [rename equal? string=? (@-> string? string? boolean?)])
 
-          (lift-out
-           sqrt
-           expt
+         (lift-out
+          sqrt
+          expt
 
-           random
+          random
 
-           string-length
-           string-append
-           format
-           ;implode
-           ;int->string
-           list->string
-           make-string
-           ;replicate
-           string
-           ;string->int
-           string->list
-           string->number
-           string->symbol
-           ;string-alphabetic?
-           ;string-contains-ci?
-           string-contains?
-           string-copy
-           string-downcase
-           ;string-ith
-           #;string-length
-           ;string-lower-case?
-           ;string-numeric?
-           string-ref
-           string-upcase
-           ;string-upper-case?
-           ;string-whitespace?
-           string?
-           substring))
+          string-length
+          string-append
+          format
+          ;implode
+          ;int->string
+          list->string
+          make-string
+          ;replicate
+          string
+          ;string->int
+          string->list
+          string->number
+          string->symbol
+          ;string-alphabetic?
+          ;string-contains-ci?
+          string-contains?
+          string-copy
+          string-downcase
+          ;string-ith
+          #;string-length
+          ;string-lower-case?
+          ;string-numeric?
+          string-ref
+          string-upcase
+          ;string-upper-case?
+          ;string-whitespace?
+          string?
+          substring))
 
 ;;
 ;; require
