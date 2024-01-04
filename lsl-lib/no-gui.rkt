@@ -1,7 +1,7 @@
 #lang racket/base
 
 ;;
-;; provide
+;; require
 ;;
 
 (require (for-syntax racket/base
@@ -37,13 +37,17 @@
          "private/syntax/lifting.rkt"
          "private/syntax/syntax.rkt")
 
+;;
+;; provide
+;;
+
+
 (begin-for-syntax
   (define ((strip pre) str)
     (and (string-prefix? str pre)
          (substring str (string-length pre)))))
 
 (provide with-tests
-
          (filtered-out
           (strip "$")
           (combine-out $require
@@ -239,10 +243,6 @@
           string?
           substring))
 
-;;
-;; require
-;;
-
 (^current-solver (z3 #:path (find-executable-path "z3")))
 
 ;;
@@ -374,6 +374,8 @@
       (hash 'timestamp 0 'version VERSION)))
 
 (define (put-version-cache val)
+  (unless (file-exists? cache-path)
+    (make-parent-directory* cache-path))
   (write-to-file val cache-path #:exists 'replace))
 
 ;;
