@@ -287,6 +287,7 @@
          (define-contract-syntax Name (struct-contract-macro #'name))
          (^struct name (field ...)
                   #:transparent
+                  #:mutable
                   #:constructor-name ctor))]))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
