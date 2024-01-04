@@ -44,7 +44,7 @@
           (define proj (contract-struct-protect ctc))
           (((proj ctc) res pos) neg))
         (apply values (cons results-wrapper args*)))
-      (chaperone-procedure
+      (impersonate-procedure
        val wrapper
        impersonator-prop:contract self)))
   (define (generate fuel)
