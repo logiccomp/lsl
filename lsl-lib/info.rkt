@@ -12,6 +12,7 @@
 
 (define deps
   '("automata-lib"
+    "http-easy-lib"
     "plot-gui-lib"
     "plot-lib"
     "rackunit-lib"

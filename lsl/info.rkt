@@ -18,7 +18,11 @@
   '("lsl-lib"))
 
 (define build-deps
-  '("chk-lib"
+  '("automata-doc"
+    "compatibility-doc"
+    "htdp-doc"
+    "htdp-lib"
+    "chk-lib"
     "racket-doc"
     "sandbox-lib"
     "scribble-lib"))

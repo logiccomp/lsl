@@ -5,18 +5,37 @@
 ;;
 
 (require (for-syntax racket/base
+                     racket/list
                      racket/match
                      racket/string
                      racket/syntax
-                     racket/list
-                     syntax/parse/class/struct-id)
-         racket/provide
+                     syntax/parse
+                     syntax/parse/class/struct-id
+                     threading)
+         automata/machine
+         json
+         net/http-easy
+         (prefix-in @ racket/contract)
+         racket/file
          racket/list
          racket/local
-         (prefix-in @ racket/contract)
-         (except-in rackunit check)
+         racket/provide
+         racket/runtime-path
+         racket/string
+         (except-in rackunit
+                    check)
          rackunit/text-ui
-         "private/syntax/lifting.rkt")
+         (prefix-in ^ rosette/safe)
+         rosette/solver/smt/z3
+         syntax/parse/define
+         (for-space contract-space "private/syntax/syntax.rkt")
+         version/utils
+         "library.rkt"
+         "private/runtime/contract.rkt"
+         "private/runtime/flat.rkt"
+         "private/runtime/function.rkt"
+         "private/syntax/lifting.rkt"
+         "private/syntax/syntax.rkt")
 
 (begin-for-syntax
   (define ((strip pre) str)
@@ -224,21 +243,6 @@
 ;; require
 ;;
 
-(require (for-syntax racket/base
-                     syntax/parse
-                     threading)
-         (prefix-in ^ rosette/safe)
-         (for-space contract-space "private/syntax/syntax.rkt")
-         automata/machine
-         rosette/solver/smt/z3
-         racket/string
-         syntax/parse/define
-         "library.rkt"
-         "private/syntax/syntax.rkt"
-         "private/runtime/contract.rkt"
-         "private/runtime/flat.rkt"
-         "private/runtime/function.rkt")
-
 (^current-solver (z3 #:path (find-executable-path "z3")))
 
 ;;
@@ -256,7 +260,7 @@
 (define-syntax $#%module-begin
   (syntax-parser
     [(_ form:expr ...)
-     #'(#%module-begin form ... ($run-tests))]))
+     #'(#%module-begin (check-version) form ... ($run-tests))]))
 
 (begin-for-syntax
   (define (struct-name->contract-name stx)
@@ -328,6 +332,49 @@
   (syntax-parser
     [(_ . (~or e:number e:boolean e:string e:character))
      #'(^#%datum . e)]))
+
+;;
+;; version
+;;
+
+(define-runtime-path HERE ".")
+(define VERSION
+  (with-input-from-file (build-path HERE "version.json")
+    (λ () (hash-ref (read-json) 'version))))
+(define VERSION-URL
+  "https://raw.githubusercontent.com/logiccomp/lsl/main/lsl-lib/version.json")
+
+(define VERSION-FMT "A new version (~a) of LSL is available. Please upgrade and restart DrRacket.\n")
+(define CACHE-EXPIRE (* 60 60))
+(define cache-path (build-path (find-system-path 'cache-dir) "lsl.rktd"))
+
+(define (check-version)
+  (define last-checked (hash-ref (get-version-cache) 'timestamp))
+  (define check-delta (- (current-seconds) last-checked))
+  (when (>= check-delta CACHE-EXPIRE)
+    (update-cache))
+  (define latest-version (hash-ref (get-version-cache) 'version))
+  (when (version<? VERSION latest-version)
+    (printf VERSION-FMT latest-version)))
+
+(define (update-cache)
+  (put-version-cache
+   (hash-set (get-version-cache) 'timestamp (current-seconds)))
+  (define res (get VERSION-URL))
+  (define latest-version
+    (when (= (response-status-code res) 200)
+      (hash-ref (response-json res) 'version)))
+  (response-close! res)
+  (put-version-cache
+   (hash-set (get-version-cache) 'version latest-version)))
+
+(define (get-version-cache)
+  (if (file-exists? cache-path)
+      (file->value cache-path)
+      (hash 'timestamp 0 'version VERSION)))
+
+(define (put-version-cache val)
+  (write-to-file val cache-path #:exists 'replace))
 
 ;;
 ;; math
