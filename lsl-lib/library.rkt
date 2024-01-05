@@ -3,7 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide Boolean
+(provide Any
+         Boolean
          Constant
          True
          Integer
@@ -38,6 +39,9 @@
 
 (define ((predicate->symbolic predicate))
   (define-symbolic* x predicate) x)
+
+(define-contract Any
+  (Flat (check (λ _ #t))))
 
 (define-contract Boolean
   (Flat (check boolean?)

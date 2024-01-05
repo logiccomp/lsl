@@ -9,6 +9,8 @@
                      racket/match
                      racket/string
                      racket/syntax
+                     racket/sequence
+                     syntax/struct
                      syntax/parse
                      syntax/parse/class/struct-id
                      threading)
@@ -33,6 +35,7 @@
          "library.rkt"
          "private/runtime/contract.rkt"
          "private/runtime/flat.rkt"
+         "private/runtime/struct.rkt"
          "private/runtime/function.rkt"
          "private/syntax/lifting.rkt"
          "private/syntax/syntax.rkt")
@@ -282,13 +285,41 @@
   (syntax-parser
     [(_ name:id (field:id ...))
      #:with Name (struct-name->contract-name #'name)
-     #:with ctor (format-id #'name "make-~a" #'name)
+     #:with (k ...)
+     (for/list ([k (in-naturals)] [field-id (in-syntax #'(field ...))])
+       #`(#%datum . #,k))
+     #:with (_ ctor pred acc ...)
+     (build-struct-names #'name (syntax-e #'(field ...)) #f #t)
+     #:with (_ _ _ mut ...)
+     (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
      #'(begin
          (define-contract-syntax Name (struct-contract-macro #'name))
-         (^struct name (field ...)
+         (^struct name root-struct (field ...)
                   #:transparent
                   #:mutable
-                  #:constructor-name ctor))]))
+                  #:constructor-name ctor)
+         (set! pred (redirect-pred pred))
+         (set! acc (redirect-accessor acc k)) ...
+         (set! mut (redirect-mutator mut k)) ...)]))
+
+(define ((redirect-pred pred) val)
+  (pred (unproxy-struct val)))
+
+(define (redirect-accessor acc k)
+  (define (recur val)
+    (if (proxy-struct? val)
+        ((vector-ref (proxy-struct-protects val) k)
+         (recur (proxy-struct-target val)))
+        (acc val)))
+  recur)
+
+(define (redirect-mutator mut k)
+  (define (recur val to-set)
+    (if (proxy-struct? val)
+        (recur (proxy-struct-target val)
+               ((vector-ref (proxy-struct-protects val) k) to-set))
+        (mut val to-set)))
+  recur)
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
   (^lambda (param ...) body))
