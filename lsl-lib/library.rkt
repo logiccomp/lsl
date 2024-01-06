@@ -128,3 +128,39 @@
                 ((contract-predicate #,ctc) tr))))))
       'original
       ctc)]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; list
+
+(define-contract (List N X)
+  (Flat (check (list-check N X))
+        (generate (list-generate N X))
+        (shrink (list-shrink N X))))
+
+(define ((list-check n x) l)
+  (and (list? l)
+       (implies maybe-n (= (length l) maybe-n))
+       (andmap (flat-contract-struct-predicate ctc) l)))
+
+(define ((list-generate n x) fuel)
+  (define result
+    (let ([n (or maybe-n (random 0 (* 10 fuel)))])
+      (build-list n (λ (_) (contract-generate-function ctc fuel)))))
+  (if (ormap contract-generate-failure? result)
+      (contract-generate-failure)
+      result))
+
+(define ((list-shrink n x) val)
+  (cond
+    [maybe-n (list-shrink-length val)]
+    [(empty? val) (list-shrink-elems val)]
+    [else (if (< (random) 1/2)
+              (list-shrink-length val)
+              (list-shrink-elems val))]))
+
+(define (list-shrink-length val)
+  (define k (random (length val)))
+  (append (take val k) (drop val (add1 k))))
+
+(define (list-shrink-elems val)
+  (map (curry contract-shrink-function ctc) val))

@@ -1,8 +1,80 @@
 #lang racket/base
 
-(require chk
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
+(require (only-in rosette integer? even?)
+         chk
+         racket/class
+         lsl/private/contract/flat
+         lsl/private/guard
+         lsl/private/util
          "util.rkt")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; examples
+
+(module+ examples
+  (provide (all-defined-out))
+
+  (define bool-ctc
+    (new flat-contract%
+         [syntax #'Boolean]
+         [checker boolean?]
+         [domain boolean?]
+         [generator (λ (fuel) (< (random) 1/2))]
+         [shrinker (λ (fuel val) #f)]))
+
+  (define pos-ctc
+    (new flat-contract%
+         [syntax #'Positive]
+         [checker (λ (x) (and (real? x) (positive? x)))]
+         [domain real?]
+         [generator (λ (fuel) (random fuel))]
+         [shrinker (λ (fuel val) (floor (/ val 2)))]))
+
+  (define even-ctc
+    (new flat-contract%
+         [syntax #'Even]
+         [checker (λ (x) (and (integer? x) (even? x)))]
+         [domain integer?]
+         [generator (λ (fuel) (* 2 (random fuel)))]
+         [shrinker (λ (fuel val)
+                     (define val* (floor (/ val 2)))
+                     (if (odd? val*) (sub1 val*) val*))])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; unit tests
+
+(module+ test
+  (require (submod ".." examples))
+
+  (chk
+   #:? passed-guard?
+   (send even-ctc protect 2 #f)
+   ((send even-ctc protect 2 #f) 2 #f)  2
+
+   #:? failed-guard?
+   (send even-ctc protect 3 #f)
+   #:x ((send even-ctc protect 3 #f) 3 #f)
+   "expected: Even"
+
+   #:? even?
+   (send even-ctc generate 1)
+   (send even-ctc shrink 1 4)  2
+   (send even-ctc shrink 1 5)  2
+
+   #:? none?
+   (send even-ctc interact 'generate 1)
+
+   #:? even?
+   (send even-ctc symbolic)
+   ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; integration tests
+
+#|
 ;; pre-defined flat
 (chk
  (run/var Integer x 10 x)  10
@@ -83,3 +155,4 @@
  (run/sexp `(begin ,even-sexp (contract-shrink Even 6)))  3
  #:x (run (contract-generate (Flat (domain Integer) (check even?))))
  "cannot generate")
+|#

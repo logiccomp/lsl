@@ -15,7 +15,7 @@
 @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 @;; utils
 
-@(define evaluator (make-base-eval '(require lsl)))
+@(define evaluator (make-base-eval #:lang 'lsl))
 
 @(define (select ids)
    (let* ([ids (sort ids symbol<?)]
@@ -30,23 +30,6 @@
 @author{Daniel Patterson}
 
 @defmodule[lsl #:lang]
-
-@examples[#:eval evaluator #:lang
-lsl
-
-(define-struct node (left value right))
-
-(define-contract IntTree
-  (OneOf Integer (Node IntTree Integer IntTree)))
-
-(: sum (-> IntTree Integer))
-(define (sum x)
-  (cond
-    [(integer? x) x]
-    [else (+ (sum (node-left x)) (node-value x) (sum (node-right x)))]))]
-
-@examples[#:eval evaluator
-  (sum (make-node 1 2 3))]
 
 @section{Inherited from ISL}
 
@@ -65,7 +48,8 @@ lsl
 @(define ho (select '(identity andmap apply argmax argmin compose filter foldl foldr for-each map memf ormap
                       procedure? sort)))
 
-@tabular[#:style 'boxed #:column-properties '(top)
+@tabular[#:style (style #f (list (attributes '((class . "boxed") (style . "border-spacing: 10px 5px")))))
+         #:column-properties '(top)
 (list (list @elem{Syntax} @stx)
       (list @elem{Testing} @test)
       (list @elem{Equality} @eqn)

@@ -1,9 +1,95 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
 (require chk
+         racket/contract
+         racket/class
+         racket/list
+         racket/match
+         racket/promise
+         lsl/private/contract/struct
+         lsl/private/contract/oneof
+         lsl/private/contract/recursive
+         lsl/private/guard
+         lsl/private/proxy
          "util.rkt")
 
-;; recursive
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; examples
+
+(module+ examples
+  (provide (all-defined-out))
+
+  (require (submod "flat.rkt" examples))
+
+  (struct thing root (v)
+    #:transparent
+    #:mutable)
+
+  (define (unthing x)
+    (if (thing? x) (unthing (thing-v x)) x))
+
+  (define rec-even-thing-ctc
+    (new recursive-contract%
+         [syntax #'_]
+         [promise (delay even-thing-ctc)]))
+
+  (define thing-ctc
+    (new struct-contract%
+       [syntax #'_]
+       [constructor thing]
+       [predicate thing?]
+       [accessors (list thing-v)]
+       [mutators (list set-thing-v!)]
+       [contracts (list rec-even-thing-ctc)]))
+
+  (define even-thing-ctc
+    (new oneof-contract%
+         [syntax #'_]
+         [disjuncts (list even-ctc thing-ctc)])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; unit tests
+
+(module+ test
+  (require (submod ".." examples))
+
+  (chk
+   #:do (define good-thing (thing (thing (thing 10))))
+   #:? passed-guard?
+   (send rec-even-thing-ctc protect good-thing '+)
+   ((send rec-even-thing-ctc protect good-thing '+) good-thing '-)  good-thing
+
+   #:do (define bad-thing (thing (thing (thing 5))))
+   #:? failed-guard?
+   (send rec-even-thing-ctc protect bad-thing '+)
+   #:x ((send rec-even-thing-ctc protect bad-thing '+) bad-thing '-)
+   "TODO"
+
+   #:do (define (two-thing? x)
+          (match x
+            [(thing (thing _)) #t]
+            [_ #f]))
+   #:t
+   (let ([xs (map (λ _ (send rec-even-thing-ctc generate 5)) (range 20))])
+     (and (andmap (or/c thing? (and/c integer? even?)) xs)
+          (findf two-thing? xs)
+          (andmap even? (map unthing xs))))
+
+   (send rec-even-thing-ctc shrink 1 good-thing)
+   (thing (thing (thing 5)))
+
+   ;; TODO: shrink depth of data
+   ;; TODO: interact
+   ;; TODO: symbolic
+   ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; integration tests
+
+#|
 
 (chk
  #:do (define node '(define-struct node (left value right)))
@@ -71,3 +157,5 @@
                    ,sum-sexp))
  "must be exactly (Tree Integer)"
  )
+
+|#

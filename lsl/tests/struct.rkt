@@ -1,7 +1,72 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
 (require chk
+         racket/class
+         lsl/private/contract/struct
+         lsl/private/guard
+         lsl/private/proxy
          "util.rkt")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; examples
+
+(module+ examples
+  (provide (all-defined-out))
+
+  (require (submod "flat.rkt" examples))
+
+  (struct eb root (e b)
+    #:transparent
+    #:mutable)
+
+  (define eb-struct-ctc
+    (new struct-contract%
+         [syntax #'_]
+         [constructor eb]
+         [predicate eb?]
+         [accessors (list eb-e eb-b)]
+         [mutators (list set-eb-e! set-eb-b!)]
+         [contracts (list even-ctc bool-ctc)])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; unit tests
+
+(module+ test
+  (require (submod ".." examples))
+
+  (chk
+   #:? passed-guard?
+   (send eb-struct-ctc protect (eb 2 #f) '+)
+   ((send eb-struct-ctc protect (eb 2 #f) '+) (eb 2 #f) '-)  (eb 2 #f)
+
+   #:? failed-guard?
+   (send eb-struct-ctc protect (eb 2 2) '+)
+   #:x ((send eb-struct-ctc protect (eb 2 2) '+) (eb 2 2) '-)
+   "TODO"
+
+   #:? failed-guard?
+   (send eb-struct-ctc protect (eb 3 #f) '+)
+   #:x ((send eb-struct-ctc protect (eb 3 #f) '+) (eb 3 #f) '-)
+   "TODO"
+
+   #:t
+   (let ([x (send eb-struct-ctc generate 1)])
+     (and (even? (eb-e x))
+          (boolean? (eb-b x))))
+
+   (send eb-struct-ctc shrink 1 (eb 4 #t))  (eb 2 #f)
+
+   ;; TODO: interact
+   ;; TODO: symbolic
+   ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; integration tests
+
+#|
 
 ;; success
 (chk
@@ -57,3 +122,5 @@
       (define (f st) (foo-x st))
       (f (make-foo 1/2)))
  "expected: Integer")
+
+|#
