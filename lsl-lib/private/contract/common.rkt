@@ -17,7 +17,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (struct-out exn:user)
+(provide (struct-out exn:root)
+         (struct-out exn:user)
          (struct-out exn:contract)
          (struct-out blame)
          (struct-out positive-blame)
@@ -30,9 +31,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exceptions
 
-(struct exn:user exn (value))
-
-(struct exn:contract exn (srclocs vc)
+(struct exn:root exn (vc))
+(struct exn:user exn:root (value))
+(struct exn:contract exn:root (srclocs)
   #:property prop:exn:srclocs
   (λ (self) (exn:contract-srclocs self)))
 
@@ -102,8 +103,7 @@
     (match (continuation-mark-set->list cms errortrace-key)
       [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
       [_ null]))
-  (displayln "raising")
-  (raise (exn:contract msg cms (append stx-srclocs cm-srclocs) (vc))))
+  (raise (exn:contract msg cms (vc) (append stx-srclocs cm-srclocs))))
 
 (define BLM-CTC-FMT
   (string-join

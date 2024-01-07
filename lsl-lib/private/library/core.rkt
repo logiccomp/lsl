@@ -19,6 +19,7 @@
          syntax/parse/define
          version/utils
          "test.rkt"
+         "../contract/common.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -48,6 +49,7 @@
    $if
    $and
    $or
+   $raise
 
    $define-struct)))
 
@@ -116,6 +118,11 @@
 
 (define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
   (^or arg0 arg ...))
+
+(define ($raise v)
+  (raise (exn:user (format "exception raised: ~v" v)
+                   (current-continuation-marks)
+                   (^vc) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; structs

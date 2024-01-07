@@ -10,6 +10,7 @@
                      syntax/parse/class/struct-id)
          racket/class
          racket/contract
+         racket/match
          racket/provide
          racket/string
          rackunit
@@ -30,7 +31,7 @@
    $check-error
    $check-expect
    $check-member-of
-   ;; TODO: $check-random
+   $check-random
    $check-range
    $check-satisfied
    $check-within
@@ -115,6 +116,24 @@
      (push-form!
       (syntax/loc stx (check-true ($member actual (list expecteds ...)))))]))
 
+(define-syntax ($check-random stx)
+  (syntax-parse stx
+    [(_ actual expected)
+     (push-form!
+      (syntax/loc stx
+        (let ([rng-vec (make-rng-vec)])
+          (check-equal? (with-rng-vec rng-vec actual)
+                        (with-rng-vec rng-vec expected)))))]))
+
+(define (make-rng-vec)
+  (pseudo-random-generator->vector
+   (make-pseudo-random-generator)))
+
+(define-syntax-rule (with-rng-vec rng-vec e)
+  (parameterize ([current-pseudo-random-generator
+                  (vector->pseudo-random-generator rng-vec)])
+    e))
+
 (define-syntax ($check-range stx)
   (syntax-parse stx
     [(_ actual low high)
@@ -194,13 +213,21 @@
 
 (define (check-or-verify-contract val name mode)
   (define ctc (and (proxy? val) (proxy-contract val)))
-  (when ctc
-    (define countereg (send ctc interact val name mode))
-    (unless (none? countereg)
-      (error name VERIFY-FMT countereg))))
+  (if ctc
+      (match (send ctc interact val name mode)
+        [(list eg exn)
+         (error name VERIFY-FMT eg (indent (exn-message exn)))]
+        [(none)
+         (error name "failed to generate values associated with contract")])
+      (error name "no associated contract")))
+
+(define (indent str)
+  (string-replace str "\n" "\n    "))
 
 (define VERIFY-FMT
   (string-join
    '("verification failure"
-     "counterexample: ~a")
+     "counterexample: ~a"
+     "error:"
+     "~a")
    "\n  "))

@@ -19,7 +19,6 @@
          (struct-out none)
          λ/memoize
          repeat/fuel
-         repeat/fix
          lift-out)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,10 +44,6 @@
     [else
      (define x (f))
      (if (none? x) (repeat/fuel f (sub1 fuel)) x)]))
-
-(define (repeat/fix f x)
-  (define x* (f x))
-  (if (equal? x x*) x (repeat/fix f x*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax
