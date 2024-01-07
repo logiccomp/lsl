@@ -1,11 +1,16 @@
 #lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
+(require racket/match)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
 (provide (struct-out root)
-         (struct-out proc)
          (struct-out proxy)
+         (struct-out proc)
          unproxy)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,10 +27,7 @@
    (define (hash2-proc self recur)
      (recur (unproxy self)))])
 
-(struct proc root (target)
-  #:property prop:procedure 0)
-
-(struct proxy root (target contract)
+(struct proxy root (target info contract)
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (define recur
@@ -34,6 +36,12 @@
          [(#f) display]
          [else (λ (p port) (print p port mode))]))
      (recur (unproxy self) port))])
+
+(struct proc proxy ()
+  #:property prop:procedure
+  (λ (self . args)
+    (match-define (proxy target wrapper _) self)
+    (apply wrapper args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions

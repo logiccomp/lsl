@@ -32,7 +32,7 @@
       (or (exactly-one? val)
           (failed-guard
            (λ (val neg)
-             (flat-error this syntax exactly-one? val pos)))))
+             (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
       (for/fold ([val (none)])

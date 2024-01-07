@@ -2,7 +2,8 @@
 
 (provide run
          run/sexp
-         run/var)
+         run/var
+         syntax/unexpanded)
 
 (require racket/port
          racket/string)
@@ -30,3 +31,6 @@
   (if (string-contains? output "FAILURE")
       (error output)
       result))
+
+(define-syntax-rule (syntax/unexpanded tmpl)
+  (syntax-property #'tmpl 'unexpanded #'tmpl))

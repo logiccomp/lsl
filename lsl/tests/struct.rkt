@@ -24,7 +24,7 @@
 
   (define eb-struct-ctc
     (new struct-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded (Thing Even Boolean))]
          [constructor eb]
          [predicate eb?]
          [accessors (list eb-e eb-b)]
@@ -45,12 +45,12 @@
    #:? failed-guard?
    (send eb-struct-ctc protect (eb 2 2) '+)
    #:x ((send eb-struct-ctc protect (eb 2 2) '+) (eb 2 2) '-)
-   "TODO"
+   "expected: Boolean"
 
    #:? failed-guard?
    (send eb-struct-ctc protect (eb 3 #f) '+)
    #:x ((send eb-struct-ctc protect (eb 3 #f) '+) (eb 3 #f) '-)
-   "TODO"
+   "expected: Even"
 
    #:t
    (let ([x (send eb-struct-ctc generate 1)])

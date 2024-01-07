@@ -19,7 +19,7 @@
 
   (define bool-ctc
     (new flat-contract%
-         [syntax #'Boolean]
+         [syntax (syntax/unexpanded Boolean)]
          [checker boolean?]
          [domain boolean?]
          [generator (λ (fuel) (< (random) 1/2))]
@@ -27,7 +27,7 @@
 
   (define pos-ctc
     (new flat-contract%
-         [syntax #'Positive]
+         [syntax (syntax/unexpanded Positive)]
          [checker (λ (x) (and (real? x) (positive? x)))]
          [domain real?]
          [generator (λ (fuel) (random fuel))]
@@ -35,7 +35,7 @@
 
   (define even-ctc
     (new flat-contract%
-         [syntax #'Even]
+         [syntax (syntax/unexpanded Even)]
          [checker (λ (x) (and (integer? x) (even? x)))]
          [domain integer?]
          [generator (λ (fuel) (* 2 (random fuel)))]

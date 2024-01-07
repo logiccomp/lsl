@@ -5,9 +5,7 @@
 
 (require racket/class
          racket/match
-         (only-in rosette/safe
-                  define-symbolic*
-                  assume)
+         (prefix-in ^ rosette/safe)
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -22,7 +20,7 @@
 
 (define flat-contract%
   (class contract%
-    (init-field syntax checker [domain #f] [generator #f] [shrinker #f])
+    (init-field syntax checker [generator #f] [shrinker #f] [symbol #f])
 
     (super-new)
 
@@ -40,13 +38,8 @@
     (define/override (shrink fuel val)
       (if shrinker (shrinker fuel val) (none)))
 
-    (define/override (interact mode val)
+    (define/override (interact val name mode)
       (none))
 
     (define/override (symbolic)
-      (cond
-        [domain
-         (define-symbolic* val domain)
-         (assume (checker val))
-         val]
-        [else (none)]))))
+      (if symbol (symbol) (none)))))

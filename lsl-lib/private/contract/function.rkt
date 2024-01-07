@@ -4,8 +4,10 @@
 ;; require
 
 (require racket/class
+         racket/format
          racket/list
-         racket/unsafe/ops
+         racket/string
+         (prefix-in ^ rosette/safe)
          "common.rkt"
          "../guard.rkt"
          "../proxy.rkt"
@@ -28,13 +30,12 @@
     (define arity (length domains))
 
     (define/override (protect val pos)
-      (define (procedure-valid? val)
-        (and (procedure? val)
-             (procedure-arity-includes? val arity)))
-      (if (procedure-valid? val)
+      (define val-proc? (procedure? val))
+      (define val-arity? (and val-proc? (procedure-arity-includes? val arity)))
+      (if val-arity?
           (passed-guard
            (λ (val neg)
-             (define (wrapper . args)
+             (define (info . args)
                (define ((dom-apply acc k) arg)
                  (define make-dom (list-ref domains k))
                  (define guard (send (apply make-dom acc) protect arg pos))
@@ -43,12 +44,14 @@
                (define result (apply val args*))
                (define guard (send (apply codomain args*) protect result pos))
                (guard result neg))
-             ;; TODO: Should be `(proxy val this)` with contract checks
-             ;; moved into elimination form (same as for structs)
-             (proxy (unsafe-impersonate-procedure val wrapper) this)))
+             (proc val info this)))
           (failed-guard
            (λ (val neg)
-             (contract-error this syntax val pos)))))
+             (if val-proc?
+                 (contract-error this syntax val pos
+                                 #:expected (format ARITY-FMT arity)
+                                 #:given (format ARITY-FMT (procedure-arity val)))
+                 (contract-error this syntax val pos))))))
 
     (define/override (generate fuel)
       (define generated
@@ -59,12 +62,13 @@
             result)))
       (procedure-reduce-arity generated arity))
 
-    (define/override (interact mode val)
+    (define/override (interact val name mode)
       (define ((dom-apply acc k) dom)
         (mode (apply dom acc)))
       (define args (list-update-many domains domain-order dom-apply))
-      (if (fails? args)
-          (repeat/fix shrink* args)
+      (if (fails? val args)
+          (let ([args (repeat/fix shrink* args)])
+            (format "(~a ~a)" name (string-join (map ~v args))))
           (none)))
 
     (define (fails? val args)
@@ -80,8 +84,12 @@
 
     (define (shrink* args)
       (define ((shrink-apply acc k) dom)
-        (send (apply dom acc) shrink (list-ref args k)))
+        (send (apply dom acc) shrink SHRINK-FUEL (list-ref args k)))
       (list-update-many domains domain-order shrink-apply))))
+
+(define SHRINK-FUEL 10)
+
+(define ARITY-FMT "~a-arity function")
 
 (define (list-update-many xs ks f)
   (for/fold ([acc xs])
@@ -92,8 +100,6 @@
 ;; TODO
 
 #|
-
-* Restore arity error.
 
 * Generated value should be protected to ensure clients can't misuse it.
 

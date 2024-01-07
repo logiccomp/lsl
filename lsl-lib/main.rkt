@@ -1,44 +1,56 @@
 #lang racket/base
 
-;;
-;; provide
-;;
-
-(provide (all-from-out "no-gui.rkt")
-         (all-from-out automata/machine)
-         (all-from-out automata/dfa)
-         (all-from-out automata/re)
-         (all-from-out automata/re-ext)
-         visualize
-         ticks)
-
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
-;;
 
-(require (only-in automata/machine
-                  [machine-accepting? accepting?]
-                  [machine-accepts? accepts?])
-         (only-in automata/dfa
-                  [dfa state-machine])
-         (only-in automata/re
-                  [re regular-expression]
-                  complement
-                  seq
-                  union
-                  star
-                  epsilon)
-         (only-in automata/re-ext
-                  [seq/close seq-prefix])
+(require (for-syntax racket/base
+                     syntax/parse)
+         (prefix-in ^ rosette/safe)
          racket/lazy-require
-         "no-gui.rkt")
+         racket/provide
+         "private/syntax/grammar.rkt"
+         "private/syntax/interface.rkt"
+         "private/library/automata.rkt"
+         "private/library/boolean.rkt"
+         "private/library/contract.rkt"
+         "private/library/core.rkt"
+         "private/library/equal.rkt"
+         "private/library/function.rkt"
+         "private/library/list.rkt"
+         "private/library/number.rkt"
+         "private/library/string.rkt"
+         "private/library/test.rkt")
 
 (lazy-require
- ["gui.rkt" (visualize ticks)])
+ ["private/library/performance.rkt" (ticks visualize)])
 
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
+
+(provide
+ define-contract
+ (rename-out
+  [define-protected define]
+  [declare-contract :])
+
+ (all-from-out
+  "private/syntax/grammar.rkt"
+  "private/library/automata.rkt"
+  "private/library/boolean.rkt"
+  "private/library/contract.rkt"
+  "private/library/core.rkt"
+  "private/library/equal.rkt"
+  "private/library/function.rkt"
+  "private/library/list.rkt"
+  "private/library/number.rkt"
+  "private/library/string.rkt"
+  "private/library/test.rkt")
+
+ ticks
+ visualize)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; reader
-;;
 
 (module reader syntax/module-reader
   #:language 'lsl

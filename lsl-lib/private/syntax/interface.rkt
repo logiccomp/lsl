@@ -18,9 +18,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide $define
-         $:
-         $define-contract)
+(provide define-protected
+         declare-contract
+         define-contract)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; phase-1 definitions
@@ -39,7 +39,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(define-syntax $define
+(define-syntax define-protected
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
      #:with ?new-body ((attribute ?head.make-body) #'?body)
@@ -57,24 +57,23 @@
                    [val ?new-body])
               ((send ctc protect val pos) val neg))))]))
 
-(define-syntax $:
+(define-syntax declare-contract
   (syntax-parser
     [(_ name:id ctc:expr)
      (free-id-table-set! contract-table #'name #'ctc)
      #'(void)]))
 
-;; TODO: restore recursive
-(define-syntax $define-contract
+(define-syntax define-contract
   (syntax-parser
     [(_ name:id ctc:expr)
      #'(define-contract-syntax name
          (syntax-parser
            [_:id
             (syntax/loc #'ctc
-              ctc #;(Recursive name ctc))]))]
+              (Recursive name ctc))]))]
     [(_ (name:id param:id ...) ctc:expr)
      #'(define-contract-syntax name
          (syntax-parser
            [(_:id param ...)
             (syntax/loc #'ctc
-              ctc #;(Recursive (name param ...) ctc))]))]))
+              (Recursive (name param ...) ctc))]))]))

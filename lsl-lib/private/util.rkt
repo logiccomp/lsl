@@ -4,15 +4,23 @@
 ;; require
 
 (require (for-syntax racket/base
-                     syntax/parse))
+                     racket/string
+                     racket/provide-transform
+                     syntax/parse
+                     syntax/stx)
+         (only-in rosette/safe
+                  for/all)
+         racket/match)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (struct-out none)
+(provide (for-syntax strip)
+         (struct-out none)
          λ/memoize
          repeat/fuel
-         repeat/fix)
+         repeat/fix
+         lift-out)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -41,3 +49,33 @@
 (define (repeat/fix f x)
   (define x* (f x))
   (if (equal? x x*) x (repeat/fix f x*)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; syntax
+
+(begin-for-syntax
+  (define ((strip pre) str)
+    (and (string-prefix? str pre)
+         (substring str (string-length pre)))))
+
+(define-syntax lift-out
+  (make-provide-pre-transformer
+   (λ (stx modes)
+     (syntax-parse stx
+       [(_ f ...)
+        #:with (wrapped-f ...)
+        (stx-map
+         syntax-local-lift-expression
+         #'((wrap-lift f) ...))
+        (pre-expand-export
+         #'(rename-out [wrapped-f f] ...)
+         modes)]))))
+
+(define (wrap-lift f)
+  (λ args
+    (let go ([acc null] [args args])
+      (match args
+        [(list) (apply f (reverse acc))]
+        [(cons x xt)
+         (for/all ([x x #:exhaustive])
+           (go (cons x acc) xt))]))))

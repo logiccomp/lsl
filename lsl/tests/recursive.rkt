@@ -33,12 +33,12 @@
 
   (define rec-even-thing-ctc
     (new recursive-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded (Recursive (X) (OneOf Even (Thing X))))]
          [promise (delay even-thing-ctc)]))
 
   (define thing-ctc
     (new struct-contract%
-       [syntax #'_]
+       [syntax (syntax/unexpanded (Thing X))]
        [constructor thing]
        [predicate thing?]
        [accessors (list thing-v)]
@@ -47,7 +47,7 @@
 
   (define even-thing-ctc
     (new oneof-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded (OneOf Even (Thing X)))]
          [disjuncts (list even-ctc thing-ctc)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -66,7 +66,7 @@
    #:? failed-guard?
    (send rec-even-thing-ctc protect bad-thing '+)
    #:x ((send rec-even-thing-ctc protect bad-thing '+) bad-thing '-)
-   "TODO"
+   "expected: (OneOf Even (Thing X))"
 
    #:do (define (two-thing? x)
           (match x

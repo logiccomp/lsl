@@ -244,7 +244,6 @@
           ;string-upper-case?
           ;string-whitespace?
           string?
-          string<?
           substring))
 
 (^current-solver (z3 #:path (find-executable-path "z3")))

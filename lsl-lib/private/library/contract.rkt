@@ -1,21 +1,6 @@
 #lang rosette/safe
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; provide
-
-(provide Any
-         Boolean
-         Constant
-         True
-         Integer
-         Real
-         Natural
-         String
-         Symbol
-         Record
-         ->)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require (for-syntax racket/base
@@ -32,7 +17,24 @@
          (only-in racket/stream
                   stream
                   empty-stream)
-         "private/syntax/syntax.rkt")
+         "../syntax/expand.rkt"
+         "../syntax/grammar.rkt"
+         "../syntax/interface.rkt")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
+
+(provide Any
+         Boolean
+         Constant
+         True
+         Integer
+         Real
+         Natural
+         String
+         Symbol
+         Record
+         ->)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; atomic
@@ -50,7 +52,7 @@
 
 (define-contract (Constant v)
   (Flat (check (λ (x) (equal? x v)))
-        (symbolic v) ;; Questionable decision...
+        (symbolic v)
         (generate (λ (fuel) v))))
 
 (define-contract True (Constant #t))
@@ -59,7 +61,7 @@
   (Flat (check integer?)
         (symbolic (predicate->symbolic integer?))
         (generate (λ (fuel) (random -100 100)))
-        (shrink (λ (val) (if (zero? val) 0 (floor (/ val 2)))))))
+        (shrink (λ (fuel val) (if (zero? val) 0 (floor (/ val 2)))))))
 
 (define-contract Real
   (Flat (check real?)
@@ -97,14 +99,17 @@
     (symbol? x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; arrow
 
 (define-contract-syntax ->
   (λ (stx)
     (syntax-parse stx
       [(_ d:expr ... c:expr)
-       (syntax-property #'(Function (arguments [_ d] ...)
-                                    (result c))
-                        'original stx)])))
+       #'(Function (arguments [_ d] ...)
+                   (result c))])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; record
 
 (define-contract-syntax Record
   (syntax-parser
@@ -112,55 +117,16 @@
      #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'tr))
-     (syntax-property
-      (if (attribute folder)
-          (quasisyntax/loc ctc
-            (Flat
-             (check
-              (λ (val)
-                (set! tr (folder tr val))
-                ((contract-predicate #,ctc) tr)))))
-          (quasisyntax/loc ctc
-            (Flat
-             (check
-              (λ (val)
-                (set! tr (append tr (list val)))
-                ((contract-predicate #,ctc) tr))))))
-      'original
-      ctc)]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; list
-
-(define-contract (List N X)
-  (Flat (check (list-check N X))
-        (generate (list-generate N X))
-        (shrink (list-shrink N X))))
-
-(define ((list-check n x) l)
-  (and (list? l)
-       (implies maybe-n (= (length l) maybe-n))
-       (andmap (flat-contract-struct-predicate ctc) l)))
-
-(define ((list-generate n x) fuel)
-  (define result
-    (let ([n (or maybe-n (random 0 (* 10 fuel)))])
-      (build-list n (λ (_) (contract-generate-function ctc fuel)))))
-  (if (ormap contract-generate-failure? result)
-      (contract-generate-failure)
-      result))
-
-(define ((list-shrink n x) val)
-  (cond
-    [maybe-n (list-shrink-length val)]
-    [(empty? val) (list-shrink-elems val)]
-    [else (if (< (random) 1/2)
-              (list-shrink-length val)
-              (list-shrink-elems val))]))
-
-(define (list-shrink-length val)
-  (define k (random (length val)))
-  (append (take val k) (drop val (add1 k))))
-
-(define (list-shrink-elems val)
-  (map (curry contract-shrink-function ctc) val))
+     (if (attribute folder)
+         (quasisyntax/loc ctc
+           (Flat
+            (check
+             (λ (val)
+               (set! tr (folder tr val))
+               ((contract->predicate #,ctc) tr)))))
+         (quasisyntax/loc ctc
+           (Flat
+            (check
+             (λ (val)
+               (set! tr (append tr (list val)))
+               ((contract->predicate #,ctc) tr))))))]))

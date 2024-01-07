@@ -3,17 +3,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require #;(only-in rosette/safe
-                  concrete?
-                  symbolic?
-                  assert
-                  verify
-                  evaluate)
-         racket/class
+(require racket/class
+         racket/format
          racket/match
          racket/string
          racket/syntax-srcloc
          errortrace/errortrace-key
+         "../guard.rkt"
          "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,6 +21,7 @@
          (struct-out positive-blame)
          (struct-out negative-blame)
          contract%
+         contract->predicate
          contract-error
          generate-error)
 
@@ -60,7 +57,7 @@
     (define/public (shrink fuel val)
       (none))
 
-    (define/public (interact mode val)
+    (define/public (interact val name mode)
       (unimplemented-error 'interact))
 
     (define/public (symbolic)
@@ -69,43 +66,29 @@
 (define (unimplemented-error method-name)
   (error 'contract "TODO"))
 
+(define ((contract->predicate ctc) val)
+  (passed-guard? (send ctc protect val #f)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; errors
 
-(define (contract-error ctc stx val blm)
-  (define datum (syntax->datum (syntax-property stx 'unexpanded)))
+(define (contract-error ctc stx val blm
+                        #:expected [expected #f]
+                        #:given [given #f])
+  (define expected-datum
+    (or expected (syntax->datum (syntax-property stx 'unexpanded))))
+  (define given-str
+    (or given (~v val)))
   (define error-msg
     (match blm
       [(blame name path)
        (define polarity (blame->polarity blm))
-       (format BLM-CTC-FMT name datum val path polarity)]
-      [_ (format UNK-CTC-FMT datum val)]))
+       (format BLM-CTC-FMT name expected-datum given-str path polarity)]
+      [_ (format UNK-CTC-FMT expected-datum given-str)]))
   (custom-error stx error-msg))
 
 (define (blame->polarity blm)
   (if (positive-blame? blm) "server" "client"))
-
-(define BLM-CTC-FMT
-  (string-join
-   '("~a: contract violation"
-     "expected: ~a"
-     "given: ~v"
-     "blaming: ~a (as ~a)")
-   "\n  "))
-
-(define UNK-CTC-FMT
-  (string-join
-   '("contract violation"
-     "expected: ~a"
-     "given: ~v")
-   "\n  "))
-
-(define (generate-error stx)
-  (define datum (syntax->datum stx))
-  (custom-error (format GEN-FMT datum)))
-
-(define GEN-FMT
-  "cannot generate ~a")
 
 (define (custom-error stx msg)
   (define cms (current-continuation-marks))
@@ -117,4 +100,26 @@
     (match (continuation-mark-set->list cms errortrace-key)
       [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
       [_ null]))
+  (error 'oh)
   (raise (exn:fail:contract msg cms (append stx-srclocs cm-srclocs))))
+
+(define BLM-CTC-FMT
+  (string-join
+   '("~a: contract violation"
+     "expected: ~a"
+     "given: ~a"
+     "blaming: ~a (as ~a)")
+   "\n  "))
+
+(define UNK-CTC-FMT
+  (string-join
+   '("contract violation"
+     "expected: ~a"
+     "given: ~a")
+   "\n  "))
+
+(define (generate-error stx)
+  (error 'check-contract GEN-FMT (syntax->datum stx)))
+
+(define GEN-FMT
+  "cannot generate ~a")

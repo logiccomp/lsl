@@ -20,7 +20,7 @@
 
   (define pte-ctc
     (new function-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded (-> Positive Even))]
          [domain-order '(0)]
          [domains (list (λ _ pos-ctc))]
          [codomain (λ _ even-ctc)]
@@ -37,28 +37,26 @@
   (require (submod ".." examples))
 
   (chk
-   #:do (define dbl (proc (λ (x) (* 2 x))))
+   #:do (define (dbl x) (* 2 x))
 
    #:? passed-guard?
    (send pte-ctc protect dbl '+)
    #:do (define dbl* ((send pte-ctc protect dbl '+) dbl '-))
-   dbl*  dbl
 
    #:? failed-guard?
    (send pte-ctc protect 2 '+)
    #:x ((send pte-ctc protect 2 '+) 2 '-)
-   "TODO"
+   "(-> Positive Even)"
 
-   #:do (define fst (proc (λ (x y) x)))
+   #:do (define fst (λ (x y) x))
    #:? failed-guard?
    (send pte-ctc protect fst '+)
    #:x ((send pte-ctc protect fst '+) fst '-)
-   "TODO"
+   "given: 2-arity function"
 
-   ;; TODO: no unproxy here
-   ((unproxy dbl*) 2)  4
-   #:x ((unproxy dbl*) -1)
-   "TODO"
+   (dbl* 2)  4
+   #:x (dbl* -1)
+   "expected: Positive"
 
    #:? even?
    (let ([f (send pte-ctc generate 1)])

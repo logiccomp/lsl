@@ -26,22 +26,26 @@
 
     (define/override (protect val pos)
       (define val* (unproxy val))
-      (define (field-guards-passed? val)
-        (cond
-          [(predicate val)
-           (define guards
+      (define guards
+        (and (predicate val*)
              (for/list ([ctc (in-list contracts)]
-                        [field (in-list (struct->list val))])
-               (send ctc protect field pos)))
-           (andmap passed-guard? guards)]
-          [else #f]))
-      (if (field-guards-passed? val*)
+                        [field (in-list (struct->list val*))])
+               (send ctc protect field pos))))
+      (if (and guards (andmap passed-guard? guards))
           (passed-guard
            (λ (val neg)
-             (proxy val this)))
+             (define info
+               (for/vector ([ctc (in-list contracts)])
+                 (λ (val)
+                   ((send ctc protect val pos) val neg))))
+             (proxy val info this)))
           (failed-guard
            (λ (val neg)
-             (flat-error this syntax predicate val* pos)))))
+             (unless guards
+               (contract-error this syntax val* pos))
+             (for ([guard (in-list guards)]
+                   [field (in-list (struct->list val*))])
+               (guard field neg))))))
 
     (define/override (generate fuel)
       (define fields

@@ -20,7 +20,7 @@
 
   (define pos-even-ctc
     (new allof-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded PositiveEven)]
          [conjuncts (list even-ctc pos-ctc)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,12 +37,12 @@
    #:? failed-guard?
    (send pos-even-ctc protect -2 '+)
    #:x ((send pos-even-ctc protect -2 '+) -2 '-)
-   "TODO"
+   "expected: Positive"
 
    #:? failed-guard?
    (send pos-even-ctc protect 3 '+)
    #:x ((send pos-even-ctc protect 3 '+) 3 '-)
-   "TODO"
+   "expected: Even"
 
    #:? (and/c even? positive?)
    (send pos-even-ctc generate 20)

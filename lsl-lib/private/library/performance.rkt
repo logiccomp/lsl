@@ -1,12 +1,6 @@
 #lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; provide
-
-(provide visualize
-         ticks)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require plot
@@ -14,7 +8,19 @@
          syntax/parse/define)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; visualize
+;; provide
+
+(provide ticks
+         visualize)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; definitions
+
+(define (ticks thk)
+  (define before (current-memory-use 'cumulative))
+  (thk)
+  (define after (current-memory-use 'cumulative))
+  (- after before))
 
 (define SYMS '(fullcircle fullsquare fulldiamond full5star))
 (define POINT-SIZE 8)
@@ -39,9 +45,3 @@
                  [plot-brush-color-map 'tab10]
                  [plot-pen-color-map 'tab10])
     (plot pts)))
-
-(define (ticks thk)
-  (define before (current-memory-use 'cumulative))
-  (thk)
-  (define after (current-memory-use 'cumulative))
-  (- after before))

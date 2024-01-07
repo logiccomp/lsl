@@ -21,7 +21,7 @@
 
   (define even-or-bool-ctc
     (new oneof-contract%
-         [syntax #'_]
+         [syntax (syntax/unexpanded (OneOf Even Boolean))]
          [disjuncts (list even-ctc bool-ctc)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,7 +42,7 @@
    #:? failed-guard?
    (send even-or-bool-ctc protect 3 '+)
    #:x ((send even-or-bool-ctc protect 3 '+) 3 '-)
-   "TODO"
+   "expected: (OneOf Even Boolean)"
 
    #:t
    (let ([xs (map (λ _ (send even-or-bool-ctc generate 1)) (range 20))])
