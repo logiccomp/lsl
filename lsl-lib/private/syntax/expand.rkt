@@ -55,14 +55,17 @@
          #'(AllOf (expand-contract e) ...)]
         [(Struct ~! s:struct-id e:expr ...)
          #'(Struct s (expand-contract e) ...)]
-        [(List ~! e:expr ... (~optional (~and ooo ellipses)))
-         #'(List (expand-contract e) ... (~? ooo))]
+        [(List ~! e:expr)
+         #'(List (expand-contract e))]
+        [(Tuple ~! e:expr ...)
+         #'(Tuple (expand-contract e) ...)]
         [(Recursive ~! (~and (~or head:id (head:id a:expr ...)) self:expr) e:expr)
          (parameterize ([rec-table (free-id-table-set (rec-table) #'head #'self)]
                         [used-vars (used-vars)])
-           (if (free-id-set-empty? (used-vars))
-               #'(expand-contract e)
-               #'(Recursive head (expand-contract e))))]
+           (define/syntax-parse ^e #'(expand-contract e))
+           (if (free-id-set-member? (used-vars) #'head)
+               #'(Recursive head ^e)
+               #'^e))]
         [(~or head:id (head:id e:expr ...))
          #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
          #:when self

@@ -38,7 +38,7 @@
                (for/vector ([ctc (in-list contracts)])
                  (λ (val)
                    ((send ctc protect val pos) val neg))))
-             (proxy val info this)))
+             (proxy val info)))
           (failed-guard
            (λ (val neg)
              (unless guards
@@ -65,7 +65,7 @@
         (if (none? x) y x))
       (if (andmap none? fields)
           (none)
-          (apply constructor (map replace-none fields fields*))))))
+          (apply constructor (map replace-none fields* fields))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

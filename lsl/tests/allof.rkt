@@ -56,20 +56,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; integration tests
 
-#|
+(module+ test
+  (chk
+   (run (: x (AllOf Integer (Flat (check positive?)))) (define x 10) x)  10
+   #:x (run (: x (AllOf Integer (Flat (check positive?)))) (define x #f) x)
+   "expected: Integer"
+   #:x (run (: x (AllOf Integer (Flat (check positive?)))) (define x -10) x)
+   "expected: (Flat (check positive?))"
 
-;; success
-(chk
- (run/var (And Integer (Flat (check positive?))) x 10 x)  10
- #:? (and/c integer? positive?)
- (run (contract-generate (And Integer (Flat (check positive?)))))
- (run (contract-shrink (And (Flat (check positive?)) Integer) 10))  5)
-
-;; failure
-(chk
- #:x (run/var (And Integer (Flat (check positive?))) x -1 x)
- "expected: (And Integer (Flat (check positive?)))"
- #:x (run/var (And Integer (Flat (check positive?))) x #t x)
- "expected: (And Integer (Flat (check positive?)))")
-
-|#
+   #:? (and/c integer? positive?)
+   (run (contract-generate (AllOf Integer (Flat (check positive?)))))
+   (run (contract-shrink (AllOf (Flat (check positive?)) Integer) 10))  5
+   ))

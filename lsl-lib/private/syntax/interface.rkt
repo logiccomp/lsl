@@ -10,17 +10,21 @@
                      syntax/parse/lib/function-header)
          racket/class
          syntax/location
-         "../contract/common.rkt"
          "grammar.rkt"
          "expand.rkt"
-         "compile.rkt")
+         "compile.rkt"
+         "../contract/common.rkt"
+         "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
 (provide define-protected
          declare-contract
-         define-contract)
+         define-contract
+         contract-generate
+         contract-shrink
+         contract-symbolic)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; phase-1 definitions
@@ -77,3 +81,44 @@
            [(_:id param ...)
             (syntax/loc #'ctc
               (Recursive (name param ...) ctc))]))]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; contract operations
+
+(define FUEL 10)
+
+(define-syntax contract-generate
+  (syntax-parser
+    [(_ ctc:expr (~optional fuel:expr))
+     #'(perform-or-error
+        'contract-generate
+        (λ ()
+          (send (compile-contract (expand-contract ctc))
+                generate
+                (~? fuel FUEL))))]))
+
+(define-syntax contract-shrink
+  (syntax-parser
+    [(_ ctc:expr val:expr (~optional fuel:expr))
+     #'(perform-or-error
+        'contract-shrink
+        (λ ()
+          (send (compile-contract (expand-contract ctc))
+                shrink
+                (~? fuel FUEL)
+                val)))]))
+
+(define-syntax contract-symbolic
+  (syntax-parser
+    [(_ ctc:expr)
+     #'(perform-or-error
+        'contract-symbolic
+        (λ ()
+          (send (compile-contract (expand-contract ctc))
+                symbolic)))]))
+
+(define (perform-or-error name thk)
+  (define result (thk))
+  (if (none? result)
+      (raise-user-error name "failed")
+      result))

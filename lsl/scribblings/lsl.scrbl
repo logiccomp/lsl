@@ -44,7 +44,8 @@
                        string->number string->symbol string-contains? string-copy string-downcase string-ref
                        string-upcase string? substring)))
 @(define lst (select '(append assoc assq build-list car cdr cons cons? eighth empty? fifth first fourth length
-                       list list-ref list? memq null null? remove rest reverse second seventh sixth third empty)))
+                       list list-ref list? memq null null? remove rest reverse second seventh sixth third empty
+		       member?)))
 @(define ho (select '(identity andmap apply argmax argmin compose filter foldl foldr for-each map memf ormap
                       procedure? sort)))
 
@@ -86,7 +87,6 @@
 
 @defform[(:)]{ TODO }
 @defform[(define-contract)]{ TODO }
-@defproc[(contract-predicate) any/c]{ TODO }
 
 @section{Property-Based Testing}
 

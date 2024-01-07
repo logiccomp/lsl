@@ -20,6 +20,7 @@
          version/utils
          "test.rkt"
          "../contract/common.rkt"
+         "../syntax/grammar.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -30,6 +31,7 @@
  #%app
  #%top
  #%top-interaction
+ quote
 
  (filtered-out
   (strip "$")
@@ -156,7 +158,7 @@
      (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
      #'(begin
          (define-contract-syntax Name (struct-contract-macro #'name))
-         (^struct name root-struct (field ...)
+         (^struct name root (field ...)
                   #:transparent
                   #:mutable
                   #:constructor-name ctor)
@@ -178,7 +180,7 @@
 (define (redirect-mutator pred mut k)
   (define (recur val to-set)
     (if (proxy? val)
-        (recur (proxy-info val)
+        (recur (proxy-target val)
                ((vector-ref (proxy-info val) k) to-set))
         (mut val to-set)))
   recur)
@@ -197,13 +199,16 @@
     (λ () (hash-ref (read-json) 'version))))
 
 (define (check-version)
-  (define last-checked (hash-ref (get-version-cache) 'timestamp))
-  (define check-delta (- (current-seconds) last-checked))
-  (when (>= check-delta CACHE-EXPIRE)
-    (update-cache))
-  (define latest-version (hash-ref (get-version-cache) 'version))
-  (when (version<? current-version latest-version)
-    (printf VERSION-FMT latest-version)))
+  (with-handlers ([exn:fail? void])
+    (define last-checked (hash-ref (get-version-cache) 'timestamp))
+    (define check-delta (- (current-seconds) last-checked))
+    (when (>= check-delta CACHE-EXPIRE)
+      (update-cache))
+    (define latest-version (hash-ref (get-version-cache) 'version))
+    (when (and (valid-version? current-version)
+               (valid-version? latest-version)
+               (version<? current-version latest-version))
+      (printf VERSION-FMT latest-version))))
 
 (define (update-cache)
   (put-version-cache

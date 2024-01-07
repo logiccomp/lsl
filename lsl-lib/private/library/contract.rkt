@@ -17,9 +17,12 @@
          (only-in racket/stream
                   stream
                   empty-stream)
+         racket/class
          "../syntax/expand.rkt"
+         "../syntax/compile.rkt"
          "../syntax/grammar.rkt"
-         "../syntax/interface.rkt")
+         "../syntax/interface.rkt"
+         "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -47,34 +50,40 @@
 
 (define-contract Boolean
   (Flat (check boolean?)
-        (symbolic (predicate->symbolic boolean?))
-        (generate (λ (fuel) (< (random) 1/2)))))
+        (generate (λ (fuel) (< (random) 1/2)))
+        (symbolic (predicate->symbolic boolean?))))
 
 (define-contract (Constant v)
   (Flat (check (λ (x) (equal? x v)))
-        (symbolic v)
-        (generate (λ (fuel) v))))
+        (generate (λ (fuel) v))
+        (symbolic (λ _ v))))
 
 (define-contract True (Constant #t))
 
 (define-contract Integer
   (Flat (check integer?)
-        (symbolic (predicate->symbolic integer?))
         (generate (λ (fuel) (random -100 100)))
-        (shrink (λ (fuel val) (if (zero? val) 0 (floor (/ val 2)))))))
+        (shrink (λ (fuel val)
+                  (if (zero? val)
+                      (none)
+                      (floor (/ val 2)))))
+        (symbolic (predicate->symbolic integer?))))
 
 (define-contract Real
   (Flat (check real?)
-        (symbolic (predicate->symbolic real?))
-        (generate (λ (fuel) (- (* 200 (random)) 100)))))
+        (generate (λ (fuel) (- (* 200 (random)) 100)))
+        (symbolic (predicate->symbolic real?))))
 
 (define (natural? n)
-  (and (integer? n) (or (positive? n) (zero? n))))
+  (and (integer? n)
+       (or (positive? n) (zero? n))))
 
 (define-contract Natural
   (Flat (check natural?)
-        (symbolic (predicate->symbolic natural?))
-        (generate (λ (fuel) (random 0 200)))))
+        (generate (λ (fuel) (random 0 200)))
+        (symbolic (λ ()
+                    (define v (contract-symbolic Integer))
+                    (if (positive? v) v (- v))))))
 
 (define (random-alpha-char)
   (integer->char (random 33 127)))
@@ -117,16 +126,14 @@
      #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'tr))
-     (if (attribute folder)
-         (quasisyntax/loc ctc
-           (Flat
-            (check
-             (λ (val)
-               (set! tr (folder tr val))
-               ((contract->predicate #,ctc) tr)))))
-         (quasisyntax/loc ctc
-           (Flat
-            (check
-             (λ (val)
-               (set! tr (append tr (list val)))
-               ((contract->predicate #,ctc) tr))))))]))
+     (quasisyntax/loc ctc
+       (Flat
+        (check
+         (let ([c (compile-contract (expand-contract #,ctc))]
+               [f (~? folder default-folder)])
+           (λ (val)
+             (define tr* (f tr val))
+             (set! tr ((send c protect tr* #f) tr* #f)))))))]))
+
+(define (default-folder tr val)
+  (append tr (list val)))

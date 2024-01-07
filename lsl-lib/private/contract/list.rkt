@@ -21,17 +21,17 @@
 
 (define list-contract%
   (class contract%
-    (init-field syntax fixed contracts)
+    (init-field syntax fixed? contracts)
 
     (super-new)
 
-    (define elems-ctc (and (not fixed) (first contracts)))
-    (define list-size (and fixed (length contracts)))
+    (define elems-ctc (and (not fixed?) (first contracts)))
+    (define list-size (and fixed? (length contracts)))
 
     (define/override (protect val pos)
       (define guards
         (and (list? val)
-             (implies fixed (= (length val) list-size))
+             (implies fixed? (= (length val) list-size))
              (for/list ([ctc (in-cycle (in-list contracts))]
                         [elem (in-list val)])
                (send ctc protect elem pos))))
@@ -49,7 +49,7 @@
 
     (define/override (generate fuel)
       (define result
-        (if fixed
+        (if fixed?
             (for/list ([ctc (in-list contracts)])
               (send ctc generate fuel))
             (build-list
@@ -60,9 +60,15 @@
           result))
 
     (define/override (shrink fuel val)
-      (if (or fixed (empty? val) (< (random) 1/2))
+      (if (or fixed? (empty? val))
           (shrink-elems fuel val)
-          (shrink-length fuel val)))
+          (try (list shrink-length shrink-elems) fuel val)))
+
+    (define (try fs fuel val)
+      (for/fold ([acc (none)])
+                ([f (in-list fs)])
+        #:break (not (none? acc))
+        (f fuel val)))
 
     (define (shrink-length fuel val)
       (define k (random (length val)))

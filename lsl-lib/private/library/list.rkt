@@ -14,6 +14,7 @@
 
 (provide
  empty
+ member?
 
  (lift-out
   build-list)
@@ -47,3 +48,6 @@
    ^seventh
    ^sixth
    ^third)))
+
+(define (member? x l)
+  (^not (^equal? #f (^member x l))))

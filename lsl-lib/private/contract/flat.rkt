@@ -25,7 +25,10 @@
     (super-new)
 
     (define/override (protect val pos)
-      (^if (checker val)
+      (define verified?
+        (and (^symbolic? val)
+             (^unsat? (^verify (^assert (checker val))))))
+      (^if (or verified? (checker val))
            (passed-guard
             (λ (val neg) val))
            (failed-guard
@@ -39,7 +42,7 @@
       (if shrinker (shrinker fuel val) (none)))
 
     (define/override (interact val name mode)
-      (none))
+      #f)
 
     (define/override (symbolic)
       (if symbol (symbol) (none)))))

@@ -25,7 +25,7 @@
     (super-new)
 
     (define/override (protect val pos)
-      (define guards (guards-of conjuncts val pos))
+      (define guards (guards-of val pos))
       (define guard-ctor
         (if (andmap passed-guard? guards)
             passed-guard
@@ -51,8 +51,20 @@
        fuel))
 
     (define (satisfies-flat val)
-      (define guards (guards-of conjuncts val #f))
-      (if (andmap passed-guard? guards) val (none)))))
+      (cond
+        [(none? val) (none)]
+        [(andmap passed-guard? (guards-of val #f)) val]
+        [else (none)]))
+
+    (define (guards-of val pos)
+      (let go ([conjuncts conjuncts])
+        (match conjuncts
+          [(list) null]
+          [(cons conjunct conjuncts-rest)
+           (define guard (send conjunct protect val pos))
+           (if (passed-guard? guard)
+               (cons guard (go conjuncts-rest))
+               (list guard))])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

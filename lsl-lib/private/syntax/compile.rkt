@@ -142,13 +142,13 @@
   (define/hygienic-metafunction (expand-racket form-stx)
     #:expression
     (define/syntax-parse (_ stx) form-stx)
-    (local-expand #'stx 'expression null))
+    (local-expand/capture-lifts #'stx 'expression null))
 
   (define/hygienic-metafunction (unbound-racket form-stx)
     #:expression
     (syntax-parse form-stx
-      #:literals (#%plain-lambda)
-      [(_ (#%plain-lambda (x ...) body))
+      #:literals (begin #%plain-lambda)
+      [(_ (begin _ ... (#%plain-lambda (x ...) body)))
        (datum->syntax #f (unbound-vars #'body))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -180,7 +180,7 @@
        #'(new function-contract%
               [syntax #'stx]
               [domain-order (list (#%datum . k) ...)]
-              [domains (list a* ...)]
+              [domains (list (let () a*) ...)]
               [codomain r*]
               [exceptions (list e.predicate-id ...)])]
       [(OneOf e ...)
@@ -199,16 +199,22 @@
               [accessors (list s.accessor-id ...)]
               [mutators (list s.mutator-id ...)]
               [contracts (list (compile-contract e) ...)])]
-      [(List e ... (~optional (~and ooo ellipses)))
-       #:with is-fixed (if (attribute ooo) #'#t #'#f)
+      [(List e)
        #'(new list-contract%
               [syntax #'stx]
-              [fixed is-fixed]
+              [fixed? #f]
+              [contracts (list (compile-contract e))])]
+      [(Tuple e ...)
+       #'(new list-contract%
+              [syntax #'stx]
+              [fixed? #t]
               [contracts (list (compile-contract e) ...)])]
       [(Recursive x e)
-       #'(new recursive-contract%
-              [syntax #'stx]
-              [promise (delay (compile-contract e))])])))
+       #'(letrec ([x (new recursive-contract%
+                          [syntax #'stx]
+                          [promise (delay (compile-contract e))])])
+           x)]
+      [x:id #'x])))
 
 (define-syntax λ*
   (syntax-parser

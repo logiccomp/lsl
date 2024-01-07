@@ -33,6 +33,9 @@
  (rename-out
   [define-protected define]
   [declare-contract :])
+ contract-generate
+ contract-shrink
+ contract-symbolic
 
  (all-from-out
   "private/syntax/grammar.rkt"

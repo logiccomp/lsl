@@ -70,150 +70,167 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; integration tests
 
-#|
+(module+ test
+  (chk
+   (run (: f (-> Integer Integer))
+        (define (f x) x)
+        (f 10))
+   10
 
-;; success
-(chk
- (run/var (-> Integer Integer) f (λ (x) x) (f 10))  10
- (run/var (Function (arguments [x Integer]
-                               [y (Flat (check (λ (z) (eq? x z))))])
-                    (result Integer))
-          f
-          (λ (x y) (+ x y))
-          (f 10 10))
- 20
- (run/var (Function (arguments [x Integer])
-                    (result (Flat (check (λ (y) (eq? x y))))))
-          f
-          (λ (x) x)
-          (f 10))
- 10
- (run/var (Function (arguments [x Integer])
-                    (result (λ (y) (eq? x y))))
-          f
-          (λ (x) x)
-          (f 10))
- 10
- #:? integer?
- (run ((contract-generate (-> Integer Integer)) 10))
- #:t
- (run (let ([f (contract-generate (-> Integer Integer))])
-        (= (f 0) (f 0))))
- (run/var (-> Integer Integer) f (λ (x) x) (check-contract f))  (void)
- (run/var (-> Integer Integer) f (λ (x) x) (verify-contract f))  (void)
- (run/var (-> Integer Integer Integer) f (λ (x y) x) (check-contract f))  (void)
+   (run (: f (Function (arguments [x Integer]
+                                  [y (Flat (check (λ (z) (eq? x z))))])
+                       (result Integer)))
+        (define (f x y) (+ x y))
+        (f 10 10))
+   20
 
- (run (: letter-grade (-> Integer String))
-      (define (letter-grade n)
-        (cond [(>= n 90) "A"]
-              [(>= n 80) "B"]
-              [else "C"]))
+   (run (: f (Function (arguments [x Integer])
+                       (result (Flat (check (λ (y) (eq? x y)))))))
+        (define (f x) x)
+        (f 10))
+   10
 
-      (: letter-grade-prop (-> Integer True))
-      (define (letter-grade-prop n)
-        (member? (letter-grade n) (list "A" "B" "C")))
+   (run (: f (Function (arguments [x Integer])
+                       (result (λ (y) (eq? x y)))))
+        (define (f x) x)
+        (f 10))
+   10
 
-      (verify-contract letter-grade-prop))
- (void)
+   #:? integer?
+   (run ((contract-generate (-> Integer Integer)) 10))
+   #:t
+   (run (let ([f (contract-generate (-> Integer Integer))])
+          (= (f 0) (f 0))))
 
- (run (define-struct bad ())
-      (: f (Function (arguments [_ (OneOf Boolean Integer)])
-                     (result Integer)
-                     (raises bad)))
-      (define (f e)
-        (if (integer? e) e (raise (make-bad))))
-      (check-contract f))
- (void))
+   (run (: f (-> Integer Integer))
+        (define (f x) x)
+        (check-contract f))
+   (void)
 
-;; failure
-(chk
- #:x (run/var (-> Integer Boolean) f (λ (x) x) (f 10))
- "expected: Boolean"
- #:x (run/var (-> Integer Boolean) f (λ (x) x) (check-contract f))
- "expected: Boolean"
- #:x (run/var (Function (arguments [x Integer])
-                        (result (Flat (check (λ (y) (eq? x y))))))
-              f
-              (λ (x) (+ x 1))
-              (f 10))
- "expected: (Flat (check (λ (y) (eq? x y))))"
- #:x (run (define-contract Even
+   (run (: f (-> Integer Integer))
+        (define (f x) x)
+        (verify-contract f))
+   (void)
+
+   (run (: f (-> Integer Integer Integer))
+        (define (f x y) x)
+        (check-contract f))
+   (void)
+
+   (run (: letter-grade (-> Integer String))
+        (define (letter-grade n)
+          (cond [(>= n 90) "A"]
+                [(>= n 80) "B"]
+                [else "C"]))
+
+        (: letter-grade-prop (-> Integer True))
+        (define (letter-grade-prop n)
+          (member? (letter-grade n) (list "A" "B" "C")))
+
+        (verify-contract letter-grade-prop))
+   (void)
+
+   (run (define-struct bad ())
+        (: f (Function (arguments [_ (OneOf Boolean Integer)])
+                       (result Integer)
+                       (raises bad)))
+        (define (f e)
+          (if (integer? e) e (raise (make-bad))))
+        (check-contract f))
+   (void)
+
+   #:x (run (: f (-> Integer Boolean))
+            (define (f x) x)
+            (f 10))
+   "expected: Boolean"
+
+   #:x (run (: f (-> Integer Boolean))
+            (define (f x) x)
+            (check-contract f))
+   "expected: Boolean"
+
+   #:x (run (: f (Function (arguments [x Integer])
+                           (result (Flat (check (λ (y) (eq? x y)))))))
+            (define (f x) (+ x 1))
+            (f 10))
+   "expected: (Flat (check (λ (y) (eq? x y))))"
+
+   #:x (run (define-contract Even
+              (Flat
+               (check even?)
+               (symbolic (λ () (* 2 (contract-symbolic Integer))))))
+            (: f (-> Even Even))
+            (define (f x) (+ x 1))
+            (verify-contract f))
+   "expected: Even"
+
+   #:x (run (: bad-mult (-> Real Real Real))
+            (define (bad-mult x y)
+              (if (= x 10417)
+                  0
+                  (* x y)))
+            (: bad-mult-prop (-> Real Real True))
+            (define (bad-mult-prop x y)
+              (= (bad-mult x y)
+                 (* x y)))
+            (verify-contract bad-mult-prop))
+   "counterexample: (bad-mult-prop 10417.0"
+
+  #:x (run (define-struct bad ())
+           (: f (Function (arguments [_ (OneOf Boolean Integer)])
+                          (result Integer)))
+           (define (f e)
+             (if (integer? e) e (raise (make-bad))))
+           (check-contract f 20))
+  "exception raised: (bad)"
+
+  #:x (run (: f (Function (arguments [x (Flat (check (λ (z) (eq? y z))))]
+                                     [y (Flat (check (λ (z) (eq? x z))))])
+                          (result Integer)))
+           (define (f x y) (+ x y))
+           (f 10 20))
+  "cannot have cyclic dependency"
+
+  #:x (run (: f (-> Integer Integer))
+           (define (f x y) x))
+  "expected: 1-arity function"
+
+  #|
+  #:do (define fb
+         '(define-contract FizzBuzz
             (Flat
              (domain Integer)
-             (check even?)))
-          (: f (-> Even Even))
-          (define (f x) (+ x 1))
-          (verify-contract f))
- "expected: Even"
+             (check (lambda (x) (not (or (zero? (modulo x 3)) (zero? (modulo x 5))))))
+             (generate (λ () (+ (* 15 (contract-generate Integer)) 1))))))
 
- #:x (run (: bad-mult (-> Real Real Real))
-          (define (bad-mult x y)
-            (if (= x 10417)
-                0
-                (* x y)))
-          (: bad-mult-prop (-> Real Real True))
-          (define (bad-mult-prop x y)
-            (= (bad-mult x y)
-               (* x y)))
-          (verify-contract bad-mult-prop))
- "counterexample: (bad-mult-prop 10417.0"
+  (run/sexp `(begin ,fb
+                    (: x FizzBuzz)
+                    (define x 4)
+                    x))
+  4
 
- #:x (run (define-struct bad ())
-          (: f (Function (arguments [_ (OneOf Boolean Integer)])
-                         (result Integer)))
-          (define (f e)
-            (if (integer? e) e (raise (make-bad))))
-          (check-contract f 20))
- "exception raised: (bad)"
+  (run/sexp `(begin ,fb
+                    (: f (-> (-> Integer Integer) FizzBuzz))
+                    (define (f g) 4)
+                    (check-contract f)))
+  (void)
 
- #:x (run/var (Function (arguments [x (Flat (check (λ (z) (eq? y z))))]
-                                   [y (Flat (check (λ (z) (eq? x z))))])
-                        (result Integer))
-              f
-              (λ (x y) (+ x y))
-              (f 10 20))
- "cannot have cyclic dependency"
- #:x (run (: f (-> Integer Integer))
-          (define (f x y) x))
- "expected: 1-arity function")
+  (run/sexp `(begin ,fb
+                    (: f (-> Integer FizzBuzz))
+                    (define (f x) (+ (* 15 x) 1))
+                    (verify-contract f)))
+  (void)
 
-;; fizzbuzz
-(chk
- #:do (define fb
-        '(define-contract FizzBuzz
-           (Flat
-            (domain Integer)
-            (check (lambda (x) (not (or (zero? (modulo x 3)) (zero? (modulo x 5))))))
-            (generate (λ () (+ (* 15 (contract-generate Integer)) 1))))))
+  #:x (run/sexp `(begin ,fb
+                        (: x FizzBuzz)
+                        (define x 3)
+                        x))
+  "expected: FizzBuzz"
 
- (run/sexp `(begin ,fb
-                   (: x FizzBuzz)
-                   (define x 4)
-                   x))
- 4
-
- (run/sexp `(begin ,fb
-                   (: f (-> (-> Integer Integer) FizzBuzz))
-                   (define (f g) 4)
-                   (check-contract f)))
- (void)
-
- (run/sexp `(begin ,fb
-                   (: f (-> Integer FizzBuzz))
-                   (define (f x) (+ (* 15 x) 1))
-                   (verify-contract f)))
- (void)
-
- #:x (run/sexp `(begin ,fb
-                       (: x FizzBuzz)
-                       (define x 3)
-                       x))
- "expected: FizzBuzz"
-
- #:x (run/sexp `(begin ,fb
-                       (: f (-> Integer FizzBuzz))
-                       (define (f x) x)
-                       (verify-contract f)))
- "expected: FizzBuzz")
-
-|#
+  #:x (run/sexp `(begin ,fb
+                        (: f (-> Integer FizzBuzz))
+                        (define (f x) x)
+                        (verify-contract f)))
+   "expected: FizzBuzz"
+   |#
+  ))

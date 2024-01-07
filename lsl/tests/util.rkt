@@ -2,16 +2,10 @@
 
 (provide run
          run/sexp
-         run/var
          syntax/unexpanded)
 
 (require racket/port
          racket/string)
-
-(define-syntax-rule (run/var ctc var val body ...)
-  (run (: var ctc)
-       (define var val)
-       body ...))
 
 (define-syntax-rule (run e ...)
   (run/sexp '(begin e ...)))
@@ -28,7 +22,8 @@
                       [current-error-port p])
          (set! result (eval sexp ns))
          (eval '(run-tests) ns)))))
-  (if (string-contains? output "FAILURE")
+  (if (or (string-contains? output "FAILURE")
+          (string-contains? output "ERROR"))
       (error output)
       result))
 

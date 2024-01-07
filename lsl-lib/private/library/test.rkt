@@ -6,6 +6,7 @@
 (require (for-syntax racket/base
                      racket/list
                      racket/match
+                     syntax/id-table
                      syntax/parse
                      syntax/parse/class/struct-id)
          racket/class
@@ -15,6 +16,8 @@
          racket/string
          rackunit
          rackunit/text-ui
+         "../syntax/expand.rkt"
+         "../syntax/compile.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -190,39 +193,46 @@
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ val:id (~optional n:number #:defaults ([n #'1])))
+    [(_ name:id (~optional n:number #:defaults ([n #'1])))
+     #:do [(define ctc (free-id-table-ref contract-table #'name #f))]
+     #:fail-unless ctc
+     (format "unknown contract for ~a" (syntax-e #'name))
      (push-form!
-      (syntax/loc stx
-        (check-contract val 'val n)))]))
+      (quasisyntax/loc stx
+        (check-contract (compile-contract (expand-contract #,ctc))
+                        name 'name n)))]))
 
-(define-check (check-contract val name n)
+(define-check (check-contract ctc val name n)
   (define (gen-mode ctc) (send ctc generate FUEL))
   (for ([_ (in-range n)])
-    (check-or-verify-contract val name gen-mode)))
+    (check-or-verify-contract ctc val name gen-mode)))
 
 (define-syntax ($verify-contract stx)
   (syntax-parse stx
-    [(_ val:id)
+    [(_ name:id)
+     #:do [(define ctc (free-id-table-ref contract-table #'name #f))]
+     #:fail-unless ctc
+     (format "unknown contract for ~a" (syntax-e #'name))
      (push-form!
-      (syntax/loc stx
-        (verify-contract val 'val)))]))
+      (quasisyntax/loc stx
+        (verify-contract (compile-contract (expand-contract #,ctc))
+                         name 'name)))]))
 
-(define-check (verify-contract val name)
+(define-check (verify-contract ctc val name)
   (define (sym-mode ctc) (send ctc symbolic))
-  (check-or-verify-contract val name sym-mode))
+  (check-or-verify-contract ctc val name sym-mode))
 
-(define (check-or-verify-contract val name mode)
-  (define ctc (and (proxy? val) (proxy-contract val)))
-  (if ctc
-      (match (send ctc interact val name mode)
-        [(list eg exn)
-         (error name VERIFY-FMT eg (indent (exn-message exn)))]
-        [(none)
-         (error name "failed to generate values associated with contract")])
-      (error name "no associated contract")))
+(define (check-or-verify-contract ctc val name mode)
+  (match (send ctc interact val name mode)
+    [(list eg exn)
+     (error name VERIFY-FMT eg (indent (exn-message exn)))]
+    [(none)
+     (error name "failed to generate values associated with contract")]
+    [#f
+     (void)]))
 
 (define (indent str)
-  (string-replace str "\n" "\n    "))
+  (string-append "  " (string-replace str "\n" "\n    ")))
 
 (define VERIFY-FMT
   (string-join

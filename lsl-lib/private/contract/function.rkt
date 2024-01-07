@@ -44,7 +44,7 @@
                (define result (apply val args*))
                (define guard (send (apply codomain args*) protect result pos))
                (guard result neg))
-             (proc val info this)))
+             (proc val info)))
           (failed-guard
            (λ (val neg)
              (if val-proc?
@@ -78,7 +78,7 @@
       (cond
         [(ormap none? args) (none)]
         [(fail-exn val args) => does-fail]
-        [else (none)]))
+        [else #f]))
 
     (define (find-best-args val args)
       (define args* (shrink* args))
