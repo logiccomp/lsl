@@ -9,14 +9,16 @@
          racket/string
          racket/syntax-srcloc
          errortrace/errortrace-key
+         (only-in rosette/safe
+                  vc)
          "../guard.rkt"
          "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (struct-out exn:fail:user)
-         (struct-out exn:fail:contract)
+(provide (struct-out exn:user)
+         (struct-out exn:contract)
          (struct-out blame)
          (struct-out positive-blame)
          (struct-out negative-blame)
@@ -28,11 +30,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exceptions
 
-(struct exn:fail:user exn:fail (value))
+(struct exn:user exn (value))
 
-(struct exn:fail:contract exn:fail (srclocs)
+(struct exn:contract exn (srclocs vc)
   #:property prop:exn:srclocs
-  (λ (self) (exn:fail:contract-srclocs self)))
+  (λ (self) (exn:contract-srclocs self)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; blame
@@ -100,8 +102,8 @@
     (match (continuation-mark-set->list cms errortrace-key)
       [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
       [_ null]))
-  (error 'oh)
-  (raise (exn:fail:contract msg cms (append stx-srclocs cm-srclocs))))
+  (displayln "raising")
+  (raise (exn:contract msg cms (append stx-srclocs cm-srclocs) (vc))))
 
 (define BLM-CTC-FMT
   (string-join

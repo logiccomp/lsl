@@ -154,14 +154,14 @@
   (syntax-parse stx
     [(_ body:expr)
      (push-form!
-      (syntax/loc stx (check-exn exn:fail:user? (λ () body))))]
+      (syntax/loc stx (check-exn exn:user? (λ () body))))]
     [(_ body:expr exn:struct-id)
      (push-form!
       (syntax/loc stx
         (check-exn
          (λ (e)
-           (and (exn:fail:user? e)
-                (exn.predicate-id (exn:fail:user-value e))))
+           (and (exn:user? e)
+                (exn.predicate-id (exn:user-value e))))
          (λ () body))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

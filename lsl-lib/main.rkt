@@ -6,6 +6,7 @@
 (require (for-syntax racket/base
                      syntax/parse)
          (prefix-in ^ rosette/safe)
+         (prefix-in ^ rosette/solver/smt/z3)
          racket/lazy-require
          racket/provide
          "private/syntax/grammar.rkt"
@@ -48,6 +49,11 @@
 
  ticks
  visualize)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; z3
+
+(^current-solver (^z3 #:path (find-executable-path "z3")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; reader

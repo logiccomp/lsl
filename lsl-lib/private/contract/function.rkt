@@ -66,19 +66,26 @@
       (define ((dom-apply acc k) dom)
         (mode (apply dom acc)))
       (define args (list-update-many domains domain-order dom-apply))
-      (if (fails? val args)
-          (let ([args (repeat/fix shrink* args)])
-            (format "(~a ~a)" name (string-join (map ~v args))))
-          (none)))
+      (define failed-vc? (fails? val args))
+      (cond
+        [failed-vc?
+         (define args*
+           (^result-value
+           (^with-vc failed-vc?
+             (^evaluate args (^verify (^assert #f))))))
+         (let (#;[args (repeat/fix shrink* args)])
+           (format "(~a ~a)" name (string-join (map ~v args*))))]
+        [else (none)]))
 
     (define (fails? val args)
-      (define (contract-exn-handler _) #t)
+      (define (contract-exn-handler exn)
+        (exn:contract-vc exn))
       (define (user-exn-handler exn)
-        (define val (exn:fail:user-value exn))
+        (define val (exn:user-value exn))
         (for/and ([exn-pred? (in-list exceptions)])
           (not (exn-pred? val))))
-      (with-handlers ([exn:fail:contract? contract-exn-handler]
-                      [exn:fail:user? user-exn-handler])
+      (with-handlers ([exn:contract? contract-exn-handler]
+                      [exn:user? user-exn-handler])
         (apply val args)
         #f))
 

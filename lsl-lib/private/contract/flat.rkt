@@ -25,12 +25,12 @@
     (super-new)
 
     (define/override (protect val pos)
-      (if (checker val)
-          (passed-guard
-           (λ (val neg) val))
-          (failed-guard
-           (λ (val neg)
-             (contract-error this syntax val pos)))))
+      (^if (checker val)
+           (passed-guard
+            (λ (val neg) val))
+           (failed-guard
+            (λ (val neg)
+              (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
       (if generator (generator fuel) (none)))
