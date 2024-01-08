@@ -7,13 +7,25 @@
          (prefix-in ^ rosette/safe)
          racket/provide
          racket/string
+         racket/list
          "../util.rkt")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; definitions
+
+(define (explode s)
+  (drop-right (drop (string-split s "") 1) 1))
+
+(define (implode l)
+  (apply string-append l))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
 (provide
  (lift-out
+  explode
+  implode
   format
   list->string
   make-string

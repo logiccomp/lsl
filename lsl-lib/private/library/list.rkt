@@ -17,7 +17,8 @@
  member?
 
  (lift-out
-  build-list)
+  build-list
+  range)
 
  (filtered-out
   (strip "^")
@@ -38,6 +39,7 @@
    ^list
    ^list-ref
    ^list?
+   ^member
    ^memq
    ^null
    ^null?

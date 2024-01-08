@@ -70,17 +70,19 @@
 (define-syntax define-contract
   (syntax-parser
     [(_ name:id ctc:expr)
-     #'(define-contract-syntax name
-         (syntax-parser
-           [_:id
-            (syntax/loc #'ctc
-              (Recursive name ctc))]))]
+     #'(define-syntax name
+         (contract-macro
+          (syntax-parser
+            [_:id
+             (syntax/loc #'ctc
+               (Recursive name ctc))])))]
     [(_ (name:id param:id ...) ctc:expr)
-     #'(define-contract-syntax name
-         (syntax-parser
-           [(_:id param ...)
-            (syntax/loc #'ctc
-              (Recursive (name param ...) ctc))]))]))
+     #'(define-syntax name
+         (contract-macro
+          (syntax-parser
+            [(_:id param ...)
+             (syntax/loc #'ctc
+               (Recursive (name param ...) ctc))])))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contract operations

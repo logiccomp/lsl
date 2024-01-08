@@ -112,30 +112,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; arrow
 
-(define-contract-syntax ->
-  (λ (stx)
-    (syntax-parse stx
-      [(_ d:expr ... c:expr)
-       #'(Function (arguments [_ d] ...)
-                   (result c))])))
+(define-syntax ->
+  (contract-macro
+   (syntax-parser
+     [(_ d:expr ... c:expr)
+      #'(Function (arguments [_ d] ...)
+                  (result c))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; record
 
-(define-contract-syntax Record
-  (syntax-parser
-    [(_ (~optional folder:expr) tr:id)
-     #:do [(define ctc (contract-table-ref #'tr))]
-     #:fail-unless ctc
-     (format "unknown contract for ~a" (syntax-e #'tr))
-     (quasisyntax/loc ctc
-       (Flat
-        (check
-         (let ([c (compile-contract (expand-contract #,ctc))]
-               [f (~? folder default-folder)])
-           (λ (val)
-             (define tr* (f tr val))
-             (set! tr ((send c protect tr* #f) tr* #f)))))))]))
+(define-syntax Record
+  (contract-macro
+   (syntax-parser
+     [(_ (~optional folder:expr) tr:id)
+      #:do [(define ctc (contract-table-ref #'tr))]
+      #:fail-unless ctc
+      (format "unknown contract for ~a" (syntax-e #'tr))
+      (quasisyntax/loc ctc
+        (Flat
+         (check
+          (let ([c (compile-contract (expand-contract #,ctc))]
+                [f (~? folder default-folder)])
+            (λ (val)
+              (define tr* (f tr val))
+              (set! tr ((send c protect tr* #f) tr* #f)))))))])))
 
 (define (default-folder tr val)
   (append tr (list val)))

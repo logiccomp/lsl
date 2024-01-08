@@ -28,11 +28,7 @@
  (for-syntax function-literal)
  arguments
  result
- raises
-
- (for-syntax contract-syntax-rep?
-             contract-syntax-transform)
- define-contract-syntax)
+ raises)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; literal forms
@@ -48,5 +44,3 @@
 (define-literal-forms function-literal
   "literal clause must occur within Function"
   (arguments result raises))
-
-(define-extensible-syntax contract-syntax)

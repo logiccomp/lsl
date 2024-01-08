@@ -22,6 +22,7 @@
          "test.rkt"
          "../contract/common.rkt"
          "../syntax/grammar.rkt"
+         "../syntax/expand.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -159,7 +160,9 @@
      #:with (_ _ _ mut ...)
      (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
      #'(begin
-         (define-contract-syntax Name (struct-contract-macro #'name))
+         (define-syntax Name
+           (contract-macro
+            (struct-contract-macro #'name)))
          (^struct name root (field ...)
                   #:transparent
                   #:mutable

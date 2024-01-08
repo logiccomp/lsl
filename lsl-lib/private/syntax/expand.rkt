@@ -5,6 +5,7 @@
 
 (require (for-syntax racket/base
                      ee-lib
+                     syntax/apply-transformer
                      syntax/id-table
                      syntax/id-set
                      syntax/parse
@@ -14,7 +15,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (for-syntax expand-contract))
+(provide (for-syntax expand-contract
+                     contract-macro
+                     contract-macro-proc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
@@ -22,6 +25,11 @@
 (begin-for-syntax
   (define rec-table (make-parameter (make-immutable-free-id-table)))
   (define used-vars (make-parameter (immutable-free-id-set)))
+
+  (struct contract-macro (proc)
+    #:property prop:procedure
+    (λ (s stx)
+      (raise-syntax-error #f "contract cannot be used in here" stx)))
 
   (define/hygienic-metafunction (expand-contract form-stx)
     #:expression
@@ -73,9 +81,9 @@
          (used-vars (free-id-set-add (used-vars) #'head))
          #'head]
         [(~or head:id (head:id e:expr ...))
-         #:when (contract-syntax-rep? (lookup #'head))
-         #:do [(define (get stx) (contract-syntax-transform (lookup #'head) stx))]
-         #:with res (apply-as-transformer get #'head 'expression #'stx)
+         #:do [(define v (lookup #'head))]
+         #:when (contract-macro? v)
+         #:with res (local-apply-transformer (contract-macro-proc v) #'stx 'expression '())
          #'(expand-contract res)]
         [e:expr #'(expand-contract (Flat (check e)))])))
 
