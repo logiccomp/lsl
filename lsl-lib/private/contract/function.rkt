@@ -44,7 +44,7 @@
                (define result (apply val args*))
                (define guard (send (apply codomain args*) protect result pos))
                (guard result neg))
-             (proc val info)))
+             (proc val info this)))
           (failed-guard
            (λ (val neg)
              (if val-proc?

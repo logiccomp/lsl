@@ -72,8 +72,6 @@
    #:x (run (: x Integer) (define x 1/2) x)  "expected: Integer"
    #:? integer?
    (run (contract-generate Integer))
-   (run (: x Integer) (define x 10) (check-contract x))  (void)
-   (run (: x Integer) (define x 10) (verify-contract x))  (void)
 
    (run (: x Real) (define x 3.14) x)  3.14
    #:x (run (: x Real) (define x #t) x)  "given: #t"

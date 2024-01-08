@@ -27,7 +27,7 @@
    (define (hash2-proc self recur)
      (recur (unproxy self)))])
 
-(struct proxy root (target info)
+(struct proxy root (target info contract)
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (define recur
@@ -40,7 +40,7 @@
 (struct proc proxy ()
   #:property prop:procedure
   (λ (self . args)
-    (match-define (proxy target wrapper) self)
+    (match-define (proxy target wrapper _) self)
     (apply wrapper args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

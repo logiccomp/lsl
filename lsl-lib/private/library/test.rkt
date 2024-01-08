@@ -193,44 +193,42 @@
 
 (define FUEL 10)
 
+(define (proxy->contract p)
+  (and (proxy? p) (proxy-contract p)))
+
 (define-syntax ($check-contract stx)
   (syntax-parse stx
     [(_ name:id (~optional n:number #:defaults ([n #'1])))
-     #:attr ctc (contract-table-ref #'name)
-     #:fail-unless (attribute ctc)
-     (format "unknown contract for ~a" (syntax-e #'name))
-     #:with thk-body
-     (syntax/loc stx
-       (check-contract (compile-contract (expand-contract ctc))
-                       name 'name n))
+     #:with thk-body (syntax/loc stx (check-contract name 'name n))
      (push-form!
       #'(with-default-check-info*
           (list (make-check-params (list name (~? n))))
           (λ () thk-body)))]))
 
-(define-check (check-contract ctc val name n)
-  (define (gen-mode ctc) (send ctc generate FUEL))
-  (for ([_ (in-range n)])
-    (check-or-verify-contract ctc val name gen-mode)))
+(define-check (check-contract val name n)
+  (define (gen-mode ctc)
+    (send ctc generate FUEL))
+  (define ctc (proxy->contract val))
+  (if ctc
+      (for ([_ (in-range n)])
+        (check-or-verify-contract ctc val name gen-mode))
+      (fail-check (format "unknown contract for ~a" name))))
 
 (define-syntax ($verify-contract stx)
   (syntax-parse stx
     [(_ name:id)
-     #:attr ctc (contract-table-ref #'name)
-     #:fail-unless (attribute ctc)
-     (format "unknown contract for ~a" (syntax-e #'name))
-     #:with thk-body
-     (syntax/loc stx
-       (verify-contract (compile-contract (expand-contract ctc))
-                        name 'name))
+     #:with thk-body (syntax/loc stx (verify-contract name 'name))
      (push-form!
       #'(with-default-check-info*
           (list (make-check-params (list name)))
           (λ () thk-body)))]))
 
-(define-check (verify-contract ctc val name)
+(define-check (verify-contract val name)
   (define (sym-mode ctc) (send ctc symbolic))
-  (check-or-verify-contract ctc val name sym-mode))
+  (define ctc (proxy->contract val))
+  (if ctc
+      (check-or-verify-contract ctc val name sym-mode)
+      (fail-check (format "unknown contract for ~a" name))))
 
 (define (check-or-verify-contract ctc val name mode)
   (match (send ctc interact val name mode)

@@ -38,7 +38,7 @@
                (for/vector ([ctc (in-list contracts)])
                  (λ (val)
                    ((send ctc protect val pos) val neg))))
-             (proxy val info)))
+             (proxy val info this)))
           (failed-guard
            (λ (val neg)
              (unless guards
