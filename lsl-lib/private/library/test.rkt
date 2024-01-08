@@ -196,13 +196,17 @@
 (define-syntax ($check-contract stx)
   (syntax-parse stx
     [(_ name:id (~optional n:number #:defaults ([n #'1])))
-     #:do [(define ctc (contract-table-ref #'name))]
-     #:fail-unless ctc
+     #:attr ctc (contract-table-ref #'name)
+     #:fail-unless (attribute ctc)
      (format "unknown contract for ~a" (syntax-e #'name))
+     #:with thk-body
+     (syntax/loc stx
+       (check-contract (compile-contract (expand-contract ctc))
+                       name 'name n))
      (push-form!
-      (quasisyntax/loc stx
-        (check-contract (compile-contract (expand-contract #,ctc))
-                        name 'name n)))]))
+      #'(with-default-check-info*
+          (list (make-check-params (list name (~? n))))
+          (λ () thk-body)))]))
 
 (define-check (check-contract ctc val name n)
   (define (gen-mode ctc) (send ctc generate FUEL))
@@ -212,13 +216,17 @@
 (define-syntax ($verify-contract stx)
   (syntax-parse stx
     [(_ name:id)
-     #:do [(define ctc (contract-table-ref #'name))]
-     #:fail-unless ctc
+     #:attr ctc (contract-table-ref #'name)
+     #:fail-unless (attribute ctc)
      (format "unknown contract for ~a" (syntax-e #'name))
+     #:with thk-body
+     (syntax/loc stx
+       (verify-contract (compile-contract (expand-contract ctc))
+                        name 'name))
      (push-form!
-      (quasisyntax/loc stx
-        (verify-contract (compile-contract (expand-contract #,ctc))
-                         name 'name)))]))
+      #'(with-default-check-info*
+          (list (make-check-params (list name)))
+          (λ () thk-body)))]))
 
 (define-check (verify-contract ctc val name)
   (define (sym-mode ctc) (send ctc symbolic))
@@ -238,7 +246,7 @@
 
 (define VERIFY-FMT
   (string-join
-   '("verification failure"
+   '("discovered a counterexample"
      "counterexample: ~a"
      "error:"
      "~a")
