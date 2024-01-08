@@ -10,7 +10,7 @@
                      syntax/parse
                      syntax/parse/class/struct-id)
          racket/class
-         racket/contract
+         (except-in racket/contract blame?)
          racket/match
          racket/provide
          racket/string
@@ -18,6 +18,7 @@
          rackunit/text-ui
          "../syntax/expand.rkt"
          "../syntax/compile.rkt"
+         "../contract/common.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -38,6 +39,7 @@
    $check-range
    $check-satisfied
    $check-within
+   $check-raises
 
    $check-contract
    $verify-contract)))
@@ -194,7 +196,7 @@
 (define-syntax ($check-contract stx)
   (syntax-parse stx
     [(_ name:id (~optional n:number #:defaults ([n #'1])))
-     #:do [(define ctc (free-id-table-ref contract-table #'name #f))]
+     #:do [(define ctc (contract-table-ref #'name))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'name))
      (push-form!
@@ -210,7 +212,7 @@
 (define-syntax ($verify-contract stx)
   (syntax-parse stx
     [(_ name:id)
-     #:do [(define ctc (free-id-table-ref contract-table #'name #f))]
+     #:do [(define ctc (contract-table-ref #'name))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'name))
      (push-form!

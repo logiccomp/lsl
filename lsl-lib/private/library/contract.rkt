@@ -123,7 +123,7 @@
 (define-contract-syntax Record
   (syntax-parser
     [(_ (~optional folder:expr) tr:id)
-     #:do [(define ctc (free-id-table-ref contract-table #'tr #f))]
+     #:do [(define ctc (contract-table-ref #'tr))]
      #:fail-unless ctc
      (format "unknown contract for ~a" (syntax-e #'tr))
      (quasisyntax/loc ctc

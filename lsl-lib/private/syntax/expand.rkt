@@ -14,14 +14,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (for-syntax contract-table
-                     expand-contract))
+(provide (for-syntax expand-contract))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
 (begin-for-syntax
-  (define contract-table (make-free-id-table))
   (define rec-table (make-parameter (make-immutable-free-id-table)))
   (define used-vars (make-parameter (immutable-free-id-set)))
 

@@ -65,6 +65,6 @@
    "expected: (Flat (check positive?))"
 
    #:? (and/c integer? positive?)
-   (run (contract-generate (AllOf Integer (Flat (check positive?)))))
+   (run (contract-generate (AllOf Integer (Flat (check positive?))) 40))
    (run (contract-shrink (AllOf (Flat (check positive?)) Integer) 10))  5
    ))

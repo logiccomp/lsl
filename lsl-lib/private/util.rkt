@@ -6,6 +6,7 @@
 (require (for-syntax racket/base
                      racket/string
                      racket/provide-transform
+                     syntax/id-table
                      syntax/parse
                      syntax/stx)
          (only-in rosette/safe
@@ -15,7 +16,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (for-syntax strip)
+(provide (for-syntax strip
+                     contract-table-ref
+                     contract-table-set!)
          (struct-out none)
          λ/memoize
          repeat/fuel
@@ -74,3 +77,19 @@
         [(cons x xt)
          (for/all ([x x #:exhaustive])
            (go (cons x acc) xt))]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; contract table (TODO FIX)
+
+(begin-for-syntax
+  (define free-contract-table (make-free-id-table))
+  (define bound-contract-table (make-bound-id-table))
+
+  (define (contract-table-set! id val)
+    (free-id-table-set! free-contract-table id val)
+    (bound-id-table-set! bound-contract-table (syntax-local-introduce id) val)
+    (void))
+
+  (define (contract-table-ref id)
+    (or (free-id-table-ref free-contract-table id #f)
+        (bound-id-table-ref bound-contract-table (syntax-local-introduce id) #f))))

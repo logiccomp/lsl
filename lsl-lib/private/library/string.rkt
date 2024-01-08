@@ -30,4 +30,5 @@
   string-upcase
   string=?
   string?
-  substring))
+  substring
+  string<?))

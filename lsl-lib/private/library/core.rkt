@@ -13,6 +13,7 @@
          (except-in net/http-easy
                     proxy?)
          racket/file
+         racket/local
          racket/provide
          racket/runtime-path
          (prefix-in ^ rosette/safe)
@@ -32,6 +33,7 @@
  #%top
  #%top-interaction
  quote
+ local
 
  (filtered-out
   (strip "$")
@@ -39,6 +41,7 @@
    $#%module-begin
    $#%datum
 
+   $...
    $require
    $lambda
    $λ
@@ -74,8 +77,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; forms
 
-;; TODO
-#;(define-syntax $...
+(define-syntax $...
   (syntax-parser
     [_ #'(error "error: expected a finished expression, but found a template")]))
 

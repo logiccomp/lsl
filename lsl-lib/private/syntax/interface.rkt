@@ -47,7 +47,7 @@
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
      #:with ?new-body ((attribute ?head.make-body) #'?body)
-     (define ctc (free-id-table-ref contract-table #'?head.name #f))
+     (define ctc (contract-table-ref #'?head.name))
      (if (not ctc)
         #'(define ?head.name ?new-body)
         #`(define ?head.name
@@ -64,7 +64,7 @@
 (define-syntax declare-contract
   (syntax-parser
     [(_ name:id ctc:expr)
-     (free-id-table-set! contract-table #'name #'ctc)
+     (contract-table-set! #'name #'ctc)
      #'(void)]))
 
 (define-syntax define-contract
