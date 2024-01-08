@@ -31,6 +31,7 @@
          Boolean
          Constant
          True
+         False
          Integer
          Real
          Natural
@@ -59,6 +60,7 @@
         (symbolic (λ _ v))))
 
 (define-contract True (Constant #t))
+(define-contract False (Constant #f))
 
 (define-contract Integer
   (Flat (check integer?)

@@ -231,6 +231,7 @@ and symbolic execution.
 @subsection{Derived}
 
 @deftogether[(@defidform[True]
+              @defidform[False]
               @defidform[Boolean]
               @defidform[Natural]
               @defidform[Integer]

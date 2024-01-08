@@ -235,9 +235,9 @@
 (define (check-or-verify-contract ctc val name mode)
   (match (send ctc interact val name mode)
     [(list eg exn)
-     (error name VERIFY-FMT eg (indent (exn-message exn)))]
+     (fail-check (format VERIFY-FMT eg (indent (exn-message exn))))]
     [(none)
-     (error name "failed to generate values associated with contract")]
+     (fail-check "failed to generate values associated with contract")]
     [#f
      (void)]))
 
