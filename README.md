@@ -1,7 +1,7 @@
 ## Logical Student Language (LSL)
 
 [![Build Status][build-badge]][build]
-[![Scribble][docs-badge][docs]
+[![Scribble][docs-badge]][docs]
 
 [build-badge]: https://github.com/logiccomp/lsl/actions/workflows/build.yml/badge.svg
 [build]: https://github.com/logiccomp/lsl/actions/workflows/build.yml?query=workflow%3Abuild
