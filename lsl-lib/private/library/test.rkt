@@ -9,6 +9,7 @@
                      syntax/id-table
                      syntax/parse
                      syntax/parse/class/struct-id)
+         racket/stxparam
          racket/class
          (except-in racket/contract blame?)
          racket/match
@@ -29,8 +30,9 @@
  (filtered-out
   (strip "$")
   (combine-out
-   $run-tests
+   $define-run-tests
    $with-tests
+   $test-suite
 
    $check-error
    $check-expect
@@ -47,53 +49,66 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test environments
 
-(begin-for-syntax
-  (define expect-forms null)
-  (define dont-push? (make-parameter #f))
+(define-syntax-parameter dont-push? #f)
 
-  (define (push-form! stx)
-    (define stx* #`(test-begin #,stx))
-    (if (dont-push?)
-        stx*
-        (match (syntax-local-context)
-          [(or 'module 'module-begin)
-           (set! expect-forms (cons stx* expect-forms))
-           #'(void)]
-          [(or 'top-level 'expression (? list?))
-           #`(void
-              (run-tests
-               (test-suite
-                "top-level tests"
-                #,stx*)))]))))
+(begin-for-syntax
+  (define anon-tests null)
+  (define test-suites null)
+
+  (define (push-form! stx [suite-name #f])
+    (match (syntax-local-context)
+      [(or 'top-level (? (λ _ (syntax-parameter-value #'dont-push?))))
+       stx]
+      [(or 'module 'module-begin)
+       (cond
+         [(not suite-name)
+          (set! anon-tests (cons stx anon-tests))
+          #'(void)]
+         [(assoc suite-name test-suites)
+          (raise-syntax-error 'check (format "test suite ~a already exists" suite-name) stx)]
+         [else
+          (set! test-suites (cons (cons suite-name stx) test-suites))
+          #'(void)])]
+      [(or 'expression (? list?))
+       (raise-syntax-error 'check "a test cannot be inside a definition or expression" stx)])))
 
 (define-syntax $with-tests
   (syntax-parser
     [(_ e:expr ...)
-     (parameterize ([dont-push? #t])
-       (local-expand
-        #'(let ([result (void)])
-            (run-tests
-             (test-suite
-              "local tests"
-              (set! result (let () e ...))))
-            result)
-        (syntax-local-context)
-        null))]))
+     #'(syntax-parameterize ([dont-push? #t])
+         (let ([result (void)])
+           (run-tests
+            (test-suite
+             "interaction-area tests"
+             (set! result (let () e ...))))
+           result))]))
 
-
-(define-syntax $run-tests
+(define-syntax $define-run-tests
   (syntax-parser
-    [(_)
-     #:with (form ...) expect-forms
-     (begin0
-       (if (empty? expect-forms)
-           #'(void)
-           #'(void
-              (run-tests
-               (test-suite
-                "module-level tests"
-                form ...))))
-       (set! expect-forms null))]))
+    [(_ external:id internal:id)
+     #:with (anon-test ...) (reverse anon-tests)
+     #:with ([name . suite] ...) (reverse test-suites)
+     (if (and (empty? anon-tests) (empty? test-suites))
+         #'(begin (define (external) (hash))
+                  (define (internal) (void)))
+         #'(begin
+             (define (external)
+               (syntax-parameterize ([dont-push? #t])
+                 (hash (~@ (#%datum . name) (run-test suite)) ...
+                       #f (run-test (test-suite "anonymous tests" anon-test ...)))))
+             (define (internal)
+               (syntax-parameterize ([dont-push? #t])
+                 (void
+                  (run-tests
+                   (test-suite
+                    "definition-area tests"
+                    suite ...
+                    (test-suite "anonymous tests" anon-test ...))))))))]))
+
+(define-syntax $test-suite
+  (syntax-parser
+    [(_ name:string test:expr ...)
+     (push-form! #'(test-suite name test ...) (syntax-e #'name))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; checks

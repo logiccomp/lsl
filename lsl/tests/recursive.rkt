@@ -103,54 +103,52 @@
                     (node-value x)
                     (sum (node-right x))))))
 
-   (run/sexp `(begin ,node
-                     (define-contract IntTree
-                       (OneOf Integer (Node IntTree Integer IntTree)))
-                     (: sum (-> IntTree Integer))
-                     ,sum-sexp
-                     (sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8)))))
+   (run/sexp node
+             '(define-contract IntTree
+               (OneOf Integer (Node IntTree Integer IntTree)))
+             '(: sum (-> IntTree Integer))
+             sum-sexp
+             '(sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8))))
    36
-   (run/sexp `(begin ,node ,tree-sexp
-                     (: sum (-> (Tree Integer) Integer))
-                     ,sum-sexp
-                     (sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8)))))
+   (run/sexp node tree-sexp
+             '(: sum (-> (Tree Integer) Integer))
+             sum-sexp
+             '(sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8))))
    36
 
-   (run/sexp `(begin
-                ,node ,tree-sexp
-                ,sum-sexp
-                (sum (contract-shrink (Tree Integer) (make-node 10 20 (make-node 1 2 3))))))
+   (run/sexp node tree-sexp sum-sexp
+             '(sum (contract-shrink (Tree Integer) (make-node 10 20 (make-node 1 2 3)))))
    17
 
    #:t
    (for/and ([_ (in-range 10)])
-     (run/sexp `(begin ,node ,tree-sexp
-                       (define (int-tree? x)
-                         (or (integer? x)
-                             (and (int-tree? (node-left x))
-                                  (integer? (node-value x))
-                                  (int-tree? (node-right x)))))
-                       (int-tree? (contract-generate (Tree Integer))))))
+     (run/sexp node tree-sexp
+               '(define (int-tree? x)
+                  (or (integer? x)
+                      (and (int-tree? (node-left x))
+                           (integer? (node-value x))
+                           (int-tree? (node-right x)))))
+               '(int-tree? (contract-generate (Tree Integer)))))
 
    #:x
-   (run/sexp `(begin ,node
-                     (define-contract IntTree
-                       (OneOf Integer (Node IntTree Integer IntTree)))
-                     (: sum (-> IntTree Integer))
-                     ,sum-sexp
-                     (sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8)))))
+   (run/sexp node
+             '(define-contract IntTree
+               (OneOf Integer (Node IntTree Integer IntTree)))
+             '(: sum (-> IntTree Integer))
+             sum-sexp
+             '(sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8))))
    "contract violation"
    #:x
-   (run/sexp `(begin ,node ,tree-sexp
-                     (: sum (-> (Tree Integer) Integer))
-                     ,sum-sexp
-                     (sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8)))))
+   (run/sexp node tree-sexp
+             '(: sum (-> (Tree Integer) Integer))
+             sum-sexp
+             '(sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8))))
    "contract violation"
    #:x
-   (run/sexp `(begin ,node
-                     (define-contract (Tree X)
-                       (OneOf X (Node (Tree Boolean) X (Tree X))))
-                     (: sum (-> (Tree Integer) Integer))
-                     ,sum-sexp))
+   (run/sexp node
+             '(define-contract (Tree X)
+               (OneOf X (Node (Tree Boolean) X (Tree X))))
+             '(: sum (-> (Tree Integer) Integer))
+             sum-sexp)
    "must be exactly (Tree Integer)"
    ))

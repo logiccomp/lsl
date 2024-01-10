@@ -30,6 +30,7 @@
 
 (provide
  define-contract
+ provide
  (rename-out
   [define-protected define]
   [declare-contract :])

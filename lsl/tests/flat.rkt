@@ -89,10 +89,10 @@
                    (generate (λ (fuel) (* 2 (contract-generate Integer))))
                    (shrink (λ (fuel val) (floor (/ val 2))))
                    (symbolic (λ () (* 2 (contract-symbolic Integer)))))))
-   (run/sexp `(begin ,even-sexp (: x Even) (define x 2) x))  2
-   #:x (run/sexp `(begin ,even-sexp (: x Even) (define x 1) x))  "expected: Even"
+   (run/sexp even-sexp '(: x Even) '(define x 2) 'x)  2
+   #:x (run/sexp even-sexp '(: x Even) '(define x 1) 'x)  "expected: Even"
    #:? even?
-   (run/sexp `(begin ,even-sexp (contract-generate Even)))
-   (run/sexp `(begin ,even-sexp (contract-shrink Even 6)))  3
+   (run/sexp even-sexp '(contract-generate Even))
+   (run/sexp even-sexp '(contract-shrink Even 6))  3
    #:x (run (contract-generate (Flat (check even?))))  "contract-generate: failed"
    ))

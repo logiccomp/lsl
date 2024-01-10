@@ -68,7 +68,10 @@
      #'(#%module-begin
         (check-version)
         form ...
-        (run-tests))]))
+        (define-run-tests run-tests print-tests)
+        (provide run-tests)
+        (module+ main
+          (print-tests)))]))
 
 (define-syntax $#%datum
   (syntax-parser
@@ -80,7 +83,8 @@
 
 (define-syntax $...
   (syntax-parser
-    [_ #'(error "error: expected a finished expression, but found a template")]))
+    [_ (syntax/loc this-syntax
+         (error '(... ...) "expected a finished expression, but found a template"))]))
 
 (define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
   (^require mod ...))
@@ -112,7 +116,9 @@
     [(_ [(~and (~not $else) guard:expr) arm:expr] ...+ [$else final-arm:expr])
      #'(^cond [guard arm] ... [^else final-arm])]
     [(_ [(~and (~not $else) guard:expr) arm:expr] ...+)
-     #:with final-arm #'(error "cond: all question results were false")
+     #:with final-arm
+     (syntax/loc this-syntax
+       (error 'cond "all question results were false"))
      #'(^cond [guard arm] ... [^else final-arm])]))
 
 (define-syntax-parse-rule ($if guard:expr then:expr else:expr)
