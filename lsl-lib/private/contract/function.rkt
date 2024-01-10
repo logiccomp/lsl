@@ -72,23 +72,24 @@
            (^with-vc (exn:root-vc failed-exn)
                      (^evaluate args (^solve (void))))))
         (define-values (best-args best-exn)
-          (find-best-args val concrete-args))
-        (list (format "(~a ~a)" name (string-join (map ~v best-args)))
+          (find-best-args val concrete-args failed-exn))
+        (list (if (empty? best-args)
+                  (format "(~a)" name)
+                  (format "(~a ~a)" name (string-join (map ~v best-args))))
               best-exn))
       (cond
         [(ormap none? args) (none)]
         [(fail-exn val args) => does-fail]
         [else #f]))
 
-    (define (find-best-args val args)
+    (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
         [(or (ormap none? args*) (equal? args args*))
-         (values args (fail-exn val args))]
-        [(fail-exn val args*)
-         (find-best-args val args*)]
+         (values args last-exn)]
+        [(fail-exn val args*) => (λ (exn) (find-best-args val args* exn))]
         [else
-         (values args (fail-exn val args))]))
+         (values args last-exn)]))
 
     (define (shrink* args)
       (define ((shrink-apply acc k) dom)
