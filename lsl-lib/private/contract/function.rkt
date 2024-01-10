@@ -68,9 +68,11 @@
       (define args (list-update-many domains domain-order dom-apply))
       (define (does-fail failed-exn)
         (define concrete-args
-          (^result-value
-           (^with-vc (exn:root-vc failed-exn)
-                     (^evaluate args (^solve (void))))))
+          (if (ormap ^symbolic? args)
+              (^result-value
+               (^with-vc (exn:root-vc failed-exn)
+                         (^evaluate args (^solve (void)))))
+              args))
         (define-values (best-args best-exn)
           (find-best-args val concrete-args failed-exn))
         (list (if (empty? best-args)
