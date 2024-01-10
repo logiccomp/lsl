@@ -60,4 +60,11 @@
 
    #:x (run* (list (check-expect 1 1)))
    "cannot be inside a definition or expression"
+
+   #:x (run* (check-expect (f #t) #t)
+             (check-expect (g '()) '())
+             (define-struct foo (bar))
+             (define (g l) (filter (lambda (x) #t) l))
+             (define (f x) (foo-bar x)))
+   "1 success(es) 0 failure(s) 1 error(s) 2 test(s) run"
    ))

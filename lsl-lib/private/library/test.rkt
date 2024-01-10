@@ -11,6 +11,7 @@
                      syntax/parse/class/struct-id)
          racket/stxparam
          racket/class
+         (prefix-in ^ rosette/safe)
          (except-in racket/contract blame?)
          racket/match
          racket/provide
@@ -55,7 +56,8 @@
   (define anon-tests null)
   (define test-suites null)
 
-  (define (push-form! stx [suite-name #f])
+  (define (push-form! raw-stx [suite-name #f])
+    (define stx #`(wrap-check (λ () #,raw-stx)))
     (match (syntax-local-context)
       [(or 'top-level (? (λ _ (syntax-parameter-value #'dont-push?))))
        stx]
@@ -71,6 +73,9 @@
           #'(void)])]
       [(or 'expression (? list?))
        (raise-syntax-error 'check "a test cannot be inside a definition or expression" stx)])))
+
+(define (wrap-check thk)
+  (^result-value (^with-vc (thk))))
 
 (define-syntax $with-tests
   (syntax-parser
