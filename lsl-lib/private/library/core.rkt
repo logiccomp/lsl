@@ -55,6 +55,7 @@
    $if
    $and
    $or
+   $set!
    $raise
 
    $define-struct)))
@@ -129,6 +130,9 @@
 
 (define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
   (^or arg0 arg ...))
+
+(define-syntax-parse-rule ($set! x:id arg:expr)
+  (^set! x arg))
 
 (define ($raise v)
   (raise (exn:user (format "exception raised: ~v" v)
