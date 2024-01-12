@@ -220,7 +220,9 @@
     (when (>= check-delta CACHE-EXPIRE)
       (update-cache))
     (define latest-version (hash-ref (get-version-cache) 'version))
-    (when (and (valid-version? current-version)
+    (define ready? (hash-ref (get-version-cache) 'ready))
+    (when (and ready?
+               (valid-version? current-version)
                (valid-version? latest-version)
                (version<? current-version latest-version))
       (printf VERSION-FMT latest-version))))
@@ -239,7 +241,9 @@
 (define (get-version-cache)
   (if (file-exists? cache-path)
       (file->value cache-path)
-      (hash 'timestamp 0 'version current-version)))
+      (hash 'timestamp 0
+            'version current-version
+            'ready #f)))
 
 (define (put-version-cache val)
   (unless (file-exists? cache-path)
