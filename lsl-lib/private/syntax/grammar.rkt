@@ -10,7 +10,7 @@
 
 (provide
  (for-syntax contract-literal)
- Flat
+ Immediate
  Function
  OneOf
  AllOf
@@ -19,7 +19,7 @@
  Tuple
  Recursive
 
- (for-syntax flat-literal)
+ (for-syntax immediate-literal)
  check
  generate
  shrink
@@ -35,10 +35,10 @@
 
 (define-literal-forms contract-literal
   "contract constructor must occur within a contract"
-  (Flat Function OneOf AllOf Struct List Tuple Recursive))
+  (Immediate Function OneOf AllOf Struct List Tuple Recursive))
 
-(define-literal-forms flat-literal
-  "literal clause must occur within Flat"
+(define-literal-forms immediate-literal
+  "literal clause must occur within Immediate"
   (check generate shrink symbolic))
 
 (define-literal-forms function-literal

@@ -16,7 +16,7 @@
 (module+ examples
   (provide (all-defined-out))
 
-  (require (submod "flat.rkt" examples))
+  (require (submod "immediate.rkt" examples))
 
   (struct eb root (e b)
     #:transparent

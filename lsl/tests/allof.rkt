@@ -16,7 +16,7 @@
 (module+ examples
   (provide (all-defined-out))
 
-  (require (submod "flat.rkt" examples))
+  (require (submod "immediate.rkt" examples))
 
   (define pos-even-ctc
     (new allof-contract%
@@ -58,13 +58,13 @@
 
 (module+ test
   (chk
-   (run (: x (AllOf Integer (Flat (check positive?)))) (define x 10) x)  10
-   #:x (run (: x (AllOf Integer (Flat (check positive?)))) (define x #f) x)
+   (run (: x (AllOf Integer (Immediate (check positive?)))) (define x 10) x)  10
+   #:x (run (: x (AllOf Integer (Immediate (check positive?)))) (define x #f) x)
    "expected: Integer"
-   #:x (run (: x (AllOf Integer (Flat (check positive?)))) (define x -10) x)
-   "expected: (Flat (check positive?))"
+   #:x (run (: x (AllOf Integer (Immediate (check positive?)))) (define x -10) x)
+   "expected: (Immediate (check positive?))"
 
    #:? (and/c integer? positive?)
-   (run (contract-generate (AllOf Integer (Flat (check positive?))) 40))
-   (run (contract-shrink (AllOf (Flat (check positive?)) Integer) 10))  5
+   (run (contract-generate (AllOf Integer (Immediate (check positive?))) 40))
+   (run (contract-shrink (AllOf (Immediate (check positive?)) Integer) 10))  5
    ))

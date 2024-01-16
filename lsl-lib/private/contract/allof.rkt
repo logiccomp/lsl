@@ -40,17 +40,17 @@
       (repeat/fuel
        (λ ()
          (define conjunct (random-ref conjuncts))
-         (satisfies-flat (send conjunct generate fuel)))
+         (satisfies-immediate (send conjunct generate fuel)))
        fuel))
 
     (define/override (shrink fuel val)
       (repeat/fuel
        (λ ()
          (define conjunct (random-ref conjuncts))
-         (satisfies-flat (send conjunct shrink fuel val)))
+         (satisfies-immediate (send conjunct shrink fuel val)))
        fuel))
 
-    (define (satisfies-flat val)
+    (define (satisfies-immediate val)
       (cond
         [(none? val) (none)]
         [(andmap passed-guard? (guards-of val #f)) val]

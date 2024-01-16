@@ -23,21 +23,21 @@
 
    #:do (define fold-sexp
           '(begin
-             (: t (Flat (check positive?)))
+             (: t (Immediate (check positive?)))
              (define t 1)
              (: f (-> (Record + t) Integer))
              (define (f x) x)))
    (run/sexp fold-sexp '(f 1) '(f 2) '(f 3))  3
    #:x (run/sexp fold-sexp '(f 1) '(f 2) '(f -10))
-   "expected: (Flat (check positive?))"
+   "expected: (Immediate (check positive?))"
 
    #:do (define re-sexp
           '(begin
-             (: t (Flat (check machine-accepting?)))
+             (: t (Immediate (check machine-accepting?)))
              (define t (re (seq-prefix 'a (star 'b) 'a)))
              (: f (-> (Record machine-next t) Symbol))
              (define (f x) x)))
    (run/sexp re-sexp '(f 'a) '(f 'b) '(f 'b) '(f 'a))  'a
    #:x (run/sexp re-sexp '(f 'a) '(f 'b) '(f 'a) '(f 'a))
-   "expected: (Flat (check machine-accepting?))"
+   "expected: (Immediate (check machine-accepting?))"
    ))

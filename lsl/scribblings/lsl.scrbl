@@ -100,21 +100,21 @@ and symbolic execution.
 @subsection{Primitives}
 
 @defform[(Flat clause ...)]{
-  A @emph{flat contract} is one that can be checked immediately,
+  An @emph{immediate contract} is one that can be checked immediately,
   without imposing any future checks.
   As a shorthand,
   an ordinary LSL expression @racket[e]
   in a contract position
-  is automatically converted to the flat contract
-  @racket[(Flat (check e))].
+  is automatically converted to the immediate contract
+  @racket[(Immediate (check e))].
   @examples[#:eval evaluator #:no-prompt #:label #f
     (define-contract Even
-      (Flat (check (lambda (x) (and (integer? x) (even? x))))
-            (generate (lambda (fuel) (* 2 (random fuel))))
-	    (shrink (lambda (fuel x)
-	              (let ([y (/ x 2)])
-                        (if (even? y) y (sub1 y)))))
-            (symbolic (lambda () (* 2 (contract-symbolic Integer))))))]
+      (Immediate (check (lambda (x) (and (integer? x) (even? x))))
+                 (generate (lambda (fuel) (* 2 (random fuel))))
+                 (shrink (lambda (fuel x)
+	                   (let ([y (/ x 2)])
+                             (if (even? y) y (sub1 y)))))
+                 (symbolic (lambda () (* 2 (contract-symbolic Integer))))))]
 
   @defsubform[(check predicate-expr)]{
     The @racket[predicate-expr] is expected to produce a predicate

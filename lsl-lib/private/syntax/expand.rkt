@@ -36,15 +36,15 @@
     (define/syntax-parse (_ stx) form-stx)
     (syntax-replace-srcloc #'stx
       (syntax-parse #'stx
-        #:literal-sets (contract-literal flat-literal function-literal)
-        [(Flat ~! (~alt (~optional (check chk:expr))
-                        (~optional (generate gen:expr))
-                        (~optional (shrink shk:expr))
-                        (~optional (symbolic sym:expr))) ...)
-         #'(Flat (check (~? chk #f))
-                 (generate (~? gen #f))
-                 (shrink (~? shk #f))
-                 (symbolic (~? sym #f)))]
+        #:literal-sets (contract-literal immediate-literal function-literal)
+        [(Immediate ~! (~alt (~optional (check chk:expr))
+                             (~optional (generate gen:expr))
+                             (~optional (shrink shk:expr))
+                             (~optional (symbolic sym:expr))) ...)
+         #'(Immediate (check (~? chk #f))
+                      (generate (~? gen #f))
+                      (shrink (~? shk #f))
+                      (symbolic (~? sym #f)))]
         [(Function ~! (~alt (~once (arguments [x:id a:expr] ...))
                             (~once (result r:expr))
                             (~optional (raises e:struct-id ...))) ...)
@@ -85,7 +85,7 @@
          #:when (contract-macro? v)
          #:with res (local-apply-transformer (contract-macro-proc v) #'stx 'expression '())
          #'(expand-contract res)]
-        [e:expr #'(expand-contract (Flat (check e)))])))
+        [e:expr #'(expand-contract (Immediate (check e)))])))
 
   (define (syntax-replace-srcloc loc-stx stx)
     (syntax-property

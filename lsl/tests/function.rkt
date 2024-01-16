@@ -16,7 +16,7 @@
 (module+ examples
   (provide (all-defined-out))
 
-  (require (submod "flat.rkt" examples))
+  (require (submod "immediate.rkt" examples))
 
   (define pte-ctc
     (new function-contract%
@@ -78,14 +78,14 @@
    10
 
    (run (: f (Function (arguments [x Integer]
-                                  [y (Flat (check (λ (z) (eq? x z))))])
+                                  [y (Immediate (check (λ (z) (eq? x z))))])
                        (result Integer)))
         (define (f x y) (+ x y))
         (f 10 10))
    20
 
    (run (: f (Function (arguments [x Integer])
-                       (result (Flat (check (λ (y) (eq? x y)))))))
+                       (result (Immediate (check (λ (y) (eq? x y)))))))
         (define (f x) x)
         (f 10))
    10
@@ -145,13 +145,13 @@
    "expected: Boolean"
 
    #:x (run (: f (Function (arguments [x Integer])
-                           (result (Flat (check (λ (y) (eq? x y)))))))
+                           (result (Immediate (check (λ (y) (eq? x y)))))))
             (define (f x) (+ x 1))
             (f 10))
-   "expected: (Flat (check (λ (y) (eq? x y))))"
+   "expected: (Immediate (check (λ (y) (eq? x y))))"
 
    #:x (run* (define-contract Even
-               (Flat
+               (Immediate
                 (check even?)
                 (symbolic (λ () (* 2 (contract-symbolic Integer))))))
              (: f (-> Even Even))
@@ -179,8 +179,8 @@
              (check-contract f 20))
   "exception raised: (bad)"
 
-  #:x (run (: f (Function (arguments [x (Flat (check (λ (z) (eq? y z))))]
-                                     [y (Flat (check (λ (z) (eq? x z))))])
+  #:x (run (: f (Function (arguments [x (Immediate (check (λ (z) (eq? y z))))]
+                                     [y (Immediate (check (λ (z) (eq? x z))))])
                           (result Integer)))
            (define (f x y) (+ x y))
            (f 10 20))
@@ -192,7 +192,7 @@
 
   #:do (define fb
          '(define-contract FizzBuzz
-            (Flat
+            (Immediate
              #;(domain Integer)
              (check (lambda (x) (not (or (zero? (modulo x 3)) (zero? (modulo x 5))))))
              (generate (λ () (+ (* 15 (contract-generate Integer)) 1))))))

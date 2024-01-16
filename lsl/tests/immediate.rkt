@@ -5,7 +5,7 @@
 
 (require chk
          racket/class
-         lsl/private/contract/flat
+         lsl/private/contract/immediate
          lsl/private/guard
          lsl/private/util
          "util.rkt")
@@ -17,21 +17,21 @@
   (provide (all-defined-out))
 
   (define bool-ctc
-    (new flat-contract%
+    (new immediate-contract%
          [syntax (syntax/unexpanded Boolean)]
          [checker boolean?]
          [generator (λ (fuel) (< (random) 1/2))]
          [shrinker (λ (fuel val) #f)]))
 
   (define pos-ctc
-    (new flat-contract%
+    (new immediate-contract%
          [syntax (syntax/unexpanded Positive)]
          [checker (λ (x) (and (real? x) (positive? x)))]
          [generator (λ (fuel) (random fuel))]
          [shrinker (λ (fuel val) (floor (/ val 2)))]))
 
   (define even-ctc
-    (new flat-contract%
+    (new immediate-contract%
          [syntax (syntax/unexpanded Even)]
          [checker (λ (x) (and (integer? x) (even? x)))]
          [generator (λ (fuel) (* 2 (random fuel)))]
@@ -85,14 +85,14 @@
 
    #:do (define even-sexp
           '(define-contract Even
-             (Flat (check (λ (x) (and (integer? x) (even? x))))
-                   (generate (λ (fuel) (* 2 (contract-generate Integer))))
-                   (shrink (λ (fuel val) (floor (/ val 2))))
-                   (symbolic (λ () (* 2 (contract-symbolic Integer)))))))
+             (Immediate (check (λ (x) (and (integer? x) (even? x))))
+                        (generate (λ (fuel) (* 2 (contract-generate Integer))))
+                        (shrink (λ (fuel val) (floor (/ val 2))))
+                        (symbolic (λ () (* 2 (contract-symbolic Integer)))))))
    (run/sexp even-sexp '(: x Even) '(define x 2) 'x)  2
    #:x (run/sexp even-sexp '(: x Even) '(define x 1) 'x)  "expected: Even"
    #:? even?
    (run/sexp even-sexp '(contract-generate Even))
    (run/sexp even-sexp '(contract-shrink Even 6))  3
-   #:x (run (contract-generate (Flat (check even?))))  "contract-generate: failed"
+   #:x (run (contract-generate (Immediate (check even?))))  "contract-generate: failed"
    ))

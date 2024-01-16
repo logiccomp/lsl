@@ -16,7 +16,7 @@
                      mischief/sort)
          racket/class
          racket/promise
-         "../contract/flat.rkt"
+         "../contract/immediate.rkt"
          "../contract/function.rkt"
          "../contract/oneof.rkt"
          "../contract/allof.rkt"
@@ -159,12 +159,12 @@
     #:expression
     (define/syntax-parse (_ stx) form-stx)
     (syntax-parse #'stx
-      #:literal-sets (contract-literal flat-literal function-literal)
-      [(Flat (check chk)
+      #:literal-sets (contract-literal immediate-literal function-literal)
+      [(Immediate (check chk)
              (generate gen)
              (shrink shk)
              (symbolic sym))
-       #'(new flat-contract%
+       #'(new immediate-contract%
               [syntax #'stx]
               [checker chk]
               [generator gen]

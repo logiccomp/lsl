@@ -13,12 +13,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide flat-contract%)
+(provide immediate-contract%)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(define flat-contract%
+(define immediate-contract%
   (class contract%
     (init-field syntax checker [generator #f] [shrinker #f] [symbol #f])
 
