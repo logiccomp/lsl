@@ -218,7 +218,7 @@
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ name:id (~optional n:number #:defaults ([n #'100])))
+    [(_ name:id (~optional n:number #:defaults ([n #'1])))
      #:with thk-body (syntax/loc stx (check-contract name 'name n))
      (push-form!
       #'(with-default-check-info*
