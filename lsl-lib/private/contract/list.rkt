@@ -53,7 +53,7 @@
             (for/list ([ctc (in-list contracts)])
               (send ctc generate fuel))
             (build-list
-             (random fuel)
+             (random (add1 fuel))
              (λ _ (send elems-ctc generate fuel)))))
       (if (ormap none? result)
           (none)
