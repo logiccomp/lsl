@@ -87,7 +87,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contract operations
 
-(define FUEL 10)
+(define FUEL 50)
 
 (define-syntax contract-generate
   (syntax-parser

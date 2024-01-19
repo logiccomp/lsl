@@ -211,8 +211,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verification
 
-(define FUEL 10)
-
 (define (proxy->contract p)
   (and (proxy? p) (proxy-contract p)))
 
@@ -226,12 +224,10 @@
           (λ () thk-body)))]))
 
 (define-check (check-contract val name n)
-  (define (gen-mode ctc)
-    (send ctc generate FUEL))
   (define ctc (proxy->contract val))
   (if ctc
-      (for ([_ (in-range n)])
-        (check-or-verify-contract ctc val name gen-mode))
+      (for ([fuel (in-range n)])
+        (check-or-verify-contract ctc val name (λ (ctc) (send ctc generate fuel))))
       (fail-check (format "unknown contract for ~a" name))))
 
 (define-syntax ($verify-contract stx)

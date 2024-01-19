@@ -64,7 +64,9 @@
 
 (define-contract Integer
   (Immediate (check integer?)
-             (generate (λ (fuel) (random -100 100)))
+             (generate (λ (fuel) (if (zero? fuel)
+                                     0
+                                     (random (* -1 fuel) fuel))))
              (shrink (λ (fuel val)
                        (if (zero? val)
                            (none)
@@ -73,7 +75,7 @@
 
 (define-contract Real
   (Immediate (check real?)
-             (generate (λ (fuel) (- (* 200 (random)) 100)))
+             (generate (λ (fuel) (- (* 2 fuel (random)) fuel)))
              (symbolic (predicate->symbolic real?))))
 
 (define (natural? n)
@@ -82,7 +84,7 @@
 
 (define-contract Natural
   (Immediate (check natural?)
-             (generate (λ (fuel) (random 0 200)))
+             (generate (λ (fuel) (random 0 (add1 fuel))))
              (symbolic (λ ()
                          (define v (contract-symbolic Integer))
                          (if (positive? v) v (- v))))))
@@ -92,18 +94,18 @@
 
 (define-contract String
   (Immediate (check lifted-string?)
-             (generate (λ (fuel) (random-string)))))
+             (generate (λ (fuel) (random-string fuel)))))
 
 (define (lifted-string? x)
   (for/all ([x x])
     (string? x)))
 
-(define (random-string)
-  (build-string (random 0 100) (λ (_) (random-alpha-char))))
+(define (random-string fuel)
+  (build-string (random 0 (add1 fuel)) (λ (_) (random-alpha-char))))
 
 (define-contract Symbol
   (Immediate (check lifted-symbol?)
-             (generate (λ (fuel) (string->symbol (random-string))))))
+             (generate (λ (fuel) (string->symbol (random-string fuel))))))
 
 (define (lifted-symbol? x)
   (for/all ([x x])
