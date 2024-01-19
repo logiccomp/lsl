@@ -15,6 +15,7 @@
 (provide
  empty
  member?
+ remove-all
 
  (lift-out
   build-list
@@ -53,3 +54,6 @@
 
 (define (member? x l)
   (^not (^equal? #f (^member x l))))
+
+(define (remove-all x l)
+  (filter (lambda (y) (not (equal? y x))) l))

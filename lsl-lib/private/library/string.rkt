@@ -32,6 +32,7 @@
   string
   string->list
   string->number
+  number->string
   string->symbol
   string-append
   string-contains?

@@ -20,6 +20,7 @@
          "private/library/list.rkt"
          "private/library/number.rkt"
          "private/library/string.rkt"
+         "private/library/char.rkt"
          "private/library/test.rkt")
 
 (lazy-require
@@ -49,6 +50,7 @@
   "private/library/list.rkt"
   "private/library/number.rkt"
   "private/library/string.rkt"
+  "private/library/char.rkt"
   "private/library/test.rkt")
 
  ticks
