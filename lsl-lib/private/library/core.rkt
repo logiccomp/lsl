@@ -231,12 +231,12 @@
   (put-version-cache
    (hash-set (get-version-cache) 'timestamp (current-seconds)))
   (define res (get VERSION-URL))
-  (define latest-version
-    (when (= (response-status-code res) 200)
-      (hash-ref (response-json res) 'version)))
-  (response-close! res)
-  (put-version-cache
-   (hash-set (get-version-cache) 'version latest-version)))
+  (when (= (response-status-code res) 200)
+    (put-version-cache
+     (hash-set* (get-version-cache)
+                'version (hash-ref (response-json res) 'version)
+                'ready (hash-ref (response-json res) 'ready))))
+  (response-close! res))
 
 (define (get-version-cache)
   (if (file-exists? cache-path)
