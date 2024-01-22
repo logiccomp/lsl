@@ -44,4 +44,24 @@
   string=?
   string?
   substring
-  string<?))
+  string<?
+  ; TODO: Verify all definitions below behave like ISL.
+  string-ci<=?
+  string-ci<?
+  string-ci=?
+  string-ci>=?
+  string-ci>?
+  string<=?
+  string>=?
+  string>?
+  ; TODO: int->string
+  ; TODO: replicate
+  ; TODO: string->int
+  ; TODO: string-alphabetic?
+  ; TODO: string-contains-ci?
+  ; TODO: string-ith
+  ; TODO: string-lower-case?
+  ; TODO: string-numeric?
+  ; TODO: string-upper-case?
+  ; TODO: string-whitespace?
+  ))

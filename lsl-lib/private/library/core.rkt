@@ -33,8 +33,11 @@
  #%app
  #%top
  #%top-interaction
- quote
  local
+ quote
+ quasiquote
+ unquote
+ unquote-splicing
 
  (filtered-out
   (strip "$")

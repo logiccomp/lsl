@@ -12,6 +12,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
+; TODO: Add the following definitions (should be easy to define with Rosette? )
+; boolean->string
+; false?
+
 (provide
  (contract-out
   [rename equal? boolean=? (-> ^boolean? ^boolean? ^boolean?)])

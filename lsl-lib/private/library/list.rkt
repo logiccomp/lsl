@@ -14,12 +14,17 @@
 
 (provide
  empty
- member?
+ member? ; TODO: Fix this.
  remove-all
 
  (lift-out
   build-list
-  range)
+  range
+  ; TODO: Verify definitions below behave like ISL.
+  list*
+  make-list
+  ; TODO memq?
+  memv)
 
  (filtered-out
   (strip "^")
@@ -40,8 +45,8 @@
    ^list
    ^list-ref
    ^list?
-   ^member
-   ^memq
+   ^member ; TODO: Fix this.
+   ^memq ; TODO: Fix this.
    ^null
    ^null?
    ^remove

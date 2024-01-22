@@ -12,6 +12,11 @@
 ;; provide
 
 (provide
+ (lift-out
+  ; TODO: Verify definition behaves like ISL.
+  ; TODO: quick-sort
+  build-string)
+
  (filtered-out
   (strip "^")
   (combine-out
