@@ -99,7 +99,7 @@ and symbolic execution.
 
 @subsection{Primitives}
 
-@defform[(Flat clause ...)]{
+@defform[(Immediate clause ...)]{
   An @emph{immediate contract} is one that can be checked immediately,
   without imposing any future checks.
   As a shorthand,
