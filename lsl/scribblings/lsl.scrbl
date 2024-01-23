@@ -145,7 +145,7 @@ and symbolic execution.
 }
 
 @defform[(Function clause ...)]{
-  A function contract protects a function by contraining its
+  A function contract protects a function by constraining its
   inputs and outputs. Arguments are labeled so that dependent
   properties can be checked.
   @examples[#:eval evaluator #:no-prompt #:label #f
