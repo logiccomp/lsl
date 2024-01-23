@@ -110,7 +110,7 @@ and symbolic execution.
   @examples[#:eval evaluator #:no-prompt #:label #f
     (define-contract Even
       (Immediate (check (lambda (x) (and (integer? x) (even? x))))
-                 (generate (lambda (fuel) (* 2 (random fuel))))
+                 (generate (lambda (fuel) (* 2 (random (add1 fuel)))))
                  (shrink (lambda (fuel x)
 	                   (let ([y (/ x 2)])
                              (if (even? y) y (sub1 y)))))
