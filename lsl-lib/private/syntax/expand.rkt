@@ -24,6 +24,7 @@
 
 (begin-for-syntax
   (define rec-table (make-parameter (make-immutable-free-id-table)))
+  (define param-vars (make-parameter (immutable-free-id-set)))
   (define used-vars (make-parameter (immutable-free-id-set)))
 
   (struct contract-macro (proc)
@@ -72,6 +73,10 @@
            (if (free-id-set-member? (used-vars) #'head)
                #'(Recursive head ^e)
                #'^e))]
+        [((~and (~or All Exists) name) ~! (x:id ...) e:expr)
+         (define new-vars (immutable-free-id-set (syntax-e #'(x ...))))
+         (parameterize ([param-vars (free-id-set-union (param-vars) new-vars)])
+           #'(name (x ...) (expand-contract e)))]
         [(~or head:id (head:id e:expr ...))
          #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
          #:when self
@@ -85,7 +90,11 @@
          #:when (contract-macro? v)
          #:with res (local-apply-transformer (contract-macro-proc v) #'stx 'expression '())
          #'(expand-contract res)]
-        [e:expr #'(expand-contract (Immediate (check e)))])))
+        [x:id
+         #:when (free-id-set-member? (param-vars) #'x)
+         #'(Seal x)]
+        [e:expr
+         #'(expand-contract (Immediate (check e)))])))
 
   (define (syntax-replace-srcloc loc-stx stx)
     (syntax-property

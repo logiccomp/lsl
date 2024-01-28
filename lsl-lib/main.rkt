@@ -39,8 +39,11 @@
  contract-shrink
  contract-symbolic
 
+ (except-out
+  (all-from-out "private/syntax/grammar.rkt")
+  Seal)
+
  (all-from-out
-  "private/syntax/grammar.rkt"
   "private/library/automata.rkt"
   "private/library/boolean.rkt"
   "private/library/contract.rkt"

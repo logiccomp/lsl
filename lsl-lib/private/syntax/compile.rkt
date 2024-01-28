@@ -23,12 +23,13 @@
          "../contract/struct.rkt"
          "../contract/list.rkt"
          "../contract/recursive.rkt"
+         "../contract/parametric.rkt"
          "grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (for-syntax compile-contract))
+(provide compile-contract)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; unbound variables (modified from mflatt's code)
@@ -154,67 +155,81 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; compile
 
-(begin-for-syntax
-  (define/hygienic-metafunction (compile-contract form-stx)
-    #:expression
-    (define/syntax-parse (_ stx) form-stx)
-    (syntax-parse #'stx
-      #:literal-sets (contract-literal immediate-literal function-literal)
-      [(Immediate (check chk)
-             (generate gen)
-             (shrink shk)
-             (symbolic sym))
-       #'(new immediate-contract%
-              [syntax #'stx]
-              [checker chk]
-              [generator gen]
-              [shrinker shk]
-              [symbol sym])]
-      [(Function (arguments [x a] ...)
-                 (result r)
-                 (raises e:struct-id ...))
-       #:with (a* ...) #'((expand-racket (λ* (x ...) (compile-contract a))) ...)
-       #:with (y ...) #'((unbound-racket a*) ...)
-       #:with (k ...) (sort-indices #'stx #'(x ...) #'(y ...))
-       #:with r* #'(λ* (x ...) (compile-contract r))
-       #'(new function-contract%
-              [syntax #'stx]
-              [domain-order (list (#%datum . k) ...)]
-              [domains (list (let () a*) ...)]
-              [codomain r*]
-              [exceptions (list e.predicate-id ...)])]
-      [(OneOf e ...)
-       #'(new oneof-contract%
-              [syntax #'stx]
-              [disjuncts (list (compile-contract e) ...)])]
-      [(AllOf e ...)
-       #'(new allof-contract%
-              [syntax #'stx]
-              [conjuncts (list (compile-contract e) ...)])]
-      [(Struct s:struct-id e ...)
-       #'(new struct-contract%
-              [syntax #'stx]
-              [constructor s.constructor-id]
-              [predicate s.predicate-id]
-              [accessors (list s.accessor-id ...)]
-              [mutators (list s.mutator-id ...)]
-              [contracts (list (compile-contract e) ...)])]
-      [(List e)
-       #'(new list-contract%
-              [syntax #'stx]
-              [fixed? #f]
-              [contracts (list (compile-contract e))])]
-      [(Tuple e ...)
-       #'(new list-contract%
-              [syntax #'stx]
-              [fixed? #t]
-              [contracts (list (compile-contract e) ...)])]
-      [(Recursive x e)
-       #'(letrec ([x (new recursive-contract%
-                          [syntax #'stx]
-                          [promise (delay (compile-contract e))])])
-           x)]
-      [x:id #'x])))
+(define-syntax (compile-contract form-stx)
+  (define/syntax-parse (_ stx) form-stx)
+  (syntax-parse #'stx
+    #:literal-sets (contract-literal immediate-literal function-literal)
+    [(Immediate (check chk)
+                (generate gen)
+                (shrink shk)
+                (symbolic sym))
+     #'(new immediate-contract%
+            [syntax #'stx]
+            [checker chk]
+            [generator gen]
+            [shrinker shk]
+            [symbol sym])]
+    [(Function (arguments [x a] ...)
+               (result r)
+               (raises e:struct-id ...))
+     #:with (a* ...) #'((expand-racket (λ* (x ...) (compile-contract a))) ...)
+     #:with (y ...) #'((unbound-racket a*) ...)
+     #:with (k ...) (sort-indices #'stx #'(x ...) #'(y ...))
+     #:with r* #'(λ* (x ...) (compile-contract r))
+     #'(new function-contract%
+            [syntax #'stx]
+            [domain-order (list (#%datum . k) ...)]
+            [domains (list (let () a*) ...)]
+            [codomain r*]
+            [exceptions (list e.predicate-id ...)])]
+    [(OneOf e ...)
+     #'(new oneof-contract%
+            [syntax #'stx]
+            [disjuncts (list (compile-contract e) ...)])]
+    [(AllOf e ...)
+     #'(new allof-contract%
+            [syntax #'stx]
+            [conjuncts (list (compile-contract e) ...)])]
+    [(Struct s:struct-id e ...)
+     #'(new struct-contract%
+            [syntax #'stx]
+            [constructor s.constructor-id]
+            [predicate s.predicate-id]
+            [accessors (list s.accessor-id ...)]
+            [mutators (list s.mutator-id ...)]
+            [contracts (list (compile-contract e) ...)])]
+    [(List e)
+     #'(new list-contract%
+            [syntax #'stx]
+            [fixed? #f]
+            [contracts (list (compile-contract e))])]
+    [(Tuple e ...)
+     #'(new list-contract%
+            [syntax #'stx]
+            [fixed? #t]
+            [contracts (list (compile-contract e) ...)])]
+    [(Recursive x e)
+     #'(letrec ([x (new recursive-contract%
+                        [syntax #'stx]
+                        [promise (delay (compile-contract e))])])
+         x)]
+    [(All (x ...) e)
+     #'(new parametric-contract%
+            [syntax #'stx]
+            [polarity #t]
+            [names '(x ...)]
+            [make-body (λ (x ...) (compile-contract e))])]
+    [(Exists (x ...) e)
+     #'(new parametric-contract%
+            [syntax #'stx]
+            [polarity #f]
+            [names '(x ...)]
+            [make-body (λ (x ...) (compile-contract e))])]
+    [(Seal x)
+     #'(new seal-contract%
+            [syntax #'stx]
+            [info x])]
+    [x:id #'x]))
 
 (define-syntax λ*
   (syntax-parser

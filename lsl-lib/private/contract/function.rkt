@@ -38,8 +38,8 @@
              (define (info . args)
                (define ((dom-apply acc k) arg)
                  (define make-dom (list-ref domains k))
-                 (define guard (send (apply make-dom acc) protect arg pos))
-                 (guard arg neg))
+                 (define guard (send (apply make-dom acc) protect arg neg))
+                 (guard arg pos))
                (define args* (list-update-many args domain-order dom-apply))
                (define result (apply val args*))
                (define guard (send (apply codomain args*) protect result pos))
@@ -118,12 +118,3 @@
   (for/fold ([acc xs])
             ([k (in-list ks)])
     (list-update acc k (f acc k))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TODO
-
-#|
-
-* Generated value should be protected to ensure clients can't misuse it.
-
-|#

@@ -228,6 +228,33 @@ and symbolic execution.
     (contract-generate (MyPoint Integer Integer))]
 }
 
+@defform[(All (id ...) contract)]{
+  A universal contract that guarantees @racket[id]
+  is used uniformally within @racket[contract].
+  This form is often used to define
+  parametrically polymorphic functions.
+  @examples[#:eval evaluator #:label #f
+    (: id (All (A) (-> A A)))
+    (define (id x) x)
+    (id 10)]
+}
+
+@defform[(Exists (id ...) contract)]{
+  An existential contract that guarantees @racket[id]
+  is used uniformally within @racket[contract].
+  This form is often used for data abstraction.
+  @examples[#:eval evaluator #:label #f
+    (: counter-pkg (Exists (A) (Tuple (-> A) (-> A A) (-> A Integer))))
+    (define counter-pkg
+      (list (λ () 0)
+            (λ (x) (+ x 1))
+            (λ (x) x)))
+    (define make-counter (first counter-pkg))
+    (define counter-incr (second counter-pkg))
+    (define counter-get (third counter-pkg))
+    (counter-get (counter-incr (make-counter)))]
+}
+
 @subsection{Derived}
 
 @deftogether[(@defidform[True]
