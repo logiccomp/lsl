@@ -17,10 +17,10 @@
 ;; definitions
 
 (define (ticks thk)
-  (define before (current-memory-use 'cumulative))
+  (define before (current-inexact-monotonic-milliseconds))
   (thk)
-  (define after (current-memory-use 'cumulative))
-  (- after before))
+  (define after (current-inexact-monotonic-milliseconds))
+  (round (* 100 (- after before))))
 
 (define SYMS '(fullcircle fullsquare fulldiamond full5star))
 (define POINT-SIZE 8)
