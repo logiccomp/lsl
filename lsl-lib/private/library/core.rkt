@@ -32,7 +32,6 @@
 (provide
  #%app
  #%top
- #%top-interaction
  quote
  local
 
@@ -41,6 +40,7 @@
   (combine-out
    $#%module-begin
    $#%datum
+   $#%top-interaction
 
    $...
    $require
@@ -78,6 +78,17 @@
   (syntax-parser
     [(_ . (~or e:number e:boolean e:string e:character))
      #'(^#%datum . e)]))
+
+;; HACK: Rosette should expose `splicing-with-vc` instead.
+;; e.g. `(member 1)` in the REPL and then `(member 1 '(1))`
+
+(require racket/splicing (only-in rackunit require/expose))
+(require/expose rosette/base/core/bool (current-vc))
+
+(define-syntax $#%top-interaction
+  (syntax-parser
+    [(_ . e)
+     #'(splicing-parameterize ([current-vc (current-vc)]) e)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; forms
