@@ -134,7 +134,7 @@
       (quasisyntax/loc ctc
         (Immediate
          (check
-          (let ([c (compile-contract (expand-contract #,ctc))]
+          (let ([c #,(compile-contract (expand-contract ctc))]
                 [f (~? folder default-folder)])
             (λ (val)
               (define tr* (f tr val))

@@ -19,3 +19,7 @@
 * lifted is probably quite slow, can do more at compile time?
 * calling static struct info leads to bad error message (rosette doesn't support `#:name` though)
 * generalize List to non-flat elements
+* no improper lists: `cons` should guarantee second argument is list
+* contract errors should be better
+* reverse argument order of string-contains?
+* don't export member (only member?), force conditionals to use Booleans

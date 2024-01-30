@@ -55,9 +55,9 @@
                    [path (quote-module-name)]
                    [pos (positive-blame name path)]
                    [neg (negative-blame name path)]
-                   [ctc (compile-contract
-                         (expand-contract
-                          #,(flip-intro-scope ctc)))]
+                   [ctc #,(compile-contract
+                           (expand-contract
+                            (flip-intro-scope ctc)))]
                    [val ?new-body])
               ((send ctc protect val pos) val neg))))]))
 
@@ -73,16 +73,13 @@
      #'(define-syntax name
          (contract-macro
           (syntax-parser
-            [_:id
-             (syntax/loc #'ctc
-               (Recursive name ctc))])))]
+            [_:id (syntax/loc #'ctc (Recursive name ctc))])))]
     [(_ (name:id param:id ...) ctc:expr)
      #'(define-syntax name
          (contract-macro
           (syntax-parser
             [(_:id param ...)
-             (syntax/loc #'ctc
-               (Recursive (name param ...) ctc))])))]))
+             (syntax/loc #'ctc (Recursive (name param ...) ctc))])))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contract operations
@@ -92,20 +89,20 @@
 (define-syntax contract-generate
   (syntax-parser
     [(_ ctc:expr (~optional fuel:expr))
-     #'(perform-or-error
+     #`(perform-or-error
         'contract-generate
         (λ ()
-          (send (compile-contract (expand-contract ctc))
+          (send #,(compile-contract (expand-contract #'ctc))
                 generate
                 (~? fuel FUEL))))]))
 
 (define-syntax contract-shrink
   (syntax-parser
     [(_ ctc:expr val:expr (~optional fuel:expr))
-     #'(perform-or-error
+     #`(perform-or-error
         'contract-shrink
         (λ ()
-          (send (compile-contract (expand-contract ctc))
+          (send #,(compile-contract (expand-contract #'ctc))
                 shrink
                 (~? fuel FUEL)
                 val)))]))
@@ -113,10 +110,10 @@
 (define-syntax contract-symbolic
   (syntax-parser
     [(_ ctc:expr)
-     #'(perform-or-error
+     #`(perform-or-error
         'contract-symbolic
         (λ ()
-          (send (compile-contract (expand-contract ctc))
+          (send #,(compile-contract (expand-contract #'ctc))
                 symbolic)))]))
 
 (define (perform-or-error name thk)

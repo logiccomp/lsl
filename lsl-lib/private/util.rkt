@@ -79,17 +79,14 @@
            (go (cons x acc) xt))]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; contract table (TODO FIX)
+;; contract table
 
 (begin-for-syntax
   (define free-contract-table (make-free-id-table))
-  (define bound-contract-table (make-bound-id-table))
 
   (define (contract-table-set! id val)
     (free-id-table-set! free-contract-table id val)
-    (bound-id-table-set! bound-contract-table (syntax-local-introduce id) val)
     (void))
 
   (define (contract-table-ref id)
-    (or (free-id-table-ref free-contract-table id #f)
-        (bound-id-table-ref bound-contract-table (syntax-local-introduce id) #f))))
+    (free-id-table-ref free-contract-table id #f)))

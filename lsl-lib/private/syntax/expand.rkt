@@ -4,12 +4,17 @@
 ;; require
 
 (require (for-syntax racket/base
+                     racket/sequence
+                     racket/syntax
                      ee-lib
+                     syntax/stx
                      syntax/apply-transformer
                      syntax/id-table
                      syntax/id-set
                      syntax/parse
-                     syntax/parse/class/struct-id)
+                     syntax/parse/class/struct-id
+                     "free-vars.rkt")
+         syntax/parse
          "grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -23,29 +28,40 @@
 ;; definitions
 
 (begin-for-syntax
-  (define rec-table (make-parameter (make-immutable-free-id-table)))
-  (define param-vars (make-parameter (immutable-free-id-set)))
-  (define used-vars (make-parameter (immutable-free-id-set)))
+  (define (contract-syntax-error s stx)
+    (raise-syntax-error #f "contract cannot be used in here" stx))
 
+  (struct parametric-var ()
+    #:property prop:procedure contract-syntax-error)
+  (struct recursive-var (datum id)
+    #:property prop:procedure contract-syntax-error)
   (struct contract-macro (proc)
-    #:property prop:procedure
-    (λ (s stx)
-      (raise-syntax-error #f "contract cannot be used in here" stx)))
+    #:property prop:procedure contract-syntax-error)
 
-  (define/hygienic-metafunction (expand-contract form-stx)
+  (define (expand-racket stx)
+    (syntax-parse (local-expand/capture-lifts stx 'expression null)
+      #:literals (kernel-literals)
+      [(begin (define-values (id ...) e) ... body)
+       #:with (^e ...) (stx-map expand-racket #'(e ...))
+       #'(begin (define-values (id ...) ^e) ... body)]))
+
+  (define/hygienic (expand-contract stx)
     #:expression
-    (define/syntax-parse (_ stx) form-stx)
-    (syntax-replace-srcloc #'stx
-      (syntax-parse #'stx
+    (define new-stx
+      (syntax-parse stx
         #:literal-sets (contract-literal immediate-literal function-literal)
         [(Immediate ~! (~alt (~optional (check chk:expr))
                              (~optional (generate gen:expr))
                              (~optional (shrink shk:expr))
                              (~optional (symbolic sym:expr))) ...)
-         #'(Immediate (check (~? chk #f))
-                      (generate (~? gen #f))
-                      (shrink (~? shk #f))
-                      (symbolic (~? sym #f)))]
+         (define/syntax-parse chk^ (expand-racket #'(~? chk #f)))
+         (define/syntax-parse gen^ (expand-racket #'(~? gen #f)))
+         (define/syntax-parse shk^ (expand-racket #'(~? shk #f)))
+         (define/syntax-parse sym^ (expand-racket #'(~? sym #f)))
+         #'(Immediate (check (let-values () chk^))
+                      (generate (let-values () gen^))
+                      (shrink (let-values () shk^))
+                      (symbolic (let-values () sym^)))]
         [(Function ~! (~alt (~once (arguments [x:id a:expr] ...))
                             (~once (result r:expr))
                             (~optional (raises e:struct-id ...))) ...)
@@ -53,48 +69,114 @@
          (check-duplicate-identifier
           (filter non-wildcard? (syntax-e #'(x ...))))
          "duplicate identifier"
-         #'(Function (arguments [x (expand-contract a)] ...)
-                     (result (expand-contract r))
-                     (raises (~? (~@ e ...))))]
+         (with-scope sc
+           (define/syntax-parse (x^ ...)
+             (for/list ([x (in-syntax #'(x ...))])
+               (define x* (if (non-wildcard? x) x (generate-temporary x)))
+               (bind! (add-scope x* sc) (racket-var))))
+           (define/syntax-parse ([a^ fvs^] ...)
+             (for/list ([a (in-syntax #'(a ...))])
+               (define a^ (expand-contract (add-scope a sc)))
+               (list a^ (free-id-set->list (fvs a^)))))
+           (define/syntax-parse r^
+             (expand-contract (add-scope #'r sc)))
+           #'(Function (arguments [x^ fvs^ a^] ...)
+                       (result r^)
+                       (raises (~? (~@ e ...)))))]
         [(OneOf ~! e:expr ...)
-         #'(OneOf (expand-contract e) ...)]
+         (define/syntax-parse (e^ ...)
+           (stx-map expand-contract #'(e ...)))
+         #'(OneOf e^ ...)]
         [(AllOf ~! e:expr ...)
-         #'(AllOf (expand-contract e) ...)]
+         (define/syntax-parse (e^ ...)
+           (stx-map expand-contract #'(e ...)))
+         #'(AllOf e^ ...)]
         [(Struct ~! s:struct-id e:expr ...)
-         #'(Struct s (expand-contract e) ...)]
+         (define/syntax-parse (e^ ...)
+           (stx-map expand-contract #'(e ...)))
+         #'(Struct s e^ ...)]
         [(List ~! e:expr)
-         #'(List (expand-contract e))]
+         (define/syntax-parse e^ (expand-contract #'e))
+         #'(List e^)]
         [(Tuple ~! e:expr ...)
-         #'(Tuple (expand-contract e) ...)]
-        [(Recursive ~! (~and (~or head:id (head:id a:expr ...)) self:expr) e:expr)
-         (parameterize ([rec-table (free-id-table-set (rec-table) #'head #'self)]
-                        [used-vars (used-vars)])
-           (define/syntax-parse ^e #'(expand-contract e))
-           (if (free-id-set-member? (used-vars) #'head)
-               #'(Recursive head ^e)
-               #'^e))]
+         (define/syntax-parse (e^ ...)
+           (stx-map expand-contract #'(e ...)))
+         #'(Tuple e^ ...)]
+        [(Recursive ~! (~or head:id (head:id param:expr ...)) e:expr)
+         (with-scope sc
+           (define/syntax-parse x^
+             (bind! (add-scope #'head sc)
+                    (recursive-var
+                     (syntax->datum #'(~? (head param ...) head))
+                     (add-scope #'head sc))))
+           (define/syntax-parse e^
+             (expand-contract (add-scope #'e sc)))
+           (if (free-id-set-member? (fvs #'e^) #'x^)
+               #'(Recursive x^ e^)
+               #'e^))]
         [((~and (~or All Exists) name) ~! (x:id ...) e:expr)
-         (define new-vars (immutable-free-id-set (syntax-e #'(x ...))))
-         (parameterize ([param-vars (free-id-set-union (param-vars) new-vars)])
-           #'(name (x ...) (expand-contract e)))]
+         (with-scope sc
+           (define/syntax-parse (x^ ...)
+             (for/list ([x (in-syntax #'(x ...))])
+               (bind! (add-scope x sc) (parametric-var))))
+           (define/syntax-parse e^
+             (expand-contract (add-scope #'e sc)))
+           #'(name (x^ ...) e^))]
         [(~or head:id (head:id e:expr ...))
-         #:do [(define self (free-id-table-ref (rec-table) #'head #f))]
-         #:when self
-         (unless (equal? (syntax->datum self) (syntax->datum #'stx))
-           (define err-str (format "recursive call must be exactly ~a" (syntax->datum self)))
-           (raise-syntax-error #f err-str #'stx))
-         (used-vars (free-id-set-add (used-vars) #'head))
-         #'head]
+         #:do [(define v (lookup #'head))]
+         #:when (recursive-var? v)
+         #:do [(define datum (recursive-var-datum v))]
+         #:cut
+         #:fail-when
+         (and (not (equal? datum (syntax->datum stx))) stx)
+         (format "must be exactly ~a" datum)
+         (or (recursive-var-id v) #'head)]
+        [x:id
+         #:when (lookup #'x parametric-var?)
+         #'(Seal x)]
         [(~or head:id (head:id e:expr ...))
          #:do [(define v (lookup #'head))]
          #:when (contract-macro? v)
-         #:with res (local-apply-transformer (contract-macro-proc v) #'stx 'expression '())
-         #'(expand-contract res)]
-        [x:id
-         #:when (free-id-set-member? (param-vars) #'x)
-         #'(Seal x)]
+         #:do [(define proc (contract-macro-proc v))]
+         (expand-contract (apply-as-transformer proc #'head 'expression stx))]
         [e:expr
-         #'(expand-contract (Immediate (check e)))])))
+         (expand-contract #'(Immediate (check e)))]))
+    (syntax-replace-srcloc stx new-stx))
+
+  (define (fvs stx)
+    (syntax-parse stx
+      #:literal-sets (contract-literal immediate-literal function-literal)
+      [(Immediate (check chk:expr)
+                  (generate gen:expr)
+                  (shrink shk:expr)
+                  (symbolic sym:expr))
+       (free-id-set-union
+        (immutable-free-id-set (free-vars #'chk))
+        (immutable-free-id-set (free-vars #'gen))
+        (immutable-free-id-set (free-vars #'shk))
+        (immutable-free-id-set (free-vars #'sym)))]
+      [(Function (arguments [x:id a:expr] ...)
+                 (result r:expr)
+                 (raises e:struct-id ...))
+       (free-id-set-subtract
+        (free-id-set-union
+         (apply free-id-set-union
+                (immutable-free-id-set null)
+                (stx-map fvs #'(a ...)))
+         (fvs #'r))
+        (immutable-free-id-set (syntax-e #'(x ...))))]
+      [(OneOf e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(AllOf e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(Struct s:struct-id e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(List e:expr) (fvs #'e)]
+      [(Tuple e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(Recursive x:id e:expr)
+       (free-id-set-remove (fvs #'e) #'x)]
+      [((~and (~or All Exists) name) (x:id ...) e:expr)
+       (free-id-set-subtract (fvs #'e) (immutable-free-id-set (syntax-e #'(x ...))))]
+      [(Seal x) (immutable-free-id-set)]
+      [x:id (immutable-free-id-set (list #'x))]
+      [_ (immutable-free-id-set)]))
 
   (define (syntax-replace-srcloc loc-stx stx)
     (syntax-property
