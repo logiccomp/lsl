@@ -99,8 +99,8 @@
          #'(begin
              (define (external)
                (syntax-parameterize ([dont-push? #t])
-                 (hash (~@ (#%datum . name) (run-test suite)) ...
-                       #f (run-test (test-suite "anonymous tests" anon-test ...)))))
+                 (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
+                       #f (λ () (run-test (test-suite "anonymous tests" anon-test ...))))))
              (define (internal)
                (syntax-parameterize ([dont-push? #t])
                  (void
