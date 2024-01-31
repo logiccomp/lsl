@@ -44,6 +44,7 @@
    $check-within
    $check-raises
 
+   $contracted?
    $check-contract
    $verify-contract)))
 
@@ -213,6 +214,10 @@
 
 (define (proxy->contract p)
   (and (proxy? p) (proxy-contract p)))
+
+;; HACK: Only for the `tick` homework. Figure something better out later.
+(define ($contracted? p)
+  (if (proxy->contract p) #t #f))
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
