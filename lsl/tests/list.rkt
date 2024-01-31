@@ -81,6 +81,8 @@
    #:x (run (: x (Tuple Integer Boolean)) (define x (list 1 #t 1)) x)  "expected: (Tuple Integer Boolean)"
    #:x (run (: x (Tuple Integer Boolean)) (define x (list 3 3)) x)  "expected: Boolean"
 
+   (run (: x (Tuple)) (define x (list)) x)  '()
+
    (run (contract-shrink (List Integer) '(0) 20))  '()
 
    #:? (λ (xs) (andmap integer? xs))

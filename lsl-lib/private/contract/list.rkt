@@ -32,7 +32,9 @@
       (define guards
         (and (list? val)
              (implies fixed? (= (length val) list-size))
-             (for/list ([ctc (in-cycle (in-list contracts))]
+             (for/list ([ctc (if fixed?
+                                 (in-list contracts)
+                                 (in-cycle (in-value elems-ctc)))]
                         [elem (in-list val)])
                (send ctc protect elem pos))))
       (define guard-ctor
