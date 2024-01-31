@@ -17,6 +17,7 @@
 ;; definitions
 
 (define (ticks thk)
+  (collect-garbage 'minor)
   (define before (current-inexact-monotonic-milliseconds))
   (thk)
   (define after (current-inexact-monotonic-milliseconds))
