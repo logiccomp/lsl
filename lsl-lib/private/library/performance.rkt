@@ -5,23 +5,16 @@
 
 (require plot
          racket/list
-         syntax/parse/define)
+         syntax/parse/define
+         "time.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide ticks
-         visualize)
+(provide visualize)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
-
-(define (ticks thk)
-  (collect-garbage 'minor)
-  (define before (current-inexact-monotonic-milliseconds))
-  (thk)
-  (define after (current-inexact-monotonic-milliseconds))
-  (round (* 100 (- after before))))
 
 (define SYMS '(fullcircle fullsquare fulldiamond full5star))
 (define POINT-SIZE 8)

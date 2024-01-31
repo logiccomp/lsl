@@ -8,6 +8,7 @@
          racket/provide
          racket/string
          racket/list
+         "time.rkt"
          "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -23,6 +24,9 @@
 ;; provide
 
 (provide
+ (rename-out
+  [$string=? string=?])
+
  (lift-out
   explode
   implode
@@ -41,7 +45,12 @@
   string-length
   string-ref
   string-upcase
-  string=?
   string?
   substring
   string<?))
+
+(define $string=?
+  (λ (x y)
+    (^for*/all ([x x #:exhaustive] [y y #:exhaustive])
+      (current-ticks (+ (current-ticks) (min (string-length x) (string-length y))))
+      (string=? x y))))

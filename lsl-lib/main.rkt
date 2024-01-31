@@ -21,10 +21,11 @@
          "private/library/number.rkt"
          "private/library/string.rkt"
          "private/library/char.rkt"
-         "private/library/test.rkt")
+         "private/library/test.rkt"
+         "private/library/time.rkt")
 
 (lazy-require
- ["private/library/performance.rkt" (ticks visualize)])
+ ["private/library/performance.rkt" (visualize)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -56,7 +57,10 @@
   "private/library/char.rkt"
   "private/library/test.rkt")
 
- ticks
+ (except-out
+  (all-from-out "private/library/time.rkt")
+  current-ticks)
+
  visualize)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
