@@ -143,6 +143,11 @@
          (expand-contract #'(Immediate (check e)))]))
     (syntax-replace-srcloc stx new-stx))
 
+  (define (free-id-set-union* xs)
+    (if (null? xs)
+        (immutable-free-id-set null)
+        (apply free-id-set-union xs)))
+
   (define (fvs stx)
     (syntax-parse stx
       #:literal-sets (contract-literal immediate-literal function-literal)
@@ -160,16 +165,14 @@
                  (raises e:struct-id ...))
        (free-id-set-subtract
         (free-id-set-union
-         (apply free-id-set-union
-                (immutable-free-id-set null)
-                (stx-map fvs #'(a ...)))
+         (free-id-set-union* (stx-map fvs #'(a ...)))
          (fvs #'r))
         (immutable-free-id-set (syntax-e #'(x ...))))]
-      [(OneOf e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
-      [(AllOf e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
-      [(Struct s:struct-id e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(OneOf e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
+      [(AllOf e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
+      [(Struct s:struct-id e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
       [(List e:expr) (fvs #'e)]
-      [(Tuple e:expr ...) (apply free-id-set-union (stx-map fvs #'(e ...)))]
+      [(Tuple e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
       [(Recursive x:id e:expr)
        (free-id-set-remove (fvs #'e) #'x)]
       [((~and (~or All Exists) name) (x:id ...) e:expr)
