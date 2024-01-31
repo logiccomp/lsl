@@ -82,13 +82,13 @@
 ;; HACK: Rosette should expose `splicing-with-vc` instead.
 ;; e.g. `(member 1)` in the REPL and then `(member 1 '(1))`
 
-(require racket/splicing (only-in rackunit require/expose))
+(require "../syntax/splicing.rkt" (only-in rackunit require/expose))
 (require/expose rosette/base/core/bool (current-vc))
 
 (define-syntax $#%top-interaction
   (syntax-parser
     [(_ . e)
-     #'(splicing-parameterize ([current-vc (current-vc)]) e)]))
+     #'(#%top-interaction . (splicing-parameterize ([current-vc (current-vc)]) e))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; forms
