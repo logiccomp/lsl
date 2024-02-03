@@ -98,7 +98,7 @@
          #'(begin (define (external) (hash))
                   (define (internal) (void)))
          #'(begin
-             (define (external)
+             (define external
                (syntax-parameterize ([dont-push? #t])
                  (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
                        #f (λ () (run-test (test-suite "anonymous tests" anon-test ...))))))
