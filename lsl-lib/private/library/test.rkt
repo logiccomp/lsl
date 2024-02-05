@@ -235,7 +235,7 @@
 (define-check (check-contract val name n)
   (define ctc (proxy->contract val))
   (if ctc
-      (for ([fuel (in-range n)])
+      (for ([fuel (in-range 2 (+ n 2))])
         (check-or-verify-contract ctc val name
                                   (λ (ctc) (send ctc generate (scale-fuel fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
