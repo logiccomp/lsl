@@ -27,14 +27,14 @@
     (new immediate-contract%
          [syntax (syntax/unexpanded Positive)]
          [checker (λ (x) (and (real? x) (positive? x)))]
-         [generator (λ (fuel) (random fuel))]
+         [generator (λ (fuel) (+ 1 (if (zero? fuel) 0 (random fuel))))]
          [shrinker (λ (fuel val) (floor (/ val 2)))]))
 
   (define even-ctc
     (new immediate-contract%
          [syntax (syntax/unexpanded Even)]
          [checker (λ (x) (and (integer? x) (even? x)))]
-         [generator (λ (fuel) (* 2 (random fuel)))]
+         [generator (λ (fuel) (if (zero? fuel) 0 (* 2 (random fuel))))]
          [shrinker (λ (fuel val)
                      (define val* (floor (/ val 2)))
                      (if (odd? val*) (sub1 val*) val*))])))
