@@ -237,9 +237,7 @@
   (if ctc
       (for ([fuel (in-range n)])
         (check-or-verify-contract ctc val name
-                                  (λ (ctc)
-                                    (displayln (scale-fuel fuel))
-                                    (send ctc generate (scale-fuel fuel)))))
+                                  (λ (ctc) (send ctc generate (scale-fuel fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
 
 (define-syntax ($verify-contract stx)
