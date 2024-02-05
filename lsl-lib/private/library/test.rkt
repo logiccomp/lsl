@@ -230,7 +230,7 @@
 
 ;; TODO: parameterize by scaling?
 (define (scale-fuel x)
-  (if (zero? x) x (ceiling (log x))))
+  (if (zero? x) x (inexact->exact (ceiling (log x)))))
 
 (define-check (check-contract val name n)
   (define ctc (proxy->contract val))
@@ -238,6 +238,7 @@
       (for ([fuel (in-range n)])
         (check-or-verify-contract ctc val name
                                   (λ (ctc)
+                                    (displayln (scale-fuel fuel))
                                     (send ctc generate (scale-fuel fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
 
