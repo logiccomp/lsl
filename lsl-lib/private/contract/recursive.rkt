@@ -5,7 +5,8 @@
 
 (require racket/class
          racket/promise
-         "common.rkt")
+         "common.rkt"
+         "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -25,8 +26,9 @@
       (send (force promise) protect val pos))
 
     (define/override (generate fuel)
-      ;; TODO: reduce fuel here?
-      (send (force promise) generate fuel))
+      (if (zero? fuel)
+          (none)
+          (send (force promise) generate (sub1 fuel))))
 
     (define/override (shrink fuel val)
       (send (force promise) shrink fuel val))))

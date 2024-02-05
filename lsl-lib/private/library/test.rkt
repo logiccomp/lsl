@@ -228,11 +228,17 @@
           (list (make-check-params (list name (~? n))))
           (λ () thk-body)))]))
 
+;; TODO: parameterize by scaling?
+(define (scale-fuel x)
+  (if (zero? x) x (ceiling (log x))))
+
 (define-check (check-contract val name n)
   (define ctc (proxy->contract val))
   (if ctc
       (for ([fuel (in-range n)])
-        (check-or-verify-contract ctc val name (λ (ctc) (send ctc generate fuel))))
+        (check-or-verify-contract ctc val name
+                                  (λ (ctc)
+                                    (send ctc generate (scale-fuel fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
 
 (define-syntax ($verify-contract stx)
