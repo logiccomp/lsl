@@ -21,7 +21,7 @@
    (run (: id (All (A) (-> A A)))
         (define (id x) 1)
         (id "foo"))
-   "expected: A"
+   "expected: ∀A₁"
 
    (run (: counter-pkg (Exists (A) (Tuple (-> A) (-> A A) (-> A Integer))))
         (define counter-pkg

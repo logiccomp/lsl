@@ -177,7 +177,7 @@
              (define (f e)
                (if (integer? e) e (raise (make-bad))))
              (check-contract f 20))
-  "exception raised: (bad)"
+  "exception raised: (make-bad)"
 
   #:x (run (: f (Function (arguments [x (Immediate (check (λ (z) (eq? y z))))]
                                      [y (Immediate (check (λ (z) (eq? x z))))])

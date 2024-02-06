@@ -4,6 +4,7 @@
 ;; require
 
 (require racket/class
+         racket/string
          racket/match
          (prefix-in ^ rosette/safe)
          "common.rkt"
@@ -19,7 +20,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(struct seal-info (ctor pred? get polarity))
+(define seal-number -1)
+(struct seal-info (ctor pred? get name polarity))
 
 (define parametric-contract%
   (class contract%
@@ -29,11 +31,24 @@
 
     (define/override (protect val pos)
       (define infos
-        (for/list ([name (in-list names)])
-          (struct seal (val))
-          (seal-info seal seal? seal-val polarity)))
+        (for/list ([base-name (in-list names)])
+          (set! seal-number (add1 seal-number))
+          (define name (make-name base-name polarity seal-number))
+          (struct seal (val)
+            #:methods gen:custom-write
+            [(define write-proc (make-seal-writer name))])
+          (seal-info seal seal? seal-val name polarity)))
       (define ctc (apply make-body infos))
       (send ctc protect val pos))))
+
+(define (make-name base-name polarity seal-number)
+  (format "~a~a~a"
+          (if polarity "∀" "∃")
+          base-name
+          (integer->subscript seal-number)))
+
+(define ((make-seal-writer name) self port mode)
+  (write-string name port))
 
 (define seal-contract%
   (class contract%
@@ -42,7 +57,7 @@
     (super-new)
 
     (define/override (protect val pos)
-      (match-define (seal-info ctor pred? get polarity) info)
+      (match-define (seal-info ctor pred? get name polarity) info)
       (define wrap?
         (or (and polarity (negative-blame? pos))
             (and (not polarity) (positive-blame? pos))))
@@ -52,4 +67,27 @@
         [else
          (failed-guard
           (λ (val neg)
-            (contract-error this syntax val pos)))]))))
+            (contract-error this syntax val pos
+                            #:expected name)))]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; subscripts
+
+(define SUBSCRIPTS '("₀" "₁" "₂" "₃" "₄" "₅" "₆" "₇" "₈" "₉"))
+
+(define (integer->subscript i)
+  (define subs
+    (for/list ([digit (in-list (integer->digit* i))])
+      (list-ref SUBSCRIPTS digit)))
+  (string-join subs ""))
+
+(define (integer->digit* i)
+  (let loop ([acc '()]
+             [prev 0]
+             [m 1])
+    (define m+ (* m 10))
+    (define n (quotient (- (modulo i m+) prev) m))
+    (define acc+ (cons n acc))
+    (if (< i m+)
+      acc+
+      (loop acc+ (+ prev n) m+))))
