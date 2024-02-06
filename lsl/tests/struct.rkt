@@ -69,6 +69,10 @@
 (module+ test
   (chk
    (run (define-struct foo (x))
+        (format "~v" (make-foo 7)))
+   "(make-foo 7)"
+
+   (run (define-struct foo (x))
         (: f (-> (Foo Integer) Integer))
         (define (f st) (foo-x st))
         (f (make-foo 10)))

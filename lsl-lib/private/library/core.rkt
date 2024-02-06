@@ -16,6 +16,7 @@
          racket/local
          racket/provide
          racket/runtime-path
+         racket/struct
          (prefix-in ^ rosette/safe)
          syntax/parse/define
          version/utils
@@ -187,7 +188,12 @@
          (^struct name root (field ...)
                   #:transparent
                   #:mutable
-                  #:constructor-name ctor)
+                  #:constructor-name ctor
+                  #:methods gen:custom-write
+                  [(define write-proc
+                     (make-constructor-style-printer
+                      (λ (obj) 'ctor)
+                      (λ (obj) (list (acc obj) ...))))])
          (set! pred (redirect-pred pred))
          (set! acc (redirect-accessor pred acc k)) ...
          (set! mut (redirect-mutator pred mut k)) ...)]))
