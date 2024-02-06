@@ -71,7 +71,7 @@
           (if (ormap ^symbolic? args)
               (^result-value
                (^with-vc (exn:root-vc failed-exn)
-                         (^evaluate args (^solve (void)))))
+                 (^evaluate args (^solve (void)))))
               args))
         (define-values (best-args best-exn)
           (find-best-args val concrete-args failed-exn))
@@ -106,6 +106,7 @@
             (exn-pred? val)))
         (if allowed? #f exn))
       (with-handlers ([exn:contract? values]
+                      [exn:fail? values]
                       [exn:user? exn:user-handler])
         (apply val args)
         #f))))
