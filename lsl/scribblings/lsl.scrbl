@@ -424,7 +424,7 @@ and symbolic execution.
   how much "time" it takes to execute @racket[thunk].
 }
 
-@defproc[(visualize [f (-> any/c any/c)] [args list?]) any/c]{
+@defproc[(visualize [args list?] [f (-> any/c any/c)]) any/c]{
   Outputs a visualization graphing how much time
   @racket[f] takes for each of the given @racket[args].
 }
