@@ -146,7 +146,7 @@
 (define-syntax-parse-rule ($set! x:id arg:expr)
   (^set! x arg))
 
-(define ($raise v)
+(define-syntax-rule ($raise v)
   (raise (exn:user (format "exception raised: ~v" v)
                    (current-continuation-marks)
                    (^vc) v)))
