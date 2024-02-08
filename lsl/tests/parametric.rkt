@@ -17,11 +17,23 @@
         (define (id x) x)
         (list (id 1) (id "foo")))
    '(1 "foo")
+
+   #:t
+   (run* (: id (All (A) (-> A A)))
+         (define (id x) x)
+         (check-contract id))
+
    #:x
    (run (: id (All (A) (-> A A)))
         (define (id x) 1)
         (id "foo"))
-   "expected: ∀A₁"
+   "expected: ∀A"
+
+   #:x
+   (run* (: id (All (A) (-> A A)))
+         (define (id x) 1)
+         (check-contract id))
+   "expected: ∀A"
 
    (run (: counter-pkg (Exists (A) (Tuple (-> A) (-> A A) (-> A Integer))))
         (define counter-pkg
@@ -33,6 +45,7 @@
         (define counter-get (third counter-pkg))
         (counter-get (counter-incr (counter-incr (make-counter)))))
    2
+
    #:x
    (run (: make-counter (Exists (A) (-> A)))
         (define (make-counter) 0)
