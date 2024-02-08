@@ -95,4 +95,12 @@
    (run/sexp even-sexp '(contract-generate Even))
    (run/sexp even-sexp '(contract-shrink Even 6))  3
    #:x (run (contract-generate (Immediate (check even?))))  "contract-generate: failed"
+
+   #:? integer?
+   (run (define-contract MyInt
+          (Immediate (generate (λ (fuel) (contract-generate Integer fuel)))))
+        (: f (-> MyInt MyInt))
+        (define (f x) x)
+        (check-contract f)
+        (contract-generate MyInt))
    ))

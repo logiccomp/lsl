@@ -54,7 +54,7 @@
                              (~optional (generate gen:expr))
                              (~optional (shrink shk:expr))
                              (~optional (symbolic sym:expr))) ...)
-         (define/syntax-parse chk^ (expand-racket #'(~? chk #f)))
+         (define/syntax-parse chk^ (expand-racket #'(~? chk (λ _ #t))))
          (define/syntax-parse gen^ (expand-racket #'(~? gen #f)))
          (define/syntax-parse shk^ (expand-racket #'(~? shk #f)))
          (define/syntax-parse sym^ (expand-racket #'(~? sym #f)))
