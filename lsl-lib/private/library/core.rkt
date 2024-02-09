@@ -189,6 +189,9 @@
                   #:transparent
                   #:mutable
                   #:constructor-name ctor
+                  #:methods gen:equatable
+                  [(define (base-equal? self other)
+                     (and (equal? (acc self) (acc other)) ...))]
                   #:methods gen:custom-write
                   [(define write-proc
                      (make-constructor-style-printer

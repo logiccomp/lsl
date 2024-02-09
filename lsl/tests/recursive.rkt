@@ -26,7 +26,10 @@
 
   (struct thing root (v)
     #:transparent
-    #:mutable)
+    #:mutable
+    #:methods gen:equatable
+    [(define (base-equal? self other)
+       (equal? (thing-v self) (thing-v other)))])
 
   (define (unthing x)
     (if (thing? x) (unthing (thing-v x)) x))
@@ -79,7 +82,7 @@
           (andmap even? (map unthing xs))))
 
    (send rec-even-thing-ctc shrink 1 good-thing)
-   (thing (thing (thing 5)))
+   (thing (thing (thing 4)))
 
    ;; TODO: shrink depth of data
    ;; TODO: interact

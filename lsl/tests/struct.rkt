@@ -20,7 +20,11 @@
 
   (struct eb root (e b)
     #:transparent
-    #:mutable)
+    #:mutable
+    #:methods gen:equatable
+    [(define (base-equal? self other)
+       (and (equal? (eb-e self) (eb-e other))
+            (equal? (eb-b self) (eb-b other))))])
 
   (define eb-struct-ctc
     (new struct-contract%

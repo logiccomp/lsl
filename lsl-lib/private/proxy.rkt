@@ -3,7 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/match)
+(require racket/match
+         racket/generic)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -11,17 +12,23 @@
 (provide (struct-out root)
          (struct-out proxy)
          (struct-out proc)
+         gen:equatable
          unproxy)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
+
+(define-generics equatable
+  (base-equal? equatable other))
 
 (struct root ()
   #:transparent
   #:mutable
   #:methods gen:equal+hash
   [(define (equal-proc self other recur)
-     (recur (unproxy self) (unproxy other)))
+     (if (or (proxy? self) (proxy? other))
+         (recur (unproxy self) (unproxy other))
+         (base-equal? self other)))
    (define (hash-proc self recur)
      (recur (unproxy self)))
    (define (hash2-proc self recur)
