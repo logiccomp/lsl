@@ -46,6 +46,15 @@
         (counter-get (counter-incr (counter-incr (make-counter)))))
    2
 
+   (run (: pkg (Exists (A) (Tuple (-> A Integer) A)))
+        (define pkg (list identity 3))
+        (: unpkg (-> (Exists (A) (Tuple (-> A Integer) A)) Integer))
+        (define (unpkg p)
+          ((first p) (second p)))
+        (list ((first pkg) (second pkg))
+              (unpkg pkg)))
+   '(3 3)
+
    #:x
    (run (: make-counter (Exists (A) (-> A)))
         (define (make-counter) 0)

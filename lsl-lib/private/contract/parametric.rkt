@@ -34,10 +34,14 @@
         (for/list ([base-name (in-list names)])
           (set! seal-number (add1 seal-number))
           (define name (make-name base-name polarity seal-number))
+          (define actual-polarity
+            (if (positive-blame? pos)
+                polarity
+                (not polarity)))
           (struct seal (val)
             #:methods gen:custom-write
             [(define write-proc (make-seal-writer name))])
-          (seal-info seal seal? seal-val name polarity)))
+          (seal-info seal seal? seal-val name actual-polarity)))
       (define ctc (apply make-body infos))
       (send ctc protect val pos))))
 
