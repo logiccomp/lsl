@@ -18,6 +18,7 @@
          racket/string
          rackunit
          rackunit/text-ui
+         "equal.rkt"
          "../syntax/expand.rkt"
          "../syntax/compile.rkt"
          "../contract/common.rkt"
@@ -73,7 +74,7 @@
           (set! test-suites (cons (cons suite-name stx) test-suites))
           #'(void)])]
       [(or 'expression (? list?))
-       (raise-syntax-error 'check "a test cannot be inside a definition or expression" stx)])))
+       (raise-syntax-error 'check "a test cannot be inside a definition or expression" raw-stx)])))
 
 (define (wrap-check thk)
   (^result-value (^with-vc (thk))))
@@ -123,7 +124,8 @@
   (syntax-parse stx
     [(_ actual expected)
      (push-form!
-      (syntax/loc stx (check-equal? actual expected)))]))
+      (syntax/loc stx (check-equal? (error-if-parametric actual)
+                                    (error-if-parametric expected))))]))
 
 (define-syntax ($check-within stx)
   (syntax-parse stx
@@ -136,6 +138,7 @@
         (let ([a actual.c] [e expected.c] [v ϵ.c])
           (check-within a e v))))]))
 
+;; TODO: Need `error-if-parametric` here and other places.
 (define-syntax ($check-member-of stx)
   (syntax-parse stx
     [(_ actual expecteds ...)
@@ -148,8 +151,9 @@
      (push-form!
       (syntax/loc stx
         (let ([rng-vec (make-rng-vec)])
-          (check-equal? (with-rng-vec rng-vec actual)
-                        (with-rng-vec rng-vec expected)))))]))
+          (check-equal?
+           (error-if-parametric (with-rng-vec rng-vec actual))
+           (error-if-parametric (with-rng-vec rng-vec expected))))))]))
 
 (define (make-rng-vec)
   (pseudo-random-generator->vector

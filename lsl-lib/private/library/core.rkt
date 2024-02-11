@@ -127,15 +127,15 @@
   (syntax-parser
     #:literals ($else)
     [(_ [(~and (~not $else) guard:expr) arm:expr] ...+ [$else final-arm:expr])
-     #'(^cond [guard arm] ... [^else final-arm])]
+     #'(^cond [(error-if-parametric guard) arm] ... [^else final-arm])]
     [(_ [(~and (~not $else) guard:expr) arm:expr] ...+)
      #:with final-arm
      (syntax/loc this-syntax
        (error 'cond "all question results were false"))
-     #'(^cond [guard arm] ... [^else final-arm])]))
+     #'(^cond [(error-if-parametric guard) arm] ... [^else final-arm])]))
 
 (define-syntax-parse-rule ($if guard:expr then:expr else:expr)
-  (^if guard then else))
+  (^if (error-if-parametric guard) then else))
 
 (define-syntax-parse-rule ($and arg0:expr arg:expr ...+)
   (^and arg0 arg ...))

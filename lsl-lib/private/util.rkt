@@ -9,8 +9,8 @@
                      syntax/id-table
                      syntax/parse
                      syntax/stx)
-         (only-in rosette/safe
-                  for/all)
+         (prefix-in ^ rosette/safe)
+         racket/contract
          racket/match)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,14 +20,19 @@
                      contract-table-ref
                      contract-table-set!)
          (struct-out none)
+         (struct-out base-seal)
          λ/memoize
          repeat/fuel
-         lift-out)
+         lift-out
+         any?
+         any-list?
+         error-if-parametric)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
 
 (struct none ())
+(struct base-seal ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; memoize
@@ -75,7 +80,7 @@
       (match args
         [(list) (apply f (reverse acc))]
         [(cons x xt)
-         (for/all ([x x #:exhaustive])
+         (^for/all ([x x #:exhaustive])
            (go (cons x acc) xt))]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,3 +95,23 @@
 
   (define (contract-table-ref id)
     (free-id-table-ref free-contract-table id #f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; contracts
+
+(define any?
+  (flat-named-contract
+   'non-parametric?
+   (not/c base-seal?)))
+
+(define any-list?
+  (flat-named-contract
+   'list-without-parametric?
+   (λ (xs)
+     (and (^list? xs)
+          (^andmap any? xs)))))
+
+(define (error-if-parametric x)
+  (when (base-seal? x)
+    (error 'if "cannot use parametric value ~a" x))
+  x)

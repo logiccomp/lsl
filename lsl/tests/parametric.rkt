@@ -35,6 +35,34 @@
          (check-contract id))
    "expected: ∀A"
 
+   #:x
+   (run* (: id (All (A) (-> A Any)))
+         (define (id x) x)
+         (define y (id 10))
+         (if y y y))
+   "cannot use parametric value"
+
+   #:x
+   (run* (: id (All (A) (-> A Any)))
+         (define (id x) x)
+         (define y (id 10))
+         (cond [y y] [else y]))
+   "cannot use parametric value"
+
+   #:x
+   (run* (: id (All (A) (-> A Any)))
+         (define (id x) x)
+         (define y (id 10))
+         (check-expect y y))
+   "cannot use parametric value"
+
+   #:x
+   (run* (: id (All (A) (-> A Any)))
+         (define (id x) x)
+         (define y (id 10))
+         (equal? y y))
+   "expected: non-parametric?"
+
    (run (: counter-pkg (Exists (A) (Tuple (-> A) (-> A A) (-> A Integer))))
         (define counter-pkg
           (list (λ () 0)

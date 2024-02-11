@@ -38,7 +38,7 @@
             (if (positive-blame? pos)
                 polarity
                 (not polarity)))
-          (struct seal (val)
+          (struct seal base-seal (val)
             #:methods gen:custom-write
             [(define write-proc (make-seal-writer name))])
           (seal-info seal seal? seal-val name actual-polarity)))

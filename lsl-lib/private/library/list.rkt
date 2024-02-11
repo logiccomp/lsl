@@ -5,6 +5,7 @@
 
 (require (for-syntax racket/base)
          (prefix-in ^ rosette/safe)
+         racket/contract
          racket/list
          racket/provide
          "../util.rkt")
@@ -14,8 +15,14 @@
 
 (provide
  empty
- member?
- remove-all
+
+ ;; TODO: Really should use `any-list?` with all list operations.
+ (contract-out
+  [member? (-> any? any-list? any)]
+  [rename ^member member (-> any? any-list? any)]
+  [rename ^memq memq (-> any? any-list? any)]
+  [rename ^remove remove (-> any? any-list? any)]
+  [remove-all (-> any? any-list? any)])
 
  (lift-out
   build-list
@@ -40,11 +47,8 @@
    ^list
    ^list-ref
    ^list?
-   ^member
-   ^memq
    ^null
    ^null?
-   ^remove
    ^rest
    ^reverse
    ^second
