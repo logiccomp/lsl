@@ -88,4 +88,22 @@
         (define (make-counter) 0)
         (+ 1 (make-counter)))
    "expected real?"
+
+   (run (define-struct foo [x])
+        (: f (-> (Foo Integer) (Foo Integer)))
+        (define (f x) x)
+        (foo-x (f (make-foo 10))))
+   10
+
+   #:t
+   (run* (define-struct leaf [value])
+         (define-struct node [left right])
+         (define-contract (Tree X) (OneOf (Leaf X) (Node (Tree X) (Tree X))))
+         (: tree-map (All (X Y) (-> (-> X Y) (Tree X) (Tree Y))))
+         (define (tree-map f t)
+           (cond [(leaf? t) (make-leaf (f (leaf-value t)))]
+                 [(node? t) (make-node (tree-map f (node-left t))
+                                       (tree-map f (node-right t)))]))
+         (check-expect (tree-map number->string (make-node (make-node (make-leaf 1) (make-leaf 2)) (make-leaf 3)))
+                       (make-node (make-node (make-leaf "1") (make-leaf "2")) (make-leaf "3"))))
    ))

@@ -38,7 +38,13 @@
                (for/vector ([ctc (in-list contracts)])
                  (λ (val)
                    ((send ctc protect val pos) val neg))))
-             (proxy val info this)))
+             (define (unwrap)
+               (define fields
+                 (for/list ([ctc (in-list contracts)]
+                            [field (in-list (struct->list val*))])
+                   ((send ctc protect field pos) field pos)))
+               (apply constructor fields))
+             (proxy val info this unwrap)))
           (failed-guard
            (λ (val neg)
              (unless guards
