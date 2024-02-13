@@ -27,4 +27,10 @@
              (check-expect (make-foo 10) (make-foo 11))
              #t)
    "FAILURE"
+   #:x (run (define-struct foo (x))
+            (define-struct bar (x y))
+            (: f (-> (Foo Integer) Any))
+            (define (f x) x)
+            (bar-y (f (make-foo 10))))
+   "expected: bar?"
    ))

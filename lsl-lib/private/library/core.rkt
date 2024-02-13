@@ -200,27 +200,39 @@
                       (λ (obj) 'ctor)
                       (λ (obj) (list (acc obj) ...))))])
          (set! pred (redirect-pred pred))
-         (set! acc (redirect-accessor pred acc k)) ...
-         (set! mut (redirect-mutator pred mut k)) ...)]))
+         (set! acc (redirect-accessor 'acc pred acc k)) ...
+         (set! mut (redirect-mutator 'acc pred mut k)) ...)]))
 
-(define ((redirect-pred pred) val)
-  (pred (unproxy val)))
+(define (redirect-pred pred)
+  (procedure-rename
+   (λ (val) (pred (unproxy val)))
+   (object-name pred)))
 
-(define (redirect-accessor pred acc k)
-  (define (recur val)
-    (if (proxy? val)
-        ((vector-ref (proxy-info val) k)
-         (recur (proxy-target val)))
-        (acc val)))
-  recur)
+(define (redirect-accessor name pred acc k)
+  (procedure-rename
+   (λ (val)
+     (check-struct-type name val pred)
+     (let go ([val val])
+       (if (proxy? val)
+           ((vector-ref (proxy-info val) k)
+            (go (proxy-target val)))
+           (acc val))))
+   (object-name acc)))
 
-(define (redirect-mutator pred mut k)
-  (define (recur val to-set)
-    (if (proxy? val)
-        (recur (proxy-target val)
+(define (redirect-mutator name pred mut k)
+  (procedure-rename
+   (λ (val to-set)
+     (check-struct-type name val pred)
+     (let go ([val val])
+       (if (proxy? val)
+           (go (proxy-target val)
                ((vector-ref (proxy-info val) k) to-set))
-        (mut val to-set)))
-  recur)
+           (mut val to-set))))
+   (object-name mut)))
+
+(define (check-struct-type name val pred)
+  (unless (pred (unproxy val))
+    (raise-argument-error name (format "~a" (object-name pred)) val)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; versioning
