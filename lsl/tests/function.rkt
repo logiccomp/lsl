@@ -218,4 +218,10 @@
 
   ;#:x (run/sexp fb '(: f (-> Integer FizzBuzz)) '(define (f x) x) '(verify-contract f))
   ;"expected: FizzBuzz"
+
+  #:x
+  (run (: f (-> Integer Integer Integer))
+       (define (f x y) x)
+       (f 1))
+  "expected: 2 arguments"
   ))

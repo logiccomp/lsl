@@ -36,6 +36,11 @@
           (passed-guard
            (λ (val neg)
              (define (info . args)
+               (define n-args (length args))
+               (unless (= n-args arity)
+                 (contract-error this syntax val pos
+                                 #:expected (args-error arity)
+                                 #:given (args-error n-args)))
                (define ((dom-apply acc k) arg)
                  (define make-dom (list-ref domains k))
                  (define guard (send (apply make-dom acc) protect arg neg))
@@ -111,9 +116,16 @@
         (apply val args)
         #f))))
 
-(define SHRINK-FUEL 10)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; constants and helpers
 
+(define SHRINK-FUEL 10)
 (define ARITY-FMT "~a-arity function")
+
+(define (args-error n)
+  (if (= n 1)
+      (format "~a argument" n)
+      (format "~a arguments" n)))
 
 (define (list-update-many xs ks f)
   (for/fold ([acc xs])
