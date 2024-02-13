@@ -5,6 +5,7 @@
 
 (require (for-syntax racket/base)
          (prefix-in ^ rosette/safe)
+         racket/contract
          racket/provide
          racket/math
          "../util.rkt")
@@ -13,6 +14,11 @@
 ;; provide
 
 (provide
+ (contract-out
+  [rename ^integer? integer? (-> any? ^boolean?)]
+  [rename ^number? number? (-> any? ^boolean?)]
+  [rename ^real? real? (-> any? ^boolean?)])
+
  (lift-out
   random
   sqr
@@ -38,17 +44,14 @@
    ^expt
    ^floor
    ^inexact->exact
-   ^integer?
    ^max
    ^min
    ^modulo
    ^negative?
-   ^number?
    ^odd?
    ^pi
    ^positive?
    ^quotient
-   ^real?
    ^remainder
    ^sgn
    ^sub1

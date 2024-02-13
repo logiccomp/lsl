@@ -22,6 +22,10 @@
   [rename ^member member (-> any? any-list? any)]
   [rename ^memq memq (-> any? any-list? any)]
   [rename ^remove remove (-> any? any-list? any)]
+  [rename ^list? list? (-> any? ^boolean?)]
+  [rename ^cons? cons? (-> any? ^boolean?)]
+  [rename ^empty? empty? (-> any? ^boolean?)]
+  [rename ^null? null? (-> any? ^boolean?)]
   [remove-all (-> any? any-list? any)])
 
  (lift-out
@@ -37,18 +41,14 @@
    ^car
    ^cdr
    ^cons
-   ^cons?
    ^eighth
-   ^empty?
    ^fifth
    ^first
    ^fourth
    ^length
    ^list
    ^list-ref
-   ^list?
    ^null
-   ^null?
    ^rest
    ^reverse
    ^second

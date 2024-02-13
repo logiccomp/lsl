@@ -63,6 +63,13 @@
          (equal? y y))
    "expected: non-parametric?"
 
+   #:x
+   (run* (: id (All (A) (-> A Any)))
+         (define (id x) x)
+         (define y (id 10))
+         (number? y))
+   "expected: non-parametric?"
+
    (run (: counter-pkg (Exists (A) (Tuple (-> A) (-> A A) (-> A Integer))))
         (define counter-pkg
           (list (λ () 0)

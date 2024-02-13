@@ -14,12 +14,12 @@
 
 (provide
  (contract-out
-  [rename equal? boolean=? (-> ^boolean? ^boolean? ^boolean?)])
+  [rename equal? boolean=? (-> ^boolean? ^boolean? ^boolean?)]
+  [rename ^boolean? boolean? (-> any? ^boolean?)]
+  [rename ^not not (-> any? ^boolean?)])
 
  (filtered-out
   (strip "^")
   (combine-out
-   ^boolean?
    ^false
-   ^not
    ^true)))
