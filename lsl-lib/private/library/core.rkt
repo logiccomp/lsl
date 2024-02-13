@@ -223,7 +223,7 @@
   (procedure-rename
    (λ (val to-set)
      (check-struct-type name val pred)
-     (let go ([val val])
+     (let go ([val val] [to-set to-set])
        (if (proxy? val)
            (go (proxy-target val)
                ((vector-ref (proxy-info val) k) to-set))
