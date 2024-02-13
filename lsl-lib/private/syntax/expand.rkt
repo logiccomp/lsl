@@ -122,6 +122,14 @@
            (define/syntax-parse e^
              (expand-contract (add-scope #'e sc)))
            #'(name (x^ ...) e^))]
+        ;; TODO: do this better
+        [(~datum ...)
+         (expand-contract
+          #`(Immediate
+             (check
+              (λ _
+                #,(syntax/loc stx
+                    (error '… "expected a finished contract, but found a template"))))))]
         [(~or head:id (head:id e:expr ...))
          #:do [(define v (lookup #'head))]
          #:when (recursive-var? v)

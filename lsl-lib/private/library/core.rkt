@@ -97,7 +97,7 @@
 (define-syntax $...
   (syntax-parser
     [_ (syntax/loc this-syntax
-         (error '(... ...) "expected a finished expression, but found a template"))]))
+         (error '… "expected a finished expression, but found a template"))]))
 
 (define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
   (^require mod ...))

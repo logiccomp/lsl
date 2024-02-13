@@ -33,4 +33,9 @@
             (define (f x) x)
             (bar-y (f (make-foo 10))))
    "expected: bar?"
+   #:x (run (define-contract MyContract ...)
+            (: foo (-> Any MyContract))
+            (define (foo x) x)
+            (foo 10))
+   "expected a finished contract, but found a template"
    ))
