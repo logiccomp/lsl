@@ -82,6 +82,24 @@
    #:x (run (: x (Tuple Integer Boolean)) (define x (list 3 3)) x)  "expected: Boolean"
 
    (run (: x (Tuple)) (define x (list)) x)  '()
+   (run (: x (BoundedList 2 Integer))
+        (define x '())
+        (: y (BoundedList 2 Integer))
+        (define y '(1))
+        (: z (BoundedList 2 Integer))
+        (define z '(1 2))
+        (append x y z))
+   '(1 1 2)
+
+   #:x
+   (run* (: x (BoundedList 2 Integer))
+         (define x '(1 2 3)))
+   "expected: (BoundedList 2 Integer)"
+
+   #:x
+   (run* (: x (BoundedList -2 Integer))
+         (define x '(1)))
+   "-2 must be non-negative"
 
    (run (contract-shrink (List Integer) '(0) 20))  '()
 
@@ -91,4 +109,5 @@
    #:t (run*
         (: f (-> (Tuple Integer Integer) Integer))
         (define (f l) (length l))
-        (verify-contract f))))
+        (verify-contract f))
+   ))

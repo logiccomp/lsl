@@ -37,6 +37,7 @@
          Natural
          String
          Symbol
+         BoundedList
          Record
          ->)
 
@@ -110,6 +111,19 @@
 (define (lifted-symbol? x)
   (for/all ([x x])
     (symbol? x)))
+
+(define-syntax BoundedList
+  (contract-macro
+   (syntax-parser
+     [(_ n-stx:integer t)
+      #:do [(define n (syntax-e #'n-stx))]
+      #:fail-when (< n 0)
+      (format "~a must be non-negative" n)
+      #:with (tup ...)
+      (for/list ([k (in-range (add1 n))])
+        #`(Tuple #,@(map (λ _ #'t) (range k))))
+      (quasisyntax/loc this-syntax
+        (OneOf tup ...))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; arrow
