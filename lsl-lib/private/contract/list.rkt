@@ -81,7 +81,13 @@
         (for/list ([ctc (in-cycle (in-list contracts))]
                    [elem (in-list val)])
           (send ctc shrink fuel elem)))
-      (if (ormap none? result) (none) result))))
+      (if (ormap none? result) (none) result))
+
+    (define/override (symbolic)
+      (if (not fixed?)
+          (error 'contract "Cannot create symbolic unbounded lists")
+          (for/list ([ctc (in-list contracts)])
+              (send ctc symbolic))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO
@@ -90,6 +96,5 @@
 
 * Interact.
 
-* Symbolic.
 
 |#

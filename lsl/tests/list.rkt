@@ -87,4 +87,8 @@
 
    #:? (λ (xs) (andmap integer? xs))
    (run (contract-generate (List Integer)))
-   ))
+
+   #:t (run*
+        (: f (-> (Tuple Integer Integer) Integer))
+        (define (f l) (length l))
+        (verify-contract f))))
