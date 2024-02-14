@@ -6,8 +6,7 @@
 (require racket/class
          racket/list
          racket/match
-         (only-in rosette/safe boolean?)
-         (only-in rosette/lib/synthax ??)
+         (only-in rosette/safe boolean? define-symbolic* if)
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -53,10 +52,13 @@
         (send disjunct protect val pos)))
 
     (define/override (symbolic)
+      (define (fresh-bool)
+        (define-symbolic* b boolean?)
+        b)
       (define (mk-sym l)
         (if (empty? (rest l))
             (send (first l) symbolic)
-            (if (?? boolean?)
+            (if (fresh-bool)
                 (send (first l) symbolic)
                 (mk-sym (rest l)))))
       (if (empty? disjuncts)
