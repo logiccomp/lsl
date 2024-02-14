@@ -71,7 +71,13 @@
         (if (none? x) y x))
       (if (andmap none? fields)
           (none)
-          (apply constructor (map replace-none fields* fields))))))
+          (apply constructor (map replace-none fields* fields))))
+
+    (define/override (symbolic)
+      (define fields
+        (for/list ([ctc (in-list contracts)])
+          (send ctc symbolic)))
+      (apply constructor fields))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

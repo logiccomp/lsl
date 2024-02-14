@@ -126,4 +126,10 @@
         (define (f st) (foo-x st))
         (f (make-foo 1/2)))
    "expected: Integer"
+
+   #:t
+   (run* (define-struct foo (x))
+         (: f (-> (Foo Integer) True))
+         (define (f st) (= (foo-x st) (foo-x st)))
+         (verify-contract f))
    ))
