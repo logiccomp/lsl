@@ -6,6 +6,8 @@
 (require racket/class
          racket/list
          racket/match
+         (only-in rosette/safe boolean?)
+         (only-in rosette/lib/synthax ??)
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -48,7 +50,18 @@
 
     (define (guards-of val pos)
       (for/list ([disjunct (in-list disjuncts)])
-        (send disjunct protect val pos)))))
+        (send disjunct protect val pos)))
+
+    (define/override (symbolic)
+      (define (mk-sym l)
+        (if (empty? (rest l))
+            (send (first l) symbolic)
+            (if (?? boolean?)
+                (send (first l) symbolic)
+                (mk-sym (rest l)))))
+      (if (empty? disjuncts)
+          (error 'contract "Cannot create symbolic value for empty disjunction")
+          (mk-sym disjuncts)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO
@@ -59,7 +72,5 @@
   to generate for `None`.
 
 * Interact.
-
-* Symbolic.
 
 |#
