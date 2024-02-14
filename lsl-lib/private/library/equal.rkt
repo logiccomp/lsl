@@ -14,5 +14,5 @@
 
 (provide
  (contract-out
-  [rename ^equal? equal? (-> any? any? boolean?)]
-  [rename ^eq? eq? (-> any? any? boolean?)]))
+  [rename ^equal? equal? (-> any? any? any)]
+  [rename ^eq? eq? (-> any? any? any)]))
