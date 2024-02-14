@@ -38,4 +38,14 @@
             (define (foo x) x)
             (foo 10))
    "expected a finished contract, but found a template"
+   #:x (run* (define-struct posn (x y))
+             (: f (-> (List (Posn Natural Natural)) Any))
+             (define (f m)
+               (if (empty? m) '()
+                   (let* ([max-x (apply max (map posn-x m))]
+                          [max-y (apply max (map posn-y m))]
+                          [p (make-posn max-x max-y)])
+                     (first (filter (lambda (a) (equal? a p)) m)))))
+             (check-contract f))
+   "first: contract violation"
    ))

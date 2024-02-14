@@ -76,9 +76,6 @@
       [(or 'expression (? list?))
        (raise-syntax-error 'check "a test cannot be inside a definition or expression" raw-stx)])))
 
-(define (wrap-check thk)
-  (^result-value (^with-vc (thk))))
-
 (define-syntax $with-tests
   (syntax-parser
     [(_ e:expr ...)

@@ -110,11 +110,13 @@
           (for/or ([exn-pred? (in-list exceptions)])
             (exn-pred? val)))
         (if allowed? #f exn))
-      (with-handlers ([exn:contract? values]
-                      [exn:fail? values]
-                      [exn:user? exn:user-handler])
-        (apply val args)
-        #f))))
+      (wrap-check
+       (λ ()
+         (with-handlers ([exn:contract? values]
+                         [exn:fail? values]
+                         [exn:user? exn:user-handler])
+           (apply val args)
+           #f))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; constants and helpers

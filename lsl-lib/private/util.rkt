@@ -26,7 +26,8 @@
          lift-out
          any?
          any-list?
-         error-if-parametric)
+         error-if-parametric
+         wrap-check)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -115,3 +116,9 @@
   (when (base-seal? x)
     (error 'if "cannot use parametric value ~a" x))
   x)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rosette
+
+(define (wrap-check thk)
+  (^result-value (^with-vc (thk))))
