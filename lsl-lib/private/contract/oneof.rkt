@@ -6,7 +6,7 @@
 (require racket/class
          racket/list
          racket/match
-         (only-in rosette/safe boolean? define-symbolic* if)
+         (prefix-in ^ rosette/safe)
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -27,9 +27,10 @@
 
     (define/override (protect val pos)
       (define (exactly-one? val)
-        (match (filter passed-guard? (guards-of val pos))
-          [(list guard) guard]
-          [_ #f]))
+        (^for/all ([val val #:exhaustive])
+          (match (filter passed-guard? (guards-of val pos))
+            [(list guard) guard]
+            [_ #f])))
       (or (exactly-one? val)
           (failed-guard
            (λ (val neg)
@@ -53,14 +54,14 @@
 
     (define/override (symbolic)
       (define (fresh-bool)
-        (define-symbolic* b boolean?)
+        (^define-symbolic* b ^boolean?)
         b)
       (define (mk-sym l)
-        (if (empty? (rest l))
-            (send (first l) symbolic)
-            (if (fresh-bool)
-                (send (first l) symbolic)
-                (mk-sym (rest l)))))
+        (^if (empty? (rest l))
+             (send (first l) symbolic)
+             (^if (fresh-bool)
+                  (send (first l) symbolic)
+                  (mk-sym (rest l)))))
       (if (empty? disjuncts)
           (error 'contract "Cannot create symbolic value for empty disjunction")
           (mk-sym disjuncts)))))

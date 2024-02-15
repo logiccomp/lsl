@@ -75,4 +75,13 @@
         (define (f x)
           (or (integer? x)
               (boolean? x)))
-        (verify-contract f))))
+        (verify-contract f))
+
+   #:x
+   (run*
+    (: f (-> (OneOf Integer Boolean) True))
+    (define (f x)
+      (integer? x))
+    (verify-contract f))
+   "counterexample: (f #f)"
+   ))

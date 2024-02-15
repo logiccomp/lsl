@@ -76,7 +76,7 @@
           (if (ormap ^symbolic? args)
               (^result-value
                (^with-vc (exn:root-vc failed-exn)
-                 (^evaluate args (^solve (void)))))
+                 (^evaluate args (^complete-solution (^solve (void)) (^symbolics args)))))
               args))
         (define-values (best-args best-exn)
           (find-best-args val concrete-args failed-exn))
