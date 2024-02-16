@@ -23,6 +23,14 @@
                  (not (equal? (f (make-foo 10)) (f (make-foo 11))))
                  (not (equal? (f (f (make-foo 10))) (make-foo 11)))
                  (not (equal? (make-foo 10) (f (f (make-foo 11)))))))
+   #:t (run (define-contract (Nonempty X)
+               (Immediate
+                (check (lambda (x) (and (list? x) (> (length x) 0))))
+                (generate (lambda (fuel) (list (contract-generate X fuel))))))
+
+             (: xs (Exists (Y) (Nonempty Y)))
+             (define xs '(1))
+             #t)
    #:x (run* (define-struct foo (x))
              (check-expect (make-foo 10) (make-foo 11))
              #t)

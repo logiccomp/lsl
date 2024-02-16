@@ -38,8 +38,11 @@
   (struct contract-macro (proc)
     #:property prop:procedure contract-syntax-error)
 
+  ;; TODO: Shouldn't need to do this...
+  (define def-ctx (make-parameter #f))
+
   (define (expand-racket stx)
-    (syntax-parse (local-expand/capture-lifts stx 'expression null)
+    (syntax-parse (local-expand/capture-lifts stx 'expression null (def-ctx))
       #:literals (kernel-literals)
       [(begin (define-values (id ...) e) ... body)
        #:with (^e ...) (stx-map expand-racket #'(e ...))
@@ -116,11 +119,17 @@
                #'e^))]
         [((~and (~or All Exists) name) ~! (x:id ...) e:expr)
          (with-scope sc
+           (define new-def-ctx
+             (syntax-local-make-definition-context (def-ctx)))
            (define/syntax-parse (x^ ...)
-             (for/list ([x (in-syntax #'(x ...))])
-               (bind! (add-scope x sc) (parametric-var))))
+             (syntax-local-bind-syntaxes
+              (for/list ([x (in-syntax #'(x ...))])
+                (bind! (add-scope x sc) (parametric-var)))
+              #f
+              new-def-ctx))
            (define/syntax-parse e^
-             (expand-contract (add-scope #'e sc)))
+             (parameterize ([def-ctx new-def-ctx])
+               (expand-contract (add-scope #'e sc))))
            #'(name (x^ ...) e^))]
         ;; TODO: do this better
         [(~datum ...)
