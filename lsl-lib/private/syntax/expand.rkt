@@ -31,7 +31,7 @@
   (define (contract-syntax-error s stx)
     (raise-syntax-error #f "contract cannot be used in here" stx))
 
-  (struct parametric-var ()
+  (struct parametric-var (id)
     #:property prop:procedure contract-syntax-error)
   (struct recursive-var (datum id)
     #:property prop:procedure contract-syntax-error)
@@ -117,16 +117,20 @@
            (if (free-id-set-member? (fvs #'e^) #'x^)
                #'(Recursive x^ e^)
                #'e^))]
+        ;; TODO: Fix this!
         [((~and (~or All Exists) name) ~! (x:id ...) e:expr)
          (with-scope sc
            (define new-def-ctx
              (syntax-local-make-definition-context (def-ctx)))
            (define/syntax-parse (x^ ...)
-             (syntax-local-bind-syntaxes
-              (for/list ([x (in-syntax #'(x ...))])
-                (bind! (add-scope x sc) (parametric-var)))
-              #f
-              new-def-ctx))
+             (for/list ([x (in-syntax #'(x ...))])
+               (define y (add-scope x sc))
+               (define self
+                 (car
+                  (syntax-local-bind-syntaxes
+                   (list y) #f new-def-ctx)))
+               (bind! y (parametric-var self))
+               (syntax-local-identifier-as-binding self)))
            (define/syntax-parse e^
              (parameterize ([def-ctx new-def-ctx])
                (expand-contract (add-scope #'e sc))))
@@ -149,8 +153,10 @@
          (format "must be exactly ~a" datum)
          (or (recursive-var-id v) #'head)]
         [x:id
-         #:when (lookup #'x parametric-var?)
-         #'(Seal x)]
+         #:do [(define v (lookup #'x))]
+         #:when (parametric-var? v)
+         #:with y (parametric-var-id v)
+         #'(Seal y)]
         [(~or head:id (head:id e:expr ...))
          #:do [(define v (lookup #'head))]
          #:when (contract-macro? v)
