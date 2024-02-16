@@ -168,7 +168,7 @@
         (immutable-free-id-set (free-vars #'gen))
         (immutable-free-id-set (free-vars #'shk))
         (immutable-free-id-set (free-vars #'sym)))]
-      [(Function (arguments [x:id a:expr] ...)
+      [(Function (arguments [x:id (_:id ...) a:expr] ...)
                  (result r:expr)
                  (raises e:struct-id ...))
        (free-id-set-subtract

@@ -133,6 +133,20 @@
                            (int-tree? (node-right x)))))
                '(int-tree? (contract-generate (Tree Integer)))))
 
+   (run (define-struct counter (incr get))
+        (define-contract Counter~
+          (Counter (-> Counter~)
+                   (-> Natural)))
+        (: new-counter (-> Natural Counter~))
+        (define (new-counter n)
+          (make-counter (λ () (new-counter (add1 n)))
+                        (λ () n)))
+        (define c0 (new-counter 0))
+        (define c1 (new-counter 0))
+        (+ ((counter-get ((counter-incr c0))))
+           ((counter-get ((counter-incr c1))))))
+   2
+
    #:x
    (run/sexp node
              '(define-contract IntTree
