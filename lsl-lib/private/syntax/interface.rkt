@@ -8,6 +8,8 @@
                      syntax/id-table
                      syntax/parse
                      syntax/parse/lib/function-header)
+         (only-in automata/machine
+                  machine?)
          racket/class
          syntax/location
          "grammar.rkt"
@@ -61,8 +63,9 @@
                    [val ?new-body])
               ((send ctc protect val pos) (maybe-wrap name val) neg))))]))
 
+;; TODO: Could be made robust.
 (define (maybe-wrap name val)
-  (if (procedure? val)
+  (if (and (procedure? val) (not (machine? val)))
       (λ args
         (define logs (current-logs))
         (when logs
