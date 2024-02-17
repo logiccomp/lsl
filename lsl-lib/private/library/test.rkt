@@ -96,10 +96,16 @@
          #'(begin (define (external) (hash))
                   (define (internal) (void)))
          #'(begin
+             (define (run-anon-tests)
+               (run-test (test-suite "anonymous tests" anon-test ...)))
              (define external
                (syntax-parameterize ([dont-push? #t])
                  (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
-                       #f (λ () (run-test (test-suite "anonymous tests" anon-test ...))))))
+                       #f run-anon-tests
+                       'logs (λ ()
+                               (parameterize ([current-logs (hash)])
+                                 (run-anon-tests)
+                                 (current-logs))))))
              (define (internal)
                (syntax-parameterize ([dont-push? #t])
                  (void
@@ -227,7 +233,7 @@
      (push-form!
       #'(with-default-check-info*
           (list (make-check-params (list name (~? n))))
-          (λ () thk-body)))]))
+          (λ () (parameterize ([current-logs #f]) thk-body))))]))
 
 ;; TODO: parameterize by scaling?
 (define (scale-fuel x)

@@ -59,7 +59,16 @@
                            (expand-contract
                             (flip-intro-scope ctc)))]
                    [val ?new-body])
-              ((send ctc protect val pos) val neg))))]))
+              ((send ctc protect val pos) (maybe-wrap name val) neg))))]))
+
+(define (maybe-wrap name val)
+  (if (procedure? val)
+      (λ args
+        (define logs (current-logs))
+        (when logs
+          (current-logs (hash-update logs name add1 0)))
+        (apply val args))
+      val))
 
 (define-syntax declare-contract
   (syntax-parser

@@ -21,6 +21,7 @@
                      contract-table-set!)
          (struct-out none)
          (struct-out base-seal)
+         current-logs
          λ/memoize
          repeat/fuel
          lift-out
@@ -34,6 +35,8 @@
 
 (struct none ())
 (struct base-seal ())
+
+(define current-logs (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; memoize
