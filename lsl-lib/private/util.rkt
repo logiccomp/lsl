@@ -28,7 +28,8 @@
          any?
          any-list?
          error-if-parametric
-         wrap-check)
+         wrap-check
+         current-allowed-exns)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -37,6 +38,7 @@
 (struct base-seal ())
 
 (define current-logs (make-parameter #f))
+(define current-allowed-exns (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; memoize

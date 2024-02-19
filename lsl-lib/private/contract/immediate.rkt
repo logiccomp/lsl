@@ -1,11 +1,9 @@
-#lang racket/base
+#lang rosette/safe
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require racket/class
-         racket/match
-         (prefix-in ^ rosette/safe)
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -25,15 +23,14 @@
     (super-new)
 
     (define/override (protect val pos)
-      (define verified?
-        (and (^symbolic? val)
-             (^unsat? (^verify (^assert (checker val))))))
-      (^if (or verified? (checker val))
+      (skip-symbolic
+       val
+       (if (checker val)
            (passed-guard
             (λ (val neg) val))
            (failed-guard
             (λ (val neg)
-              (contract-error this syntax val pos)))))
+              (contract-error this syntax val pos))))))
 
     (define/override (generate fuel)
       (if generator (generator fuel) (none)))

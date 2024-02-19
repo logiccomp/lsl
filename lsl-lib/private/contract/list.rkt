@@ -1,15 +1,20 @@
-#lang racket/base
+#lang rosette/safe
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/bool
+(require (only-in racket/base
+                  for/fold
+                  for/list
+                  in-list
+                  in-cycle
+                  build-list
+                  random
+                  raise-user-error)
          racket/class
-         racket/list
-         racket/struct
-         "common.rkt"
          "../guard.rkt"
-         "../util.rkt")
+         "../util.rkt"
+         "common.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -29,14 +34,14 @@
     (define list-size (and fixed? (length contracts)))
 
     (define/override (protect val pos)
-      (define guards
-        (and (list? val)
-             (implies fixed? (= (length val) list-size))
-             (for/list ([ctc (if fixed?
-                                 (in-list contracts)
-                                 (in-cycle (in-value elems-ctc)))]
-                        [elem (in-list val)])
-               (send ctc protect elem pos))))
+      (skip-symbolic
+       val
+       (define guards
+         (cond
+           [(not (list? val)) #f]
+           [(not fixed?) (map (λ (elem) (send elems-ctc protect elem pos)) val)]
+           [(not (= (length val) list-size)) #f]
+           [else (map (λ (ctc elem) (send ctc protect elem pos)) contracts val)]))
       (define guard-ctor
         (if (and guards (andmap passed-guard? guards))
             passed-guard
@@ -45,9 +50,7 @@
        (λ (val neg)
          (unless guards
            (contract-error this syntax val pos))
-         (for/list ([guard (in-list guards)]
-                    [elem (in-list val)])
-           (guard elem neg)))))
+         (map (λ (guard elem) (guard elem neg)) guards val)))))
 
     (define/override (generate fuel)
       (define result
@@ -85,9 +88,8 @@
 
     (define/override (symbolic)
       (if (not fixed?)
-          (error 'contract "Cannot create symbolic unbounded lists")
-          (for/list ([ctc (in-list contracts)])
-              (send ctc symbolic))))))
+          (raise-user-error 'symbolic "cannot create symbolic unbounded lists")
+          (map (λ (ctc) (send ctc symbolic)) contracts)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

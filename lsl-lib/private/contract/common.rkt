@@ -9,33 +9,33 @@
          racket/string
          racket/syntax-srcloc
          errortrace/errortrace-key
-         (only-in rosette/safe
-                  vc)
+         (prefix-in ^ rosette/safe)
          "../guard.rkt"
          "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (struct-out exn:root)
-         (struct-out exn:user)
-         (struct-out exn:contract)
+(provide (struct-out exn:fail:lsl:user)
+         (struct-out exn:fail:lsl:contract)
          (struct-out blame)
          (struct-out positive-blame)
          (struct-out negative-blame)
          contract%
          contract->predicate
          contract-error
-         generate-error)
+         generate-error
+         unimplemented-error
+         force-symbolic?
+         skip-symbolic)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exceptions
 
-(struct exn:root exn (vc))
-(struct exn:user exn:root (value))
-(struct exn:contract exn:root (srclocs)
+(struct exn:fail:lsl:user exn:fail (val))
+(struct exn:fail:lsl:contract exn:fail (srclocs)
   #:property prop:exn:srclocs
-  (λ (self) (exn:contract-srclocs self)))
+  (λ (self) (exn:fail:lsl:contract-srclocs self)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; blame
@@ -67,7 +67,7 @@
       (unimplemented-error 'symbolic))))
 
 (define (unimplemented-error method-name)
-  (error 'contract "TODO"))
+  (raise-user-error method-name "is not implemented"))
 
 (define ((contract->predicate ctc) val)
   (passed-guard? (send ctc protect val #f)))
@@ -103,7 +103,7 @@
     (match (continuation-mark-set->list cms errortrace-key)
       [(cons (cons datum srcloc-list) _) (list (apply srcloc srcloc-list))]
       [_ null]))
-  (raise (exn:contract msg cms (vc) (append stx-srclocs cm-srclocs))))
+  (raise (exn:fail:lsl:contract msg cms (append stx-srclocs cm-srclocs))))
 
 (define BLM-CTC-FMT
   (string-join
@@ -125,3 +125,17 @@
 
 (define GEN-FMT
   "cannot generate ~a")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; skip symbolic
+
+(define force-symbolic? (make-parameter #f))
+
+(define-syntax-rule (skip-symbolic val body ...)
+  (skip-symbolic-fn val (λ () body ...)))
+
+(define (skip-symbolic-fn val thk)
+  (if (and (^symbolic? val)
+           (not (force-symbolic?)))
+      (passed-guard (λ (val neg) val))
+      (thk)))

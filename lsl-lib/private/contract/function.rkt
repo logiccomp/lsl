@@ -3,15 +3,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/class
+(require (prefix-in ^ rosette/safe)
+         racket/class
          racket/format
          racket/list
+         racket/set
          racket/string
-         (prefix-in ^ rosette/safe)
-         "common.rkt"
          "../guard.rkt"
          "../proxy.rkt"
-         "../util.rkt")
+         "../util.rkt"
+         "common.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -30,33 +31,39 @@
     (define arity (length domains))
 
     (define/override (protect val pos)
-      (define val-proc? (procedure? val))
-      (define val-arity? (and val-proc? (procedure-arity-includes? val arity)))
-      (if val-arity?
-          (passed-guard
-           (λ (val neg)
-             (define (info . args)
-               (define n-args (length args))
-               (unless (= n-args arity)
-                 (contract-error this syntax val pos
-                                 #:expected (args-error arity)
-                                 #:given (args-error n-args)))
-               (define ((dom-apply acc k) arg)
-                 (define make-dom (list-ref domains k))
-                 (define guard (send (apply make-dom acc) protect arg neg))
-                 (guard arg pos))
-               (define args* (list-update-many args domain-order dom-apply))
-               (define result (apply val args*))
-               (define guard (send (apply codomain args*) protect result pos))
-               (guard result neg))
-             (proc val info this (λ () val))))
-          (failed-guard
-           (λ (val neg)
-             (if val-proc?
-                 (contract-error this syntax val pos
-                                 #:expected (format ARITY-FMT arity)
-                                 #:given (format ARITY-FMT (procedure-arity val)))
-                 (contract-error this syntax val pos))))))
+      (skip-symbolic
+       val
+       (define val-proc? (procedure? val))
+       (define val-arity? (and val-proc? (procedure-arity-includes? val arity)))
+       (if val-arity?
+           (passed-guard
+            (λ (val neg)
+              (define (info . args)
+                (define n-args (length args))
+                (unless (= n-args arity)
+                  (contract-error this syntax val pos
+                                  #:expected (args-error arity)
+                                  #:given (args-error n-args)))
+                (define ((dom-apply acc k) arg)
+                  (define make-dom (list-ref domains k))
+                  (define guard (send (apply make-dom acc) protect arg neg))
+                  (guard arg pos))
+                (define args* (list-update-many args domain-order dom-apply))
+                (define cur (current-allowed-exns))
+                (define exn-set (and cur (set-union cur exceptions)))
+                (define result
+                  (parameterize ([current-allowed-exns exn-set])
+                    (apply val args*)))
+                (define guard (send (apply codomain args*) protect result pos))
+                (guard result neg))
+              (proc val info this (λ () val))))
+           (failed-guard
+            (λ (val neg)
+              (if val-proc?
+                  (contract-error this syntax val pos
+                                  #:expected (format ARITY-FMT arity)
+                                  #:given (format ARITY-FMT (procedure-arity val)))
+                  (contract-error this syntax val pos)))))))
 
     (define/override (generate fuel)
       (define generated
@@ -71,24 +78,28 @@
       (define ((dom-apply acc k) dom)
         (mode (apply dom acc)))
       (define args (list-update-many domains domain-order dom-apply))
-      (define (does-fail failed-exn)
-        (define concrete-args
-          (if (ormap ^symbolic? args)
-              (^result-value
-               (^with-vc (exn:root-vc failed-exn)
-                 (^evaluate args (^solve (void)))))
-              args))
-        (define-values (best-args best-exn)
-          (find-best-args val concrete-args failed-exn))
-        (list (if (empty? best-args)
-                  (format "(~a)" name)
-                  (format "(~a ~a)" name (string-join (map ~v best-args))))
-              best-exn))
+      (define pos (positive-blame #f #f))
+      (define neg (negative-blame #f #f))
+      (define soln
+        (^verify
+         (parameterize ([current-allowed-exns null])
+           (define result (apply val args))
+           (parameterize ([force-symbolic? #t])
+             (define guard (send (apply codomain args) protect result pos))
+             (guard result neg)))))
       (cond
-        [(ormap none? args) (none)]
-        [(fail-exn val args) => does-fail]
+        [(^sat? soln)
+         (define concrete-args
+           (^evaluate args (^complete-solution soln (^symbolics args))))
+         (define best-args concrete-args)
+         (define best-exn (fail-exn val best-args))
+         (list (if (empty? best-args)
+                   (format "(~a)" name)
+                   (format "(~a ~a)" name (string-join (map ~v best-args))))
+               best-exn)]
         [else #f]))
 
+    ;; TODO: shrinking disabled for now...
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
@@ -104,17 +115,9 @@
       (list-update-many domains domain-order shrink-apply))
 
     (define (fail-exn val args)
-      (define (exn:user-handler exn)
-        (define val (exn:user-value exn))
-        (define allowed?
-          (for/or ([exn-pred? (in-list exceptions)])
-            (exn-pred? val)))
-        (if allowed? #f exn))
       (wrap-check
        (λ ()
-         (with-handlers ([exn:contract? values]
-                         [exn:fail? values]
-                         [exn:user? exn:user-handler])
+         (with-handlers ([exn:fail? (λ (xn) xn)])
            (apply val args)
            #f))))))
 

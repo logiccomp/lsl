@@ -17,6 +17,10 @@
   (run/sexp 'e ... #:no-result #t))
 
 (define ns (make-base-namespace))
+(define clear-vc!
+  (parameterize ([current-namespace ns])
+    (namespace-require 'rosette/safe)
+    (dynamic-require 'rosette/safe 'clear-vc!)))
 
 (define (run/sexp #:no-result [no-result #f] . sexps)
   (match-define (list a ... b) sexps)
@@ -35,6 +39,7 @@
        (parameterize ([current-output-port (open-output-string)]
                       [current-error-port p]
                       [current-namespace ns])
+         (clear-vc!)
          (eval prog)
          (if no-result
              (dynamic-require `(submod (quote ,mod-name) main) #f)

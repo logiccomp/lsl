@@ -110,4 +110,9 @@
         (: f (-> (Tuple Integer Integer) Integer))
         (define (f l) (length l))
         (verify-contract f))
+
+   #:x (run* (: f (-> (Tuple Integer Integer) (List Integer)))
+             (define (f x) (list (third x)))
+             (verify-contract f))
+   "third: contract violation"
    ))

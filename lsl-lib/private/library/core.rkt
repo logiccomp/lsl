@@ -147,9 +147,15 @@
   (^set! x arg))
 
 (define-syntax-rule ($raise v)
-  (raise (exn:user (format "exception raised: ~v" v)
-                   (current-continuation-marks)
-                   (^vc) v)))
+  (do-raise v))
+
+(define (do-raise v)
+  (define cur (current-allowed-exns))
+  (when (and cur (ormap (λ (pred?) (pred? v)) cur))
+    (^assume #f))
+  (raise (exn:fail:lsl:user (format "exception raised: ~v" v)
+                            (current-continuation-marks)
+                            v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; structs
@@ -205,29 +211,33 @@
 
 (define (redirect-pred pred)
   (procedure-rename
-   (λ (val) (pred (unproxy val)))
+   (λ (val)
+     (^for/all ([val val])
+       (pred (unproxy val))))
    (object-name pred)))
 
 (define (redirect-accessor name pred acc k)
   (procedure-rename
    (λ (val)
-     (check-struct-type name val pred)
-     (let go ([val val])
-       (if (proxy? val)
-           ((vector-ref (proxy-info val) k)
-            (go (proxy-target val)))
-           (acc val))))
+     (^for/all ([val val])
+       (check-struct-type name val pred)
+       (let go ([val val])
+         (if (proxy? val)
+             ((vector-ref (proxy-info val) k)
+              (go (proxy-target val)))
+             (acc val)))))
    (object-name acc)))
 
 (define (redirect-mutator name pred mut k)
   (procedure-rename
    (λ (val to-set)
-     (check-struct-type name val pred)
-     (let go ([val val] [to-set to-set])
-       (if (proxy? val)
-           (go (proxy-target val)
-               ((vector-ref (proxy-info val) k) to-set))
-           (mut val to-set))))
+     (^for/all ([val val])
+       (check-struct-type name val pred)
+       (let go ([val val] [to-set to-set])
+         (if (proxy? val)
+             (go (proxy-target val)
+                 ((vector-ref (proxy-info val) k) to-set))
+             (mut val to-set)))))
    (object-name mut)))
 
 (define (check-struct-type name val pred)

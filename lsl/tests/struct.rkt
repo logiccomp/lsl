@@ -132,4 +132,11 @@
          (: f (-> (Foo Integer) True))
          (define (f st) (= (foo-x st) (foo-x st)))
          (verify-contract f))
+
+   #:x
+   (run* (define-struct foo (x))
+         (: f (-> (Foo Integer) True))
+         (define (f st) (zero? (foo-x st)))
+         (verify-contract f))
+   "counterexample: (f (make-foo 1))"
    ))

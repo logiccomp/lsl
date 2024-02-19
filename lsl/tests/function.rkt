@@ -132,7 +132,8 @@
                         (raises bad)))
          (define (f e)
            (if (integer? e) e (raise (make-bad))))
-         (check-contract f))
+         (check-contract f)
+         (verify-contract f))
 
    #:x (run (: f (-> Integer Boolean))
             (define (f x) x)
@@ -177,7 +178,14 @@
              (define (f e)
                (if (integer? e) e (raise (make-bad))))
              (check-contract f 20))
-  "exception raised: (make-bad)"
+   "exception raised: (make-bad)"
+   #:x (run* (define-struct bad ())
+             (: f (Function (arguments [_ (OneOf Boolean Integer)])
+                            (result Integer)))
+             (define (f e)
+               (if (integer? e) e (raise (make-bad))))
+             (verify-contract f))
+   "exception raised: (make-bad)"
 
   #:x (run (: f (Function (arguments [x (Immediate (check (λ (z) (eq? y z))))]
                                      [y (Immediate (check (λ (z) (eq? x z))))])

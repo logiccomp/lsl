@@ -23,7 +23,9 @@
     (super-new)
 
     (define/override (protect val pos)
-      (send (force promise) protect val pos))
+      (skip-symbolic
+       val
+       (send (force promise) protect val pos)))
 
     (define/override (generate fuel)
       (if (zero? fuel)
