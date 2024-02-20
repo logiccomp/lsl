@@ -80,16 +80,10 @@
     [(_ . (~or e:number e:boolean e:string e:character))
      #'(^#%datum . e)]))
 
-;; HACK: Rosette should expose `splicing-with-vc` instead.
-;; e.g. `(member 1)` in the REPL and then `(member 1 '(1))`
-
-(require "../syntax/splicing.rkt" (only-in rackunit require/expose))
-(require/expose rosette/base/core/bool (current-vc))
-
 (define-syntax $#%top-interaction
   (syntax-parser
     [(_ . e)
-     #'(#%top-interaction . (splicing-parameterize ([current-vc (current-vc)]) e))]))
+     #'(#%top-interaction . (with-vc-reset e))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; forms

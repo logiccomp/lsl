@@ -95,4 +95,6 @@
              (define (f x) x)
              (check-contract f))
    "counterexample: (f 0)"
+   #:x (run* (check-error (raise "blah") 20))
+   "check-error: contract violation"
    ))

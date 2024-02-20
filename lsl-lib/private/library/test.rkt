@@ -59,7 +59,7 @@
   (define test-suites null)
 
   (define (push-form! raw-stx [suite-name #f])
-    (define stx #`(wrap-check (λ () #,raw-stx)))
+    (define stx #`(with-vc-reset #,raw-stx))
     (match (syntax-local-context)
       [(or 'top-level (? (λ _ (syntax-parameter-value #'dont-push?))))
        stx]
