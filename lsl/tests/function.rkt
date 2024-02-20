@@ -232,4 +232,23 @@
        (define (f x y) x)
        (f 1))
   "expected: 2 arguments"
+
+  ;; shrinking
+  #:x (run* (: f (-> (List Integer) Integer))
+            (define (f x) (if (empty? x) 0 ""))
+            (check-contract f))
+  "counterexample: (f '("
+
+  #:x (run* (: f (-> (List Integer) Integer))
+            (define (f x) "")
+            (check-contract f))
+  "counterexample: (f '())"
+
+  #:x (run* (define-struct ok ())
+            (: f (Function (arguments [_ (List Integer)])
+                           (result Integer)
+                           (raises ok)))
+            (define (f x) (if (empty? x) (raise (make-ok)) ""))
+            (check-contract f))
+  "counterexample: (f '("
   ))

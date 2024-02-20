@@ -91,4 +91,8 @@
                      (first (filter (lambda (a) (equal? a p)) m)))))
              (check-contract f))
    "first: contract violation"
+   #:x (run* (: f (-> (AllOf Integer (Constant 0)) String))
+             (define (f x) x)
+             (check-contract f))
+   "counterexample: (f 0)"
    ))

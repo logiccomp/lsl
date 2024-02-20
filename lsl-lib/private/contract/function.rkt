@@ -4,6 +4,9 @@
 ;; require
 
 (require (prefix-in ^ rosette/safe)
+         (only-in rosette/base/core/exn
+                  exn:fail:svm:assume?)
+         racket/bool
          racket/class
          racket/format
          racket/list
@@ -78,28 +81,30 @@
       (define ((dom-apply acc k) dom)
         (mode (apply dom acc)))
       (define args (list-update-many domains domain-order dom-apply))
-      (define pos (positive-blame #f #f))
-      (define neg (negative-blame #f #f))
-      (define soln
-        (^verify
-         (parameterize ([current-allowed-exns null])
-           (define result (apply val args))
-           (parameterize ([force-symbolic? #t])
-             (define guard (send (apply codomain args) protect result pos))
-             (guard result neg)))))
       (cond
-        [(^sat? soln)
-         (define concrete-args
-           (^evaluate args (^complete-solution soln (^symbolics args))))
-         (define best-args concrete-args)
-         (define best-exn (fail-exn val best-args))
-         (list (if (empty? best-args)
-                   (format "(~a)" name)
-                   (format "(~a ~a)" name (string-join (map ~v best-args))))
-               best-exn)]
-        [else #f]))
+        [(ormap none? args) #f]
+        [else
+         (define pos (positive-blame #f #f))
+         (define neg (negative-blame #f #f))
+         (define soln
+           (^verify
+            (parameterize ([current-allowed-exns null])
+              (define result (apply val args))
+              (parameterize ([force-symbolic? #t])
+                (define guard (send (apply codomain args) protect result pos))
+                (guard result neg)))))
+         (cond
+           [(^sat? soln)
+            (define concrete-args
+              (^evaluate args (^complete-solution soln (^symbolics args))))
+            (define-values (best-args best-exn)
+              (find-best-args val concrete-args (fail-exn val concrete-args)))
+            (list (if (empty? best-args)
+                      (format "(~a)" name)
+                      (format "(~a ~a)" name (string-join (map ~v best-args))))
+                  best-exn)]
+           [else #f])]))
 
-    ;; TODO: shrinking disabled for now...
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
@@ -115,11 +120,14 @@
       (list-update-many domains domain-order shrink-apply))
 
     (define (fail-exn val args)
-      (wrap-check
-       (λ ()
-         (with-handlers ([exn:fail? (λ (xn) xn)])
-           (apply val args)
-           #f))))))
+      (define res
+        (^with-vc
+         (parameterize ([current-allowed-exns null])
+           (apply val args))))
+      (define exn (^result-value res))
+      (and (^failed? res)
+           (not (exn:fail:svm:assume? exn))
+           exn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; constants and helpers
