@@ -97,4 +97,6 @@
    "counterexample: (f 0)"
    #:x (run* (check-error (raise "blah") 20))
    "check-error: contract violation"
+   #:x (run* (string=? 'hi "hi"))
+   "string=?: contract violation"
    ))

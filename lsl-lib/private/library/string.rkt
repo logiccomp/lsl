@@ -5,6 +5,7 @@
 
 (require (for-syntax racket/base)
          (prefix-in ^ rosette/safe)
+         racket/contract
          racket/provide
          racket/string
          racket/list
@@ -24,8 +25,8 @@
 ;; provide
 
 (provide
- (rename-out
-  [$string=? string=?])
+ (contract-out
+  [rename $string=? string=? (-> string? string? any)])
 
  (lift-out
   explode
@@ -49,8 +50,7 @@
   substring
   string<?))
 
-(define $string=?
-  (λ (x y)
-    (^for*/all ([x x #:exhaustive] [y y #:exhaustive])
-      (current-ticks (+ (current-ticks) (min (string-length x) (string-length y))))
-      (string=? x y))))
+(define ($string=? x y)
+  (^for*/all ([x x #:exhaustive] [y y #:exhaustive])
+    (current-ticks (+ (current-ticks) (min (string-length x) (string-length y))))
+    (string=? x y)))
