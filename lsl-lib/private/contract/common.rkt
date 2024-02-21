@@ -26,7 +26,7 @@
          contract-error
          generate-error
          unimplemented-error
-         force-symbolic?
+         current-disable-contract
          skip-symbolic)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -129,13 +129,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; skip symbolic
 
-(define force-symbolic? (make-parameter #f))
+(define current-disable-contract (make-parameter #f))
 
 (define-syntax-rule (skip-symbolic val body ...)
   (skip-symbolic-fn val (λ () body ...)))
 
 (define (skip-symbolic-fn val thk)
-  (if (and (^symbolic? val)
-           (not (force-symbolic?)))
+  (if (current-disable-contract)
       (passed-guard (λ (val neg) val))
       (thk)))

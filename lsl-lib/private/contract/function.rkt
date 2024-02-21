@@ -88,9 +88,9 @@
          (define neg (negative-blame #f #f))
          (define soln
            (^verify
-            (parameterize ([current-allowed-exns null])
+            (parameterize ([current-allowed-exns null] [current-disable-contract #t])
               (define result (apply val args))
-              (parameterize ([force-symbolic? #t])
+              (parameterize ([current-disable-contract #f])
                 (define guard (send (apply codomain args) protect result pos))
                 (guard result neg)))))
          (cond
