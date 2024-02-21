@@ -258,10 +258,9 @@
           (λ () thk-body)))]))
 
 (define-check (verify-contract val name)
-  (define (sym-mode ctc) (send ctc symbolic))
   (define ctc (proxy->contract val))
   (if ctc
-      (check-or-verify-contract ctc val name sym-mode)
+      (check-or-verify-contract ctc val name symbolic-mode)
       (fail-check (format "unknown contract for ~a" name))))
 
 (define (check-or-verify-contract ctc val name mode)

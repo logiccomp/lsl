@@ -99,4 +99,10 @@
    "check-error: contract violation"
    #:x (run* (string=? 'hi "hi"))
    "string=?: contract violation"
+   #:x (run* (: g (-> Integer String))
+             (define (g x) x)
+             (: f (-> Integer Integer))
+             (define (f x) (g x))
+             (check-contract f))
+   "expected: String"
    ))

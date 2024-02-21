@@ -10,6 +10,7 @@
                      syntax/parse
                      syntax/stx)
          (prefix-in ^ rosette/safe)
+         racket/class
          racket/contract
          racket/match)
 
@@ -29,7 +30,8 @@
          any-list?
          error-if-parametric
          with-vc-reset
-         current-allowed-exns)
+         current-allowed-exns
+         symbolic-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -133,3 +135,7 @@
 
 (define-syntax-rule (with-vc-reset e)
   (splicing-parameterize ([current-vc (current-vc)]) e))
+
+;; HACK: To identify symbolic mode in `interact`.
+(define (symbolic-mode ctc)
+  (send ctc symbolic))
