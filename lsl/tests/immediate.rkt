@@ -103,4 +103,7 @@
         (define (f x) x)
         (check-contract f)
         (contract-generate MyInt))
+
+   #:? values
+   (run (contract-generate Any))
    ))

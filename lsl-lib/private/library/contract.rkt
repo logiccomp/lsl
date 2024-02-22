@@ -17,6 +17,8 @@
          (only-in racket/stream
                   stream
                   empty-stream)
+         (only-in racket/random
+                  random-ref)
          racket/class
          "../syntax/expand.rkt"
          "../syntax/compile.rkt"
@@ -48,7 +50,17 @@
   (define-symbolic* x predicate) x)
 
 (define-contract Any
-  (Immediate (check (λ _ #t))))
+  (Immediate
+   (check (λ _ #t))
+   (generate
+    (λ (fuel)
+      ((random-ref
+        (list (λ () (contract-generate Boolean fuel))
+              (λ () (contract-generate Integer fuel))
+              (λ () (contract-generate Real fuel))
+              (λ () (contract-generate Natural fuel))
+              (λ () (contract-generate String fuel))
+              (λ () (contract-generate Symbol fuel)))))))))
 
 (define-contract Boolean
   (Immediate (check boolean?)
