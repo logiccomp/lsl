@@ -13,7 +13,6 @@
          (except-in net/http-easy
                     proxy?)
          racket/file
-         racket/list
          racket/local
          racket/provide
          racket/runtime-path
@@ -197,17 +196,15 @@
                           (equal? (acc self) (acc other)) ...))]
                   #:methods gen:custom-write
                   [(define (write-proc self port mode)
-                     (write-string (format "(~a " 'ctor) port)
+                     (write-string (format "(~a" 'ctor) port)
                      (let ([recur (case mode
                                     [(#t) write]
                                     [(#f) display]
                                     [else (lambda (p port) (print p port mode))])])
-                       (for-each (lambda (e i)
-                                   (unless (zero? i)
-                                     (write-string " " port))
+                       (for-each (lambda (e)
+                                   (write-string " " port)
                                    (recur e port))
-                                 (list (acc self) ...)
-                                 (range (length '(field ...)))))
+                                 (list (acc self) ...)))
                      (write-string ")" port))])
          (set! pred (redirect-pred pred))
          (set! acc (redirect-accessor 'acc pred acc k)) ...
