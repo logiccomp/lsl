@@ -66,11 +66,13 @@
 ;; TODO: Could be made robust.
 (define (maybe-wrap name val)
   (if (and (procedure? val) (not (machine? val)))
-      (λ args
-        (define logs (current-logs))
-        (when logs
-          (current-logs (hash-update logs name add1 0)))
-        (apply val args))
+      (procedure-reduce-arity
+       (λ args
+         (define logs (current-logs))
+         (when logs
+           (current-logs (hash-update logs name add1 0)))
+         (apply val args))
+       (procedure-arity val))
       val))
 
 (define-syntax declare-contract

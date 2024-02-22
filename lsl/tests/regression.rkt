@@ -105,4 +105,7 @@
              (define (f x) (g x))
              (check-contract f))
    "expected: String"
+   #:x (run* (: f (-> Any Any Any))
+             (define (f x) x))
+   "given: 1-arity function"
    ))
