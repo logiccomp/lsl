@@ -139,4 +139,8 @@
          (define (f st) (zero? (foo-x st)))
          (verify-contract f))
    "counterexample: (f (make-foo 1))"
+
+   #:x (run* (define-struct foo (x y))
+             (check-expect (make-foo 1 2) #t))
+   "(make-foo 1 2)"
    ))
