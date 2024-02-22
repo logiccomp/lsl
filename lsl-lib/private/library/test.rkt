@@ -92,28 +92,25 @@
     [(_ external:id internal:id)
      #:with (anon-test ...) (reverse anon-tests)
      #:with ([name . suite] ...) (reverse test-suites)
-     (if (and (empty? anon-tests) (empty? test-suites))
-         #'(begin (define (external) (hash))
-                  (define (internal) (void)))
-         #'(begin
-             (define (run-anon-tests)
-               (run-test (test-suite "anonymous tests" anon-test ...)))
-             (define external
-               (syntax-parameterize ([dont-push? #t])
-                 (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
-                       #f run-anon-tests
-                       'logs (λ ()
-                               (parameterize ([current-logs (hash)])
-                                 (run-anon-tests)
-                                 (current-logs))))))
-             (define (internal)
-               (syntax-parameterize ([dont-push? #t])
-                 (void
-                  (run-tests
-                   (test-suite
-                    "definition-area tests"
-                    suite ...
-                    (test-suite "anonymous tests" anon-test ...))))))))]))
+     #'(begin
+         (define (run-anon-tests)
+           (run-test (test-suite "anonymous tests" anon-test ...)))
+         (define external
+           (syntax-parameterize ([dont-push? #t])
+             (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
+                   #f run-anon-tests
+                   'logs (λ ()
+                           (parameterize ([current-logs (hash)])
+                             (run-anon-tests)
+                             (current-logs))))))
+         (define (internal)
+           (syntax-parameterize ([dont-push? #t])
+             (void
+              (run-tests
+               (test-suite
+                "definition-area tests"
+                suite ...
+                (test-suite "anonymous tests" anon-test ...)))))))]))
 
 (define-syntax $test-suite
   (syntax-parser
