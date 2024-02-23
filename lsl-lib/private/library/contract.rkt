@@ -39,6 +39,7 @@
          Natural
          String
          Symbol
+         NonemptyList
          BoundedList
          Record
          ->)
@@ -123,6 +124,9 @@
 (define (lifted-symbol? x)
   (for/all ([x x])
     (symbol? x)))
+
+(define-contract (NonemptyList X)
+  (AllOf (List X) cons?))
 
 (define-syntax BoundedList
   (contract-macro

@@ -115,4 +115,17 @@
              (define (f x) (list (third x)))
              (verify-contract f))
    "third: contract violation"
+
+   (run (: xs (NonemptyList Integer))
+        (define xs '(1 2 3))
+        xs)
+   '(1 2 3)
+
+   #:x (run* (: xs (NonemptyList Integer))
+             (define xs '()))
+   "expected: cons?"
+
+   #:x (run* (: xs (NonemptyList Integer))
+             (define xs '(1 2 a)))
+   "expected: Integer"
    ))
