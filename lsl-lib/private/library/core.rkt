@@ -194,18 +194,12 @@
                      (and (pred self)
                           (pred other)
                           (equal? (acc self) (acc other)) ...))]
+                  #:property prop:custom-print-quotable 'never
                   #:methods gen:custom-write
-                  [(define (write-proc self port mode)
-                     (write-string (format "(~a" 'ctor) port)
-                     (let ([recur (case mode
-                                    [(#t) write]
-                                    [(#f) display]
-                                    [else (lambda (p port) (print p port mode))])])
-                       (for-each (lambda (e)
-                                   (write-string " " port)
-                                   (recur e port))
-                                 (list (acc self) ...)))
-                     (write-string ")" port))])
+                  [(define write-proc
+                     (make-constructor-style-printer
+                      (λ (obj) 'ctor)
+                      (λ (obj) (list (acc obj) ...))))])
          (set! pred (redirect-pred pred))
          (set! acc (redirect-accessor 'acc pred acc k)) ...
          (set! mut (redirect-mutator 'acc pred mut k)) ...)]))

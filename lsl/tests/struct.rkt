@@ -143,4 +143,8 @@
    #:x (run* (define-struct foo (x y))
              (check-expect (make-foo 1 2) #t))
    "(make-foo 1 2)"
+
+   #:x (run* (define-struct foo (x y))
+             (check-expect (list (make-foo 1 2)) #t))
+   "(list (make-foo 1 2))"
    ))
