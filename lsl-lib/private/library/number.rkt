@@ -15,6 +15,7 @@
 
 (provide
  (contract-out
+  [rename ^natural? natural? (-> any? ^boolean?)]
   [rename ^integer? integer? (-> any? ^boolean?)]
   [rename ^number? number? (-> any? ^boolean?)]
   [rename ^real? real? (-> any? ^boolean?)])
@@ -56,3 +57,6 @@
    ^sgn
    ^sub1
    ^zero?)))
+
+(define (^natural? x)
+  (^and (^integer? x) (^>= x 0)))
