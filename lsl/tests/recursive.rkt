@@ -168,4 +168,35 @@
              '(: sum (-> (Tree Integer) Integer))
              sum-sexp)
    "must be exactly (Tree Integer)"
+
+   (run (define-struct counter-obj
+          (incr get))
+
+        (define-contract Counter
+          (CounterObj (-> Counter)
+                      (-> Natural)))
+
+        (: nat-counter (-> Counter))
+        (define-class (nat-counter)
+          (local [(define (make n)
+                    (make-counter-obj
+                     (λ () (make (add1 n)))
+                     (λ () n)))]
+            (make 0)))
+
+        (: nat-counter-twice (-> Counter Counter))
+        (define (nat-counter-twice c)
+          (nat-counter-incr (nat-counter-incr c)))
+
+        (nat-counter-get (nat-counter-twice (nat-counter))))
+   2
+
+   #:x
+   (run* (define-class nat-counter #f))
+   "define-class: unknown contract"
+
+   #:x
+   (run* (: nat-counter Natural)
+         (define-class nat-counter 10))
+   "not a class contract"
    ))

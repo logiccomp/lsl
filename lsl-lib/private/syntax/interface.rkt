@@ -5,6 +5,7 @@
 
 (require (for-syntax ee-lib
                      racket/base
+                     racket/function
                      racket/syntax
                      syntax/id-table
                      syntax/parse
@@ -28,6 +29,7 @@
          declare-contract
          define-contract
          define-package
+         define-class
          contract-generate
          contract-shrink
          contract-symbolic)
@@ -49,6 +51,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
+(begin-for-syntax
+  (define (attach-contract name ctc val #:compiler [compiler compile-contract])
+    #`(let* ([name '#,name]
+             [path (quote-module-name)]
+             [pos (positive-blame name path)]
+             [neg (negative-blame name path)]
+             [ctc #,(compiler ctc)]
+             [val #,val])
+        ((send ctc protect val pos)
+         (maybe-wrap name val)
+         neg))))
+
 (define-syntax define-protected
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
@@ -57,15 +71,10 @@
      (if (not ctc)
         #'(define ?head.name ?new-body)
         #`(define ?head.name
-            (let* ([name '?head.name]
-                   [path (quote-module-name)]
-                   [pos (positive-blame name path)]
-                   [neg (negative-blame name path)]
-                   [ctc #,(compile-contract
-                           (expand-contract
-                            (flip-intro-scope ctc)))]
-                   [val ?new-body])
-              ((send ctc protect val pos) (maybe-wrap name val) neg))))]))
+            #,(attach-contract
+               #'?head.name
+               (expand-contract (flip-intro-scope ctc))
+               #'?new-body)))]))
 
 ;; TODO: Could be made robust.
 (define (maybe-wrap name val)
@@ -106,20 +115,22 @@
   (define (id->string x)
     (symbol->string (syntax-e x)))
 
+  ;; HACK: Name mangling necessary because Rosette structs don't
+  ;; actually set the `field-info` part of the `struct-info`.
+  (define (derived-field-names name s-name s-accs)
+    (define n (add1 (string-length (id->string s-name))))
+    (for/list ([acc s-accs])
+      (define fld (substring (id->string acc) n))
+      (format-id name "~a-~a" name fld)))
+
   (define/hygienic (package-struct-defns stx name pkg-name)
     #:expression
     (syntax-parse stx
       #:literal-sets (contract-literal)
       [(Exists (x) (Struct s:struct-id e ...))
-       ;; HACK: Name mangling necessary because Rosette structs don't
-       ;; actually set the `field-info` part of the `struct-info`.
        #:with (?pkg-fld ...)
-       (let ([n (add1 (string-length (id->string #'s)))])
-         (for/list ([acc (attribute s.accessor-id)])
-           (define fld (substring (id->string acc) n))
-           (format-id name "~a-~a" name fld)))
-       #`(begin
-           (define ?pkg-fld (s.accessor-id #,pkg-name)) ...)]
+       (derived-field-names name #'s (attribute s.accessor-id))
+       #`(begin (define ?pkg-fld (s.accessor-id #,pkg-name)) ...)]
       [_ #'(void)]))
 
   ;; HACK: Exfiltrate the info using `set!`
@@ -138,10 +149,9 @@
       [_
        #:fail-when
        (or (syntax-property stx 'unexpanded) stx)
-       "not an existential contract"
+       "not a package contract"
        #'_])))
 
-;; TODO: Nice to DRY up with `define-protected`
 (define-syntax define-package
   (syntax-parser
     [(_ ?name:id ?body:expr)
@@ -156,15 +166,53 @@
      #`(begin
          (define ?info #f)
          (define ?pkg
-           (let* ([name '?name]
-                  [path (quote-module-name)]
-                  [pos (positive-blame name path)]
-                  [neg (negative-blame name path)]
-                  [ctc #,(compile-package-contract expanded-ctc #'?Name #'?info)]
-                  [val ?body])
-             ((send ctc protect val pos) val neg)))
+           #,(attach-contract
+              #'?name
+              expanded-ctc
+              #'?body
+              #:compiler (curryr compile-package-contract #'?Name #'?info)))
          (define-contract ?Name (seal-info-pred? ?info))
          #,(package-struct-defns expanded-ctc #'?name #'?pkg))]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; define-class
+
+(begin-for-syntax
+  (define/hygienic (class-struct-defns stx name)
+    #:expression
+    (syntax-parse stx
+      #:literal-sets (contract-literal)
+      [(Function (arguments _ ...)
+                 (result (Recursive x (Struct s:struct-id e ...)))
+                 (raises _ ...))
+       #:with (?class-fld ...)
+       (derived-field-names name #'s (attribute s.accessor-id))
+       #`(begin
+           (define (?class-fld self . args)
+             (apply (s.accessor-id self) args))
+           ...)]
+      [_
+       #:fail-when
+       (or (syntax-property stx 'unexpanded) stx)
+       "not a class contract"
+       #'(void)])))
+
+(define-syntax define-class
+  (syntax-parser
+    [(_ ?head:define-header ?body:expr)
+     #:do [(define ctc (contract-table-ref #'?head.name))]
+     #:fail-when (and (not ctc) #'?head.name) "unknown contract"
+     #:do [(define expanded-ctc
+             (expand-contract
+              (flip-intro-scope ctc)))]
+     #:with ?new-body ((attribute ?head.make-body) #'?body)
+     #`(begin
+         (define ?head.name
+           #,(attach-contract
+              #'?head.name
+              expanded-ctc
+              #'?new-body))
+         #,(class-struct-defns expanded-ctc #'?head.name))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contract operations

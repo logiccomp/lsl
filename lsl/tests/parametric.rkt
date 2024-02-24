@@ -121,7 +121,7 @@
    #:x
    (run* (: nat-counter Natural)
          (define-package nat-counter #f))
-   "not an existential contract"
+   "not a package contract"
 
    #:x
    (run* (: thing (Exists (T) (List T)))
