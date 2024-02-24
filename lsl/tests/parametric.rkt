@@ -113,4 +113,68 @@
                                        (tree-map f (node-right t)))]))
          (check-expect (tree-map number->string (make-node (make-node (make-leaf 1) (make-leaf 2)) (make-leaf 3)))
                        (make-node (make-node (make-leaf "1") (make-leaf "2")) (make-leaf "3"))))
+
+   #:x
+   (run* (define-package nat-counter #f))
+   "define-package: unknown contract"
+
+   #:x
+   (run* (: nat-counter Natural)
+         (define-package nat-counter #f))
+   "not an existential contract"
+
+   #:x
+   (run* (: thing (Exists (T) (List T)))
+         (define-package thing #f))
+   "expected: (List T)"
+
+   (run (define-struct counter-pkg (make incr get))
+
+        (define-contract Counter
+          (Exists (T)
+                  (CounterPkg (-> T)
+                              (-> T T)
+                              (-> T Natural))))
+
+        (: nat-counter Counter)
+        (define-package nat-counter
+          (make-counter-pkg
+           (λ () '())
+           (λ (x) (cons 'A x))
+           (λ (x) (length x))))
+
+        (: f (-> NatCounter NatCounter))
+        (define (f x) (nat-counter-incr x))
+
+        (nat-counter-get (f (nat-counter-incr (nat-counter-make)))))
+   2
+
+   #:x
+   (run* (define-struct counter-pkg (make))
+         (define-contract Counter
+           (Exists (T) (CounterPkg (-> T))))
+
+         (: nat-counter Counter)
+         (define-package nat-counter
+           (make-counter-pkg
+            (λ () #f)))
+
+         (: f (-> NatCounter Any))
+         (define (f x) x)
+
+         (f #f))
+   "expected: NatCounter"
+
+   #:x
+   (run* (define-struct counter-pkg (f))
+         (define-contract Counter
+           (Exists (T) (CounterPkg (-> T Any))))
+
+         (: nat-counter Counter)
+         (define-package nat-counter
+           (make-counter-pkg
+            (λ (x) x)))
+
+         (nat-counter-f #f))
+   "expected: NatCounter"
    ))

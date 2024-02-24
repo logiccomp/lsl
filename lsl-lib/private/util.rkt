@@ -8,7 +8,8 @@
                      racket/provide-transform
                      syntax/id-table
                      syntax/parse
-                     syntax/stx)
+                     syntax/stx
+                     threading)
          (prefix-in ^ rosette/safe)
          racket/class
          racket/contract
@@ -18,6 +19,7 @@
 ;; provide
 
 (provide (for-syntax strip
+                     kebab->camel
                      contract-table-ref
                      contract-table-set!)
          (struct-out none)
@@ -65,6 +67,16 @@
 ;; syntax
 
 (begin-for-syntax
+  (define (kebab->camel stx)
+    (~> stx
+        syntax-e
+        symbol->string
+        (string-replace "-" " ")
+        string-titlecase
+        (string-replace " " "")
+        string->symbol
+        (datum->syntax stx _)))
+
   (define ((strip pre) str)
     (and (string-prefix? str pre)
          (substring str (string-length pre)))))

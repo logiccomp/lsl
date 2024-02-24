@@ -32,6 +32,7 @@
 
 (provide
  define-contract
+ define-package
  provide
  (rename-out
   [define-protected define]

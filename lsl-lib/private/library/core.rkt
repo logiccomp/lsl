@@ -7,8 +7,7 @@
                      racket/sequence
                      racket/string
                      syntax/parse
-                     syntax/struct
-                     threading)
+                     syntax/struct)
          json
          (except-in net/http-easy
                     proxy?)
@@ -155,16 +154,6 @@
 ;; structs
 
 (begin-for-syntax
-  (define (struct-name->contract-name stx)
-    (~> stx
-        syntax-e
-        symbol->string
-        (string-replace "-" " ")
-        string-titlecase
-        (string-replace " " "")
-        string->symbol
-        (datum->syntax stx _)))
-
   (define (struct-contract-macro sname)
     (syntax-parser
       [(_ ctc ...)
@@ -173,7 +162,7 @@
 (define-syntax $define-struct
   (syntax-parser
     [(_ name:id (field:id ...))
-     #:with Name (struct-name->contract-name #'name)
+     #:with Name (kebab->camel #'name)
      #:with (k ...)
      (for/list ([k (in-naturals)] [field-id (in-syntax #'(field ...))])
        #`(#%datum . #,k))

@@ -17,7 +17,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide parametric-contract%
+(provide (struct-out seal-info)
+         parametric-contract%
          seal-contract%)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,9 +27,10 @@
 (define seal-number -1)
 (struct seal-info (ctor pred? get name polarity))
 
+;; TODO: A bit odd to have seal-name be constant and not a list.
 (define parametric-contract%
   (class contract%
-    (init-field syntax polarity names make-body)
+    (init-field syntax polarity names make-body [seal-name #f])
 
     (super-new)
 
@@ -38,7 +40,8 @@
        (define infos
          (for/list ([base-name (in-list names)])
            (set! seal-number (add1 seal-number))
-           (define name (make-name base-name polarity seal-number))
+           (define name
+             (or seal-name (make-name base-name polarity seal-number)))
            (define actual-polarity
              (if (positive-blame? pos)
                  polarity
