@@ -108,4 +108,9 @@
    #:x (run* (: f (-> Any Any Any))
              (define (f x) x))
    "given: 1-arity function"
+   #:x (run* (: f (All (X) (-> (List X) Any)))
+             (define (f xs)
+               (ormap identity xs))
+             (f '(1 2 3)))
+   "expected: list-without-parametric?"
    ))

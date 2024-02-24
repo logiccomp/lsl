@@ -14,12 +14,13 @@
 
 (provide
  (contract-out
+  [rename ^andmap andmap (-> procedure? any-list? any-list? ... any)]
+  [rename ^ormap ormap (-> procedure? any-list? any-list? ... any)]
   [rename ^procedure? procedure? (-> any? ^boolean?)])
 
  (filtered-out
   (strip "^")
   (combine-out
-   ^andmap
    ^apply
    ^argmax
    ^argmin
@@ -31,5 +32,4 @@
    ^identity
    ^map
    ^memf
-   ^ormap
    ^sort)))
