@@ -87,12 +87,14 @@
              (set! result (let () e ...))))
            result))]))
 
+;; Special case in `internal` needed to prevent printing "0 tests succeeded"
+;; results in case no tests exist.
 (define-syntax $define-run-tests
   (syntax-parser
     [(_ external:id internal:id)
      #:with (anon-test ...) (reverse anon-tests)
      #:with ([name . suite] ...) (reverse test-suites)
-     #'(begin
+     #`(begin
          (define (run-anon-tests)
            (run-test (test-suite "anonymous tests" anon-test ...)))
          (define external
@@ -105,12 +107,14 @@
                              (current-logs))))))
          (define (internal)
            (syntax-parameterize ([dont-push? #t])
-             (void
-              (run-tests
-               (test-suite
-                "definition-area tests"
-                suite ...
-                (test-suite "anonymous tests" anon-test ...)))))))]))
+             #,(if (and (empty? anon-tests) (empty? test-suites))
+                   #'(void)
+                   #'(void
+                      (run-tests
+                       (test-suite
+                        "definition-area tests"
+                        suite ...
+                        (test-suite "anonymous tests" anon-test ...))))))))]))
 
 (define-syntax $test-suite
   (syntax-parser
