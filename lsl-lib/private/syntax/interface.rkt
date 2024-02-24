@@ -29,7 +29,7 @@
          declare-contract
          define-contract
          define-package
-         define-class
+         define-interface
          contract-generate
          contract-shrink
          contract-symbolic)
@@ -178,41 +178,34 @@
 ;; define-class
 
 (begin-for-syntax
-  (define/hygienic (class-struct-defns stx name)
+  (define/hygienic (interface-struct-defns stx name)
     #:expression
     (syntax-parse stx
       #:literal-sets (contract-literal)
-      [(Function (arguments _ ...)
-                 (result (Recursive x (Struct s:struct-id e ...)))
-                 (raises _ ...))
-       #:with (?class-fld ...)
-       (derived-field-names name #'s (attribute s.accessor-id))
-       #`(begin
-           (define (?class-fld self . args)
+      [(Recursive x (Struct s:struct-id e ...))
+       #:with (?meth ...)
+       (derived-field-names (camel->kebab name) #'s (attribute s.accessor-id))
+       #'(begin
+           (define (?meth self . args)
              (apply (s.accessor-id self) args))
            ...)]
       [_
        #:fail-when
        (or (syntax-property stx 'unexpanded) stx)
-       "not a class contract"
-       #'(void)])))
+       "not an interface contract"
+       #'_])))
 
-(define-syntax define-class
+(define-syntax define-interface
   (syntax-parser
-    [(_ ?head:define-header ?body:expr)
-     #:do [(define ctc (contract-table-ref #'?head.name))]
-     #:fail-when (and (not ctc) #'?head.name) "unknown contract"
-     #:do [(define expanded-ctc
-             (expand-contract
-              (flip-intro-scope ctc)))]
-     #:with ?new-body ((attribute ?head.make-body) #'?body)
+    [(_ name:id ctc:expr)
      #`(begin
-         (define ?head.name
-           #,(attach-contract
-              #'?head.name
-              expanded-ctc
-              #'?new-body))
-         #,(class-struct-defns expanded-ctc #'?head.name))]))
+         (define-syntax name
+           (contract-macro
+            (syntax-parser
+              [_:id (syntax/loc #'ctc (Recursive name ctc))])))
+         #,(interface-struct-defns
+            (expand-contract (syntax/loc #'ctc (Recursive name ctc)))
+            #'name))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contract operations

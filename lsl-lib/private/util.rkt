@@ -20,6 +20,7 @@
 
 (provide (for-syntax strip
                      kebab->camel
+                     camel->kebab
                      contract-table-ref
                      contract-table-set!)
          (struct-out none)
@@ -74,6 +75,15 @@
         (string-replace "-" " ")
         string-titlecase
         (string-replace " " "")
+        string->symbol
+        (datum->syntax stx _)))
+
+  (define (camel->kebab stx)
+    (~> stx
+        syntax-e
+        symbol->string
+        (regexp-replace* #rx"([a-z])([A-Z])" _ "\\1-\\2")
+        string-downcase
         string->symbol
         (datum->syntax stx _)))
 

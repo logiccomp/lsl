@@ -33,7 +33,7 @@
 (provide
  define-contract
  define-package
- define-class
+ define-interface
  provide
  (rename-out
   [define-protected define]
