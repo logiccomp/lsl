@@ -35,7 +35,8 @@
  quote
  local
 
- run-without-contracts
+ disable-contracts!
+ enable-contracts!
 
  (filtered-out
   (strip "$")
