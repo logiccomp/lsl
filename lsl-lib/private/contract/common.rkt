@@ -27,7 +27,8 @@
          generate-error
          unimplemented-error
          current-disable-contract
-         skip-symbolic)
+         skip-symbolic
+         run-without-contracts)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exceptions
@@ -138,3 +139,6 @@
   (if (current-disable-contract)
       (passed-guard (λ (val neg) val))
       (thk)))
+
+(define-syntax-rule (run-without-contracts body ...)
+  (parameterize ((current-disable-contract #t)) body ...))

@@ -35,6 +35,8 @@
  quote
  local
 
+ run-without-contracts
+
  (filtered-out
   (strip "$")
   (combine-out
