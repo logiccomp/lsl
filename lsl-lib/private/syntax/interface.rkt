@@ -144,7 +144,7 @@
               [syntax #'#,stx]
               [polarity #f]
               [names '(x)]
-              [seal-name '#,name]
+              [seal-name (format "#<~a>" '#,name)]
               [make-body (λ (x) (set! #,info x) e^)])]
       [_
        #:fail-when
