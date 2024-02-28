@@ -40,4 +40,17 @@
    (run/sexp re-sexp '(f 'a) '(f 'b) '(f 'b) '(f 'a))  'a
    #:x (run/sexp re-sexp '(f 'a) '(f 'b) '(f 'a) '(f 'a))
    "expected: (Immediate (check machine-accepting?))"
+
+   #:x (run* (require racket/list)
+             (define-contract UniqueList
+               (lambda (l)
+                 (equal? (length l)
+                         (length (remove-duplicates l)))))
+             (: ids UniqueList)
+             (define ids empty)
+             (: maybe-unique2 (-> (AllOf Natural (Record ids))))
+             (define (maybe-unique2)
+               (random 1000))
+             (check-contract maybe-unique2 1000))
+   "expected: UniqueList"
    ))

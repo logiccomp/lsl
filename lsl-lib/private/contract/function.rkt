@@ -88,12 +88,17 @@
          (define neg (negative-blame #f #f))
          (define soln
            (^verify
-            (parameterize ([current-allowed-exns null]
-                           [current-disable-contract (eq? mode symbolic-mode)])
-              (define result (apply val args))
-              (parameterize ([current-disable-contract #f])
-                (define guard (send (apply codomain args) protect result pos))
-                (guard result neg)))))
+            (if (eq? mode symbolic-mode)
+                ;; TODO: This will repeat the codomain check in verification mode,
+                ;; which is incorrect for trace contracts.
+                (parameterize ([current-allowed-exns null]
+                               [current-disable-contract #t])
+                  (define result (apply val args))
+                  (parameterize ([current-disable-contract #f])
+                    (define guard (send (apply codomain args) protect result pos))
+                    (guard result neg)))
+                (parameterize ([current-allowed-exns null])
+                  (apply val args)))))
          (cond
            [(^sat? soln)
             (define concrete-args
@@ -109,6 +114,8 @@
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
+        ;; HACK: For non-deterministic failure, keep trying to find the exception.
+        ;; Ideally, we could extract out the exception from `verify`.
         [(not last-exn)
          (let loop ()
            (define exn (fail-exn val args))
