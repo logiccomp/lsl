@@ -40,14 +40,14 @@
          (define (id x) x)
          (define y (id 10))
          (if y y y))
-   "cannot use parametric value"
+   "expected: boolean?"
 
    #:x
    (run* (: id (All (A) (-> A Any)))
          (define (id x) x)
          (define y (id 10))
          (cond [y y] [else y]))
-   "cannot use parametric value"
+   "expected: boolean?"
 
    #:x
    (run* (: id (All (A) (-> A Any)))
@@ -165,6 +165,7 @@
          (f #f))
    "expected: NatCounter"
 
+   ;; TODO: should be consistent with the above
    #:x
    (run* (define-struct counter-pkg (f))
          (define-contract Counter
@@ -176,5 +177,5 @@
             (λ (x) x)))
 
          (nat-counter-f #f))
-   "expected: NatCounter"
+   "expected: #<NatCounter>"
    ))
