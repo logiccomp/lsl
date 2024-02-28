@@ -109,6 +109,10 @@
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
+        [(not last-exn)
+         (let loop ()
+           (define exn (fail-exn val args))
+           (if exn (values args exn) (loop)))]
         [(or (ormap none? args*) (equal? args args*))
          (values args last-exn)]
         [(fail-exn val args*) => (λ (exn) (find-best-args val args* exn))]
