@@ -112,9 +112,7 @@
              (define (f xs)
                (ormap identity xs))
              (f '(1 2 3)))
-   "expected: non-parametric?"
-   #:t (run (: f (All (X) (-> (List X) Any)))
-            (define (f xs)
-              (ormap (λ (x) #t) xs))
-            (f '(1 2 3)))
+   "expected: boolean?"
+   #:x (run* (if 1 2 3))
+   "expected: boolean?"
    ))

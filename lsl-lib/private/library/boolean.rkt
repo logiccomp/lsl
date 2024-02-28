@@ -14,9 +14,9 @@
 
 (provide
  (contract-out
-  [rename equal? boolean=? (-> ^boolean? ^boolean? ^boolean?)]
-  [rename ^boolean? boolean? (-> any? ^boolean?)]
-  [rename ^not not (-> any? ^boolean?)])
+  [rename equal? boolean=? (-> is-boolean? is-boolean? is-boolean?)]
+  [rename ^boolean? boolean? (-> any? is-boolean?)]
+  [rename ^not not (-> is-boolean? is-boolean?)])
 
  (filtered-out
   (strip "^")

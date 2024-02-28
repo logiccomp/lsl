@@ -14,9 +14,9 @@
 
 (provide
  (contract-out
-  [rename ^andmap andmap (-> (unconstrained-domain-> any?) ^list? ^list? ... any)]
-  [rename ^ormap ormap (-> (unconstrained-domain-> any?) ^list? ^list? ... any)]
-  [rename ^procedure? procedure? (-> any? ^boolean?)])
+  [rename ^andmap andmap (-> (unconstrained-domain-> is-boolean?) ^list? ^list? ... any)]
+  [rename ^ormap ormap (-> (unconstrained-domain-> is-boolean?) ^list? ^list? ... any)]
+  [rename ^procedure? procedure? (-> any? is-boolean?)])
 
  (filtered-out
   (strip "^")

@@ -31,6 +31,7 @@
          lift-out
          any?
          any-list?
+         is-boolean?
          error-if-parametric
          with-vc-reset
          current-allowed-exns
@@ -140,6 +141,9 @@
    (λ (xs)
      (and (^list? xs)
           (^andmap any? xs)))))
+
+(define is-boolean?
+  (procedure-rename ^boolean? 'boolean?))
 
 (define (error-if-parametric x)
   (when (base-seal? x)

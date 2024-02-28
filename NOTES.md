@@ -1,5 +1,8 @@
 ## Notes
 
+* have symbolic use "gas" too for finitizing unbounded structures (with warning)
+* logging for random generation
+* entire runtime should be in rosette for reasoning
 * check error source location for -> flat failure
 * define-contract should check to make sure is actually contract...
 * annotate should use lift to generate contract definition for reuse

@@ -122,22 +122,27 @@
 (define-syntax $cond
   (syntax-parser
     #:literals ($else)
-    [(_ [(~and (~not $else) guard:expr) arm:expr] ...+ [$else final-arm:expr])
-     #'(^cond [(error-if-parametric guard) arm] ... [^else final-arm])]
-    [(_ [(~and (~not $else) guard:expr) arm:expr] ...+)
+    [(_ [(~and (~not $else) guard) arm:expr] ...+ [$else final-arm:expr])
+     #:declare guard (expr/c #'is-boolean? #:name "question")
+     #'(^cond [guard.c arm] ... [^else final-arm])]
+    [(_ [(~and (~not $else) guard) arm:expr] ...+)
+     #:declare guard (expr/c #'is-boolean? #:name "question")
      #:with final-arm
      (syntax/loc this-syntax
        (error 'cond "all question results were false"))
-     #'(^cond [(error-if-parametric guard) arm] ... [^else final-arm])]))
+     #'(^cond [guard.c arm] ... [^else final-arm])]))
 
-(define-syntax-parse-rule ($if guard:expr then:expr else:expr)
-  (^if (error-if-parametric guard) then else))
+(define-syntax-parse-rule ($if guard then:expr else:expr)
+  #:declare guard (expr/c #'is-boolean? #:name "question")
+  (^if guard.c then else))
 
-(define-syntax-parse-rule ($and arg0:expr arg:expr ...+)
-  (^and arg0 arg ...))
+(define-syntax-parse-rule ($and arg ...+)
+  #:declare arg (expr/c #'is-boolean?)
+  (^and arg.c ...))
 
-(define-syntax-parse-rule ($or arg0:expr arg:expr ...+)
-  (^or arg0 arg ...))
+(define-syntax-parse-rule ($or arg ...+)
+  #:declare arg (expr/c #'is-boolean?)
+  (^or arg.c ...))
 
 (define-syntax-parse-rule ($set! x:id arg:expr)
   (^set! x arg))
