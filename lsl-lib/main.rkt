@@ -59,9 +59,7 @@
   "private/library/char.rkt"
   "private/library/test.rkt")
 
- (except-out
-  (all-from-out "private/library/time.rkt")
-  current-ticks)
+ (all-from-out "private/library/time.rkt")
 
  visualize)
 

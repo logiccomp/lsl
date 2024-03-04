@@ -3,16 +3,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide current-ticks
-         ticks)
+(provide ticks)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(define current-ticks
-  (make-parameter 0))
-
 (define (ticks thk)
-  (parameterize ([current-ticks 0])
+  (define (measure)
+    (define before (current-memory-use 'cumulative))
     (thk)
-    (current-ticks)))
+    (define after (current-memory-use 'cumulative))
+    (- after before))
+  (collect-garbage 'major)
+  (define measurements (list (measure) (measure) (measure) (measure) (measure)))
+  (/ (list-ref (sort measurements <) 2) 1000))

@@ -52,5 +52,4 @@
 
 (define ($string=? x y)
   (^for*/all ([x x #:exhaustive] [y y #:exhaustive])
-    (current-ticks (+ (current-ticks) (min (string-length x) (string-length y))))
     (string=? x y)))
