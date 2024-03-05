@@ -34,6 +34,7 @@
          Constant
          True
          False
+         Maybe
          Integer
          Real
          Natural
@@ -75,6 +76,8 @@
 
 (define-contract True (Constant #t))
 (define-contract False (Constant #f))
+
+(define-contract (Maybe T) (OneOf False T))
 
 (define-contract Integer
   (Immediate (check integer?)
