@@ -115,4 +115,16 @@
    "expected: boolean?"
    #:x (run* (if 1 2 3))
    "expected: boolean?"
+   #:t
+   (run (define-struct foo (v))
+        (define x (make-foo 1))
+        (: L (List Any))
+        (define L empty)
+        (: f (-> (Foo Any) (Record L)))
+        (define (f x)
+          (begin (set-foo-v! x 2)
+                 x))
+        (f x)
+        (f x)
+        (eq? (first L) (second L)))
    ))
