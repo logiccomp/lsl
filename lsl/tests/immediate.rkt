@@ -106,4 +106,12 @@
 
    #:? values
    (run (contract-generate Any))
+
+   #:x
+   (run (define (f x)
+          (local [(: g (-> Integer Integer))
+                  (define (g y) y)]
+            (g x)))
+        (f ""))
+   "expected: Integer"
    ))

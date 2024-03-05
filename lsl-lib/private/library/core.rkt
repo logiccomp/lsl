@@ -7,15 +7,16 @@
                      racket/sequence
                      racket/string
                      syntax/parse
+                     syntax/parse/lib/function-header
                      syntax/struct)
          json
          (except-in net/http-easy
                     proxy?)
          racket/file
-         racket/local
          racket/provide
          racket/runtime-path
          racket/struct
+         racket/splicing
          (prefix-in ^ rosette/safe)
          syntax/parse/define
          version/utils
@@ -23,6 +24,7 @@
          "../contract/common.rkt"
          "../syntax/grammar.rkt"
          "../syntax/expand.rkt"
+         "../syntax/interface.rkt"
          "../proxy.rkt"
          "../util.rkt")
 
@@ -33,7 +35,6 @@
  #%app
  #%top
  quote
- local
 
  disable-contracts!
  enable-contracts!
@@ -60,6 +61,7 @@
    $or
    $set!
    $raise
+   $local
 
    $define-struct)))
 
@@ -146,6 +148,16 @@
 
 (define-syntax-parse-rule ($set! x:id arg:expr)
   (^set! x arg))
+
+(begin-for-syntax
+  (define-syntax-class def
+    #:literals (define-protected declare-contract)
+    #:description "definition"
+    (pattern (define-protected (~or x:id x:function-header) e:expr))
+    (pattern (declare-contract x:id c:expr))))
+
+(define-syntax-parse-rule ($local [d:def ...] e:expr)
+  (^let () d ... e))
 
 (define-syntax-rule ($raise v)
   (do-raise v))
