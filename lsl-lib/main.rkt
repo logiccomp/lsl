@@ -13,6 +13,7 @@
          "private/syntax/interface.rkt"
          "private/library/automata.rkt"
          "private/library/boolean.rkt"
+         "private/library/concurrency.rkt"
          "private/library/contract.rkt"
          "private/library/core.rkt"
          "private/library/equal.rkt"
@@ -49,6 +50,7 @@
  (all-from-out
   "private/library/automata.rkt"
   "private/library/boolean.rkt"
+  "private/library/concurrency.rkt"
   "private/library/contract.rkt"
   "private/library/core.rkt"
   "private/library/equal.rkt"
