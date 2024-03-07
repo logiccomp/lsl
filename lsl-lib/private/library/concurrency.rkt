@@ -8,7 +8,8 @@
   [process-macro process])
  (struct-out packet)
  action
- start)
+ start
+ start-debug)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -20,7 +21,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
-
 (struct process (start recv))
 (struct action (state packets))
 
@@ -37,8 +37,11 @@
               (~once (on-receive recv:expr))) ...)
      #'(process start recv)]))
 
+(define (start-debug scheduler processes)
+  (start scheduler processes #t))
+
 ;; TODO: contract to ensure that one of eligible packets is in input
-(define (start scheduler processes)
+(define (start scheduler processes [debug #f])
   (define n (length processes))
   (define init-actions
     (for/list ([k (in-naturals)] [p (in-list processes)])
@@ -50,7 +53,7 @@
                ([from (in-range n)] [to (in-range n)])
       (cons (channel from to '()) channels)))
   (let go ([states init-states]
-           [channels (route* init-pkts init-channels)])
+           [channels (route* init-pkts init-channels debug)])
     (define possible (eligible-packets channels))
     (cond
       [(empty? possible) states]
@@ -62,7 +65,7 @@
        (match-define (action next-state next-packets)
          (recv old-state pkt))
        (go (list-set states k next-state)
-           (route* next-packets (unroute pkt channels)))])))
+           (route* next-packets (unroute pkt channels) debug))])))
 
 (define (eligible-packets cs)
   (append-map
@@ -72,9 +75,13 @@
        [_ '()]))
    cs))
 
-(define (route* pkts channels)
+(define (route* pkts channels [debug #f])
   (for/fold ([channels channels])
             ([pkt (in-list pkts)])
+    (when debug (displayln (format ";;;; ~a -> ~a --- ~a"
+                                   (packet-from pkt)
+                                   (packet-to pkt)
+                                   (packet-msg pkt))))
     (route pkt channels)))
 
 ;; TODO: Don't append, too slow?
