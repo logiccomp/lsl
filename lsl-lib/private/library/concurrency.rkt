@@ -1,0 +1,116 @@
+#lang racket/base
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
+
+(provide
+ (rename-out
+  [process-macro process])
+ (struct-out packet)
+ action
+ start)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
+(require (for-syntax racket/base
+                     syntax/parse)
+         racket/list
+         racket/match)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; data
+
+(struct process (start recv))
+(struct action (state packets))
+
+(struct packet (from to msg))
+(struct channel (from to msgs))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; operations
+
+(define-syntax process-macro
+  (syntax-parser
+    #:datum-literals (on-start on-receive)
+    [(_ (~alt (~once (on-start start:expr))
+              (~once (on-receive recv:expr))) ...)
+     #'(process start recv)]))
+
+;; TODO: contract to ensure that one of eligible packets is in input
+(define (start scheduler processes)
+  (define n (length processes))
+  (define init-actions
+    (for/list ([k (in-naturals)] [p (in-list processes)])
+      ((process-start p) k (range (length processes)))))
+  (define init-states (map action-state init-actions))
+  (define init-pkts (append-map action-packets init-actions))
+  (define init-channels
+    (for*/fold ([channels '()])
+               ([from (in-range n)] [to (in-range n)])
+      (cons (channel from to '()) channels)))
+  (let go ([states init-states]
+           [channels (route* init-pkts init-channels)])
+    (define possible (eligible-packets channels))
+    (cond
+      [(empty? possible) states]
+      [else
+       (define pkt (scheduler possible))
+       (define k (packet-to pkt))
+       (define recv (process-recv (list-ref processes k)))
+       (define old-state (list-ref states k))
+       (match-define (action next-state next-packets)
+         (recv old-state pkt))
+       (go (list-set states k next-state)
+           (route* next-packets (unroute pkt channels)))])))
+
+(define (eligible-packets cs)
+  (append-map
+   (λ (c)
+     (match c
+       [(channel from to (cons msg _)) (list (packet from to msg))]
+       [_ '()]))
+   cs))
+
+(define (route* pkts channels)
+  (for/fold ([channels channels])
+            ([pkt (in-list pkts)])
+    (route pkt channels)))
+
+;; TODO: Don't append, too slow?
+(define (route pkt channels)
+  (match-define (packet from to msg) pkt)
+  (let go ([channels channels])
+    (match channels
+      [(list) (list)]
+      [(cons (channel (== from) (== to) msgs) rst)
+       (cons (channel from to (append msgs (list msg))) rst)]
+      [(cons c rst) (cons c (go rst))])))
+
+(define (unroute pkt channels)
+  (match-define (packet from to msg) pkt)
+  (let go ([channels channels])
+    (match channels
+      [(list) (list)]
+      [(cons (channel (== from) (== to) (cons msg rst-msgs)) rst)
+       (cons (channel from to rst-msgs) rst)]
+      [(cons c rst) (cons c (go rst))])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; example
+
+(define p
+  (process-macro
+   (on-start
+    (λ (self others)
+      (action 0 (list (packet 0 0 1)))))
+   (on-receive
+    (λ (state pkt)
+      (cond
+        [(> state 10)
+         (action state (list))]
+        [else
+         (define state* (add1 (packet-msg pkt)))
+         (action state* (list (packet 0 0 state*)))])))))
+
+(start first (list p))
