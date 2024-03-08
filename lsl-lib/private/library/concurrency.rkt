@@ -51,7 +51,7 @@
   (define init-actions
     (for/list ([k (in-naturals)]
                [p (in-list processes)])
-      ((process-start p) k (range n))))
+      ((process-start p) k (remove k (range n)))))
   (define init-states (map action-state init-actions))
   (define init-pkts (map action-packets init-actions))
   (define init-channels
@@ -79,7 +79,7 @@
        (match-define (action next-state next-packets)
          (recv old-state (receive-packet from msg)))
        (go (list-set states to next-state)
-           (route* from next-packets (unroute pkt channels) debug))])))
+           (route* to next-packets (unroute pkt channels) debug))])))
 
 (define (eligible-packets cs)
   (append-map
@@ -118,22 +118,3 @@
       [(cons (channel (== from) (== to) (cons msg rst-msgs)) rst)
        (cons (channel from to rst-msgs) rst)]
       [(cons c rst) (cons c (go rst))])))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; example
-
-(define p
-  (process-macro
-   (on-start
-    (λ (self others)
-      (action 0 (list (send-packet 0 1)))))
-   (on-receive
-    (λ (state pkt)
-      (cond
-        [(> state 10)
-         (action state (list))]
-        [else
-         (define state* (add1 (receive-packet-msg pkt)))
-         (action state* (list (send-packet 0 state*)))])))))
-
-;(start first (list p))
