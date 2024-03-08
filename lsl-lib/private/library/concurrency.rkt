@@ -74,12 +74,19 @@
       [else
        (define pkt (scheduler possible))
        (match-define (packet from to msg) pkt)
+       (when debug
+         (displayln (format ";;;; (packet #:from ~e #:to ~e #:msg ~e)"
+                            (packet-from pkt)
+                            (packet-to pkt)
+                            (packet-msg pkt))))
        (define recv (process-recv (list-ref processes to)))
        (define old-state (list-ref states to))
        (match-define (action next-state next-packets)
          (recv old-state (receive-packet from msg)))
+       (when debug
+         (displayln (format ";;;; (state #:process ~e #:value ~e)" to next-state)))
        (go (list-set states to next-state)
-           (route* to next-packets (unroute pkt channels) debug))])))
+           (route* to next-packets (unroute pkt channels)))])))
 
 (define (eligible-packets cs)
   (append-map
@@ -90,14 +97,9 @@
        [_ '()]))
    cs))
 
-(define (route* from pkts channels [debug #f])
+(define (route* from pkts channels)
   (for/fold ([channels channels])
             ([pkt (in-list pkts)])
-    (when debug
-      (displayln (format ";;;; ~a -> ~a --- ~a"
-                         from
-                         (send-packet-to pkt)
-                         (send-packet-msg pkt))))
     (route from pkt channels)))
 
 ;; TODO: Don't append, too slow?
