@@ -7,6 +7,8 @@
  (rename-out
   [process-macro process])
  (struct-out packet)
+ (struct-out send-packet)
+ (struct-out receive-packet)
  action
  start
  start-debug)
@@ -25,6 +27,9 @@
 (struct action (state packets))
 
 (struct packet (from to msg))
+(struct send-packet (to msg))
+(struct receive-packet (from msg))
+
 (struct channel (from to msgs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,49 +49,60 @@
 (define (start scheduler processes [debug #f])
   (define n (length processes))
   (define init-actions
-    (for/list ([k (in-naturals)] [p (in-list processes)])
-      ((process-start p) k (range (length processes)))))
+    (for/list ([k (in-naturals)]
+               [p (in-list processes)])
+      ((process-start p) k (range n))))
   (define init-states (map action-state init-actions))
-  (define init-pkts (append-map action-packets init-actions))
+  (define init-pkts (map action-packets init-actions))
   (define init-channels
     (for*/fold ([channels '()])
-               ([from (in-range n)] [to (in-range n)])
-      (cons (channel from to '()) channels)))
+               ([from (in-range n)]
+                [to (in-range n)])
+      (define msgs
+        (filter-map
+         (λ (pkt)
+           (match pkt
+             [(send-packet (== to) msg) msg]
+             [_ #f]))
+         (list-ref init-pkts from)))
+      (cons (channel from to msgs) channels)))
   (let go ([states init-states]
-           [channels (route* init-pkts init-channels debug)])
+           [channels init-channels])
     (define possible (eligible-packets channels))
     (cond
       [(empty? possible) states]
       [else
        (define pkt (scheduler possible))
-       (define k (packet-to pkt))
-       (define recv (process-recv (list-ref processes k)))
-       (define old-state (list-ref states k))
+       (match-define (packet from to msg) pkt)
+       (define recv (process-recv (list-ref processes to)))
+       (define old-state (list-ref states to))
        (match-define (action next-state next-packets)
-         (recv old-state pkt))
-       (go (list-set states k next-state)
-           (route* next-packets (unroute pkt channels) debug))])))
+         (recv old-state (receive-packet from msg)))
+       (go (list-set states to next-state)
+           (route* from next-packets (unroute pkt channels) debug))])))
 
 (define (eligible-packets cs)
   (append-map
    (λ (c)
      (match c
-       [(channel from to (cons msg _)) (list (packet from to msg))]
+       [(channel from to (cons msg _))
+        (list (packet from to msg))]
        [_ '()]))
    cs))
 
-(define (route* pkts channels [debug #f])
+(define (route* from pkts channels [debug #f])
   (for/fold ([channels channels])
             ([pkt (in-list pkts)])
-    (when debug (displayln (format ";;;; ~a -> ~a --- ~a"
-                                   (packet-from pkt)
-                                   (packet-to pkt)
-                                   (packet-msg pkt))))
-    (route pkt channels)))
+    (when debug
+      (displayln (format ";;;; ~a -> ~a --- ~a"
+                         from
+                         (send-packet-to pkt)
+                         (send-packet-msg pkt))))
+    (route from pkt channels)))
 
 ;; TODO: Don't append, too slow?
-(define (route pkt channels)
-  (match-define (packet from to msg) pkt)
+(define (route from pkt channels)
+  (match-define (send-packet to msg) pkt)
   (let go ([channels channels])
     (match channels
       [(list) (list)]
@@ -110,14 +126,14 @@
   (process-macro
    (on-start
     (λ (self others)
-      (action 0 (list (packet 0 0 1)))))
+      (action 0 (list (send-packet 0 1)))))
    (on-receive
     (λ (state pkt)
       (cond
         [(> state 10)
          (action state (list))]
         [else
-         (define state* (add1 (packet-msg pkt)))
-         (action state* (list (packet 0 0 state*)))])))))
+         (define state* (add1 (receive-packet-msg pkt)))
+         (action state* (list (send-packet 0 state*)))])))))
 
 ;(start first (list p))
