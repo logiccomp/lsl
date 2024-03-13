@@ -29,7 +29,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
 (struct process (start recv))
-(struct action (state packets))
+(struct action (state packets) #:transparent)
 
 (struct packet (from to msg))
 (struct send-packet (to msg) #:transparent)
