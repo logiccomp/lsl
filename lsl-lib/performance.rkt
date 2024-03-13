@@ -6,7 +6,7 @@
 (require (except-in plot ticks)
          racket/list
          syntax/parse/define
-         "time.rkt")
+         "private/library/time.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -35,7 +35,7 @@
               #:size POINT-SIZE
               #:label (symbol->string name))))
   (parameterize ([plot-x-label "Argument (Index)"]
-                 [plot-y-label "Time (Ticks)"]
+                 [plot-y-label "Time (Milliseconds)"]
                  [plot-brush-color-map 'tab10]
                  [plot-pen-color-map 'tab10])
     (plot pts)))

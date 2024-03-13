@@ -25,9 +25,6 @@
          "private/library/test.rkt"
          "private/library/time.rkt")
 
-(lazy-require
- ["private/library/performance.rkt" (visualize)])
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
@@ -61,9 +58,7 @@
   "private/library/char.rkt"
   "private/library/test.rkt")
 
- (all-from-out "private/library/time.rkt")
-
- visualize)
+ (all-from-out "private/library/time.rkt"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; z3
