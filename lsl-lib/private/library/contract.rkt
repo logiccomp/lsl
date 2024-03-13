@@ -24,7 +24,8 @@
          "../syntax/compile.rkt"
          "../syntax/grammar.rkt"
          "../syntax/interface.rkt"
-         "../util.rkt")
+         "../util.rkt"
+         "concurrency.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -43,6 +44,8 @@
          NonemptyList
          BoundedList
          Record
+         SendPacket
+         ReceivePacket
          ->)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,3 +178,15 @@
 
 (define (default-folder tr val)
   (append tr (list val)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; packets
+
+(define-contract SendPacket
+  (Immediate (check send-packet?)
+             (generate (λ (fuel) (send-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
+
+(define-contract ReceivePacket
+  (Immediate (check receive-packet?)
+             (generate (λ (fuel) (receive-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
