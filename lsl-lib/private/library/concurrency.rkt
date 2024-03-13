@@ -41,12 +41,10 @@
 ;; contracts
 
 (define-contract SendPacket
-  (Immediate (check send-packet?)
-             (generate (λ (fuel) (send-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
+  (Immediate (check send-packet?)))
 
 (define-contract ReceivePacket
-  (Immediate (check receive-packet?)
-             (generate (λ (fuel) (receive-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
+  (Immediate (check receive-packet?)))
 
 (define-contract Action
   (Immediate (check (lambda (v)
