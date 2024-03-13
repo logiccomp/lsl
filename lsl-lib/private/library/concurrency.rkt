@@ -49,7 +49,10 @@
              (generate (λ (fuel) (receive-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
 
 (define-contract Action
-  (Immediate (check action?)))
+  (Immediate (check (lambda (v)
+                      (and (action? v)
+                           (list? (action-packets v))
+                           (andmap send-packet? (action-packets v)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
