@@ -27,8 +27,8 @@
 (struct action (state packets))
 
 (struct packet (from to msg))
-(struct send-packet (to msg))
-(struct receive-packet (from msg))
+(struct send-packet (to msg) #:transparent)
+(struct receive-packet (from msg) #:transparent)
 
 (struct channel (from to msgs))
 
