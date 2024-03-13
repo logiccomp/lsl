@@ -141,8 +141,10 @@
           #`(Immediate
              (check
               (λ _
-                #,(syntax/loc stx
-                    (error '… "expected a finished contract, but found a template"))))))]
+                (raise-syntax-error
+                 '…
+                 "expected a finished contract, but found a template"
+                 #'#,stx)))))]
         [(~or head:id (head:id e:expr ...))
          #:do [(define v (lookup #'head))]
          #:when (recursive-var? v)
