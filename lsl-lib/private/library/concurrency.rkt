@@ -10,6 +10,9 @@
  (struct-out send-packet)
  (struct-out receive-packet)
  action
+ SendPacket
+ ReceivePacket
+ Action
  start
  start-debug)
 
@@ -19,7 +22,9 @@
 (require (for-syntax racket/base
                      syntax/parse)
          racket/list
-         racket/match)
+         racket/match
+         "../syntax/interface.rkt"
+         "../syntax/grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -31,6 +36,20 @@
 (struct receive-packet (from msg) #:transparent)
 
 (struct channel (from to msgs))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; contracts
+
+(define-contract SendPacket
+  (Immediate (check send-packet?)
+             (generate (λ (fuel) (send-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
+
+(define-contract ReceivePacket
+  (Immediate (check receive-packet?)
+             (generate (λ (fuel) (receive-packet (contract-generate Natural fuel) (contract-generate Any fuel))))))
+
+(define-contract Action
+  (Immediate (check action?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
