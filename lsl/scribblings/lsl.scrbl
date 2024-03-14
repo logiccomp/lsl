@@ -77,7 +77,6 @@ and symbolic execution.
   named by the @racket[field-name]s. After the @racket[define-struct], the following new
   functions are available:
 
-  @margin-note{TODO: Improve wording of @racketidfont{set-}@racket[structure-name]@racketidfont{-}@racket[field-name]@racketidfont{!} purpose statement.}
   @itemize[
 
     @item{@racketidfont{make-}@racket[structure-name] : takes a number of
