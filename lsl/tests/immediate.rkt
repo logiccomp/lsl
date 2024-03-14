@@ -104,7 +104,7 @@
         (check-contract f)
         (contract-generate MyInt))
 
-   #:? values
+   #:? (λ _ #t)
    (run (contract-generate Any))
 
    #:x
