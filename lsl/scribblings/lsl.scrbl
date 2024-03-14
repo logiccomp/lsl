@@ -70,7 +70,7 @@ and symbolic execution.
       (list @elem{Lists} @lst)
       (list @elem{Functions} @ho))]
 
-@margin-note{TODO: Figure out where to put this.}
+@section{Extended from ISL}
 @margin-note{TODO: The links to @racket[define-struct] still go to ISL+.}
 @defform[(define-struct structure-name (field-name ...))]{
 
