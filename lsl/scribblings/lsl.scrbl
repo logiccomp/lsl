@@ -43,7 +43,7 @@ and symbolic execution.
 
 @section{Inherited from ISL}
 
-@(define stx (select '(... lambda λ local letrec let* let define define-struct quote cond else if and or require)))
+@(define stx (select '(... lambda λ local letrec let* let define quote cond else if and or require)))
 @(define test (select '(check-expect check-random check-satisfied check-within check-error check-member-of check-range)))
 @(define eqn (select '(eq? equal?)))
 @(define bool (select '(boolean=? boolean? not true false)))
@@ -69,6 +69,41 @@ and symbolic execution.
       (list @elem{Strings} @str)
       (list @elem{Lists} @lst)
       (list @elem{Functions} @ho))]
+
+@section{Extended from ISL}
+@defform[(define-struct structure-name (field-name ...))]{
+
+  Defines a new structure called @racket[structure-name]. The structure's fields are
+  named by the @racket[field-name]s. After the @racket[define-struct], the following new
+  functions are available:
+
+  @itemize[
+
+    @item{@racketidfont{make-}@racket[structure-name] : takes a number of
+          arguments equal to the number of fields in the structure,
+          and creates a new instance of that structure.}
+
+    @item{@racket[structure-name]@racketidfont{-}@racket[field-name] : takes an
+          instance of the structure and returns the value in the field named by
+          @racket[field-name].}
+    @item{@racketidfont{set-}@racket[structure-name]@racketidfont{-}@racket[field-name]@racketidfont{!} : takes an
+          instance of the structure and a value, and sets the field named by
+          @racket[field-name] in the given instance of the structure to the given value.}
+
+    @item{@racket[structure-name]@racketidfont{?} : takes any value, and returns
+          @racket[#t] if the value is an instance of the structure.}
+  ]
+
+  The name of the new functions introduced by @racket[define-struct]
+  must not be the same as that of other functions or variables,
+  otherwise @racket[define-struct] reports an error.
+
+  @examples[#:eval evaluator #:no-prompt #:label #f
+    (define-struct posn [x y])
+    (define a-posn (make-posn 0 0))
+    (set-posn-x! a-posn 1)
+    (posn-x a-posn)]
+  }
 
 @section{Contracts}
 
