@@ -9,9 +9,11 @@
 (require racket/require)
 (require (except-in lang/htdp-intermediate-lambda
                     : Boolean True Integer Real Natural String Symbol ->
+                    define-struct
                     string-contains?)
          (subtract-in lsl
                       (except-in lang/htdp-intermediate-lambda
-                                 : Boolean True Integer Real Natural String Symbol ->))
+                                 : Boolean True Integer Real Natural String Symbol ->
+                                 define-struct))
          (only-in racket/string
                   string-contains?))

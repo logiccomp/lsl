@@ -71,7 +71,6 @@ and symbolic execution.
       (list @elem{Functions} @ho))]
 
 @section{Extended from ISL}
-@margin-note{TODO: The links to @racket[define-struct] still go to ISL+.}
 @defform[(define-struct structure-name (field-name ...))]{
 
   Defines a new structure called @racket[structure-name]. The structure's fields are
