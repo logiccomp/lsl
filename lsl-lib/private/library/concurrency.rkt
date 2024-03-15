@@ -7,12 +7,18 @@
  (rename-out
   [process-macro process])
  (struct-out packet)
- (struct-out send-packet)
- (struct-out receive-packet)
- SendPacket
- ReceivePacket
- (rename-out [Action~ Action]
+ (rename-out [SendPacket~ SendPacket]
+             [make-send-packet send-packet]
+             [ReceivePacket~ ReceivePacket]
+             [make-receive-packet receive-packet]
+             [Action~ Action]
              [make-action action])
+ send-packet-to
+ send-packet-msg
+ send-packet?
+ receive-packet-from
+ receive-packet-msg
+ receive-packet?
  start
  start-debug)
 
@@ -38,17 +44,17 @@
 (define-struct action (state packets))
 
 (struct packet (from to msg))
-(struct send-packet (to msg) #:transparent)
-(struct receive-packet (from msg) #:transparent)
+(define-struct send-packet (to msg))
+(define-struct receive-packet (from msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
 
-(define-contract SendPacket
-  (Immediate (check send-packet?)))
+(define-contract (SendPacket~ S)
+  (Struct send-packet String S))
 
-(define-contract ReceivePacket
-  (Immediate (check receive-packet?)))
+(define-contract (ReceivePacket~ S)
+  (Struct receive-packet String S))
 
 (define-contract (Action~ S)
   (Struct action S (List SendPacket)))
@@ -105,7 +111,7 @@
        (define recv (process-recv (hash-ref process-hash to)))
        (define old-state (hash-ref states to))
        (match-define (action next-state next-packets)
-         (recv old-state (receive-packet from msg)))
+         (recv old-state (make-receive-packet from msg)))
        (when debug
          (displayln (format ";;;; (state #:process ~e #:value ~e)" to next-state)))
        (go (hash-set states to next-state)
