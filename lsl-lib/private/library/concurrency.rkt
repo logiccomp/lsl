@@ -32,6 +32,7 @@
          racket/match
          (prefix-in ^ rosette/safe)
          (only-in "core.rkt" define-struct)
+         (only-in "contract.rkt" String Any)
          "../syntax/interface.rkt"
          "../syntax/grammar.rkt")
 
