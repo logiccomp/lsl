@@ -57,7 +57,7 @@
   (Struct receive-packet String S))
 
 (define-contract (Action~ S)
-  (Struct action S (List SendPacket)))
+  (Struct action S (List (SendPacket~ Any))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
