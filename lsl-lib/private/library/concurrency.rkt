@@ -3,24 +3,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
+(require racket/contract)
 (provide
+ (contract-out
+  [start start/c]
+  [start-debug start/c])
  (rename-out
   [process-macro process])
- (struct-out packet)
- (rename-out [SendPacket~ SendPacket]
-             [make-send-packet send-packet]
+ (rename-out [Packet~ Packet]
+             [SendPacket~ SendPacket]
+             [send-packet send-packet]
              [ReceivePacket~ ReceivePacket]
-             [make-receive-packet receive-packet]
+             [receive-packet receive-packet]
              [Action~ Action]
-             [make-action action])
+             [action action])
+ packet-from
+ packet-to
+ packet-msg
+ packet?
  send-packet-to
  send-packet-msg
  send-packet?
  receive-packet-from
  receive-packet-msg
- receive-packet?
- start
- start-debug)
+ receive-packet?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -40,16 +46,17 @@
 ;; data
 
 (struct process (name start recv) #:transparent)
-
-
-(define-struct action (state packets))
+(struct action (state packets))
 
 (struct packet (from to msg))
-(define-struct send-packet (to msg))
-(define-struct receive-packet (from msg))
+(struct send-packet (to msg))
+(struct receive-packet (from msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
+
+(define-contract (Packet~ S)
+  (Struct packet String String S))
 
 (define-contract (SendPacket~ S)
   (Struct send-packet String S))
@@ -60,22 +67,63 @@
 (define-contract (Action~ S)
   (Struct action S (List (SendPacket~ Any))))
 
+(define recv-packet/c
+  (struct/c receive-packet string? any/c))
+
+(define (send-packet/c names)
+  (struct/c send-packet (valid-process? names) any/c))
+
+(define (action/c names)
+  (struct/c action any/c (listof (send-packet/c names))))
+
+(define (valid-process? candidates)
+  (flat-named-contract
+   `valid-process?
+   (curryr member candidates)))
+
+(define (self/c make-ctc)
+  (make-chaperone-contract
+   #:name 'self/c
+   #:late-neg-projection
+   (λ (blm)
+     (λ (arg neg-party)
+       (define ctc (coerce-contract 'self/c (make-ctc arg)))
+       (define late-neg-proj (get/build-late-neg-projection ctc))
+       ((late-neg-proj blm) arg neg-party)))))
+
+(define start/c
+  (-> (->i ([candidates (listof packet?)])
+           [result (candidates) (and/c packet? (valid-process? candidates))])
+      (and/c
+       (listof process?)
+       (self/c
+        (λ (procs)
+          (define names (map process-name procs))
+          (listof (struct/c process
+                            any/c
+                            (-> any/c (action/c names))
+                            (-> any/c any/c (action/c names)))))))
+      (listof (cons/c string? any/c))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
 
 (define-syntax process-macro
   (syntax-parser
     #:datum-literals (name on-start on-receive)
-    [(_ (~alt (~once (name n:expr))
-              (~once (on-start start:expr))
-              (~once (on-receive recv:expr))) ...)
-     #'(process n start recv)]))
+    [(_ (~alt (~once (name n))
+              (~once (on-start start))
+              (~once (on-receive recv))) ...)
+     #:declare n (expr/c #'string? #:name "process name")
+     #:declare start (expr/c #'(-> (listof string?) action?)
+                             #:name "start handler")
+     #:declare recv (expr/c #'(-> any/c recv-packet/c action?)
+                            #:name "receive handler")
+     #'(process n.c start.c recv.c)]))
 
 (define (start-debug scheduler processes)
   (start scheduler processes #t))
 
-;; TODO: contract to ensure that one of eligible packets is in input
-;; TODO: contract to ensure msg sender is valid process
 (define (start scheduler processes [debug #f])
   (define process-hash
     (for/hash ([p (in-list processes)])
@@ -112,7 +160,7 @@
        (define recv (process-recv (hash-ref process-hash to)))
        (define old-state (hash-ref states to))
        (match-define (action next-state next-packets)
-         (recv old-state (make-receive-packet from msg)))
+         (recv old-state (receive-packet from msg)))
        (when debug
          (displayln (format ";;;; (state #:process ~e #:value ~e)" to next-state)))
        (go (hash-set states to next-state)
