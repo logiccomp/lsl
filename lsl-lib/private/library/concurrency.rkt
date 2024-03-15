@@ -21,6 +21,7 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
+         racket/function
          racket/list
          racket/match
          "../syntax/interface.rkt"
@@ -28,14 +29,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
-(struct process (start recv))
-(struct action (state packets) #:transparent)
+
+(struct process (name start recv) #:transparent)
+(struct action (state packets))
 
 (struct packet (from to msg))
 (struct send-packet (to msg) #:transparent)
 (struct receive-packet (from msg) #:transparent)
-
-(struct channel (from to msgs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
@@ -57,86 +57,76 @@
 
 (define-syntax process-macro
   (syntax-parser
-    #:datum-literals (on-start on-receive)
-    [(_ (~alt (~once (on-start start:expr))
+    #:datum-literals (name on-start on-receive)
+    [(_ (~alt (~once (name n:expr))
+              (~once (on-start start:expr))
               (~once (on-receive recv:expr))) ...)
-     #'(process start recv)]))
+     #'(process n start recv)]))
 
 (define (start-debug scheduler processes)
   (start scheduler processes #t))
 
 ;; TODO: contract to ensure that one of eligible packets is in input
+;; TODO: contract to ensure msg sender is valid process
 (define (start scheduler processes [debug #f])
-  (define n (length processes))
+  (define process-hash
+    (for/hash ([p (in-list processes)])
+      (values (process-name p) p)))
+  (define names (hash-keys process-hash))
   (define init-actions
-    (for/list ([k (in-naturals)]
-               [p (in-list processes)])
-      ((process-start p) k (remove k (range n)))))
-  (define init-states (map action-state init-actions))
-  (define init-pkts (map action-packets init-actions))
+    (for/hash ([(name proc) (in-hash process-hash)])
+      (define others (remove name names))
+      (values name ((process-start proc) others))))
+  (define init-states
+    (for/hash ([(name action) (in-hash init-actions)])
+      (values name (action-state action))))
   (define init-channels
-    (for*/fold ([channels '()])
-               ([from (in-range n)]
-                [to (in-range n)])
-      (define msgs
-        (filter-map
-         (λ (pkt)
-           (match pkt
-             [(send-packet (== to) msg) msg]
-             [_ #f]))
-         (list-ref init-pkts from)))
-      (cons (channel from to msgs) channels)))
+    (for*/fold ([acc (hash)])
+               ([from (in-list names)]
+                [action (in-value (hash-ref init-actions from))]
+                [pkt (in-list (action-packets action))])
+      (match-define (send-packet to msg) pkt)
+      (define (update ht)
+        (hash-update ht from (curryr append (list msg)) null))
+      (hash-update acc to update (hash))))
   (let go ([states init-states]
            [channels init-channels])
     (define possible (eligible-packets channels))
     (cond
-      [(empty? possible) states]
+      [(empty? possible)
+       (for/list ([(name state) (in-hash states)])
+         (cons name state))]
       [else
-       (define pkt (scheduler possible))
-       (match-define (packet from to msg) pkt)
+       (match-define (packet from to msg)
+         (scheduler possible))
        (when debug
-         (displayln (format ";;;; (packet #:from ~e #:to ~e #:msg ~e)"
-                            (packet-from pkt)
-                            (packet-to pkt)
-                            (packet-msg pkt))))
-       (define recv (process-recv (list-ref processes to)))
-       (define old-state (list-ref states to))
+         (displayln (format ";;;; (packet #:from ~e #:to ~e #:msg ~e)" from to msg)))
+       (define recv (process-recv (hash-ref process-hash to)))
+       (define old-state (hash-ref states to))
        (match-define (action next-state next-packets)
          (recv old-state (receive-packet from msg)))
        (when debug
          (displayln (format ";;;; (state #:process ~e #:value ~e)" to next-state)))
-       (go (list-set states to next-state)
-           (route* to next-packets (unroute pkt channels)))])))
+       (go (hash-set states to next-state)
+           (route* (pop-inbox channels from to) to next-packets))])))
 
-(define (eligible-packets cs)
-  (append-map
-   (λ (c)
-     (match c
-       [(channel from to (cons msg _))
-        (list (packet from to msg))]
-       [_ '()]))
-   cs))
+(define (eligible-packets channels)
+  (for*/list ([(to inbox) (in-hash channels)]
+              [(from msgs) (in-hash inbox)]
+              #:when (not (empty? msgs)))
+    (packet from to (first msgs))))
 
-(define (route* from pkts channels)
+(define (route* channels from pkts)
   (for/fold ([channels channels])
             ([pkt (in-list pkts)])
-    (route from pkt channels)))
+    (route channels from pkt)))
 
-;; TODO: Don't append, too slow?
-(define (route from pkt channels)
+(define (route channels from pkt)
   (match-define (send-packet to msg) pkt)
-  (let go ([channels channels])
-    (match channels
-      [(list) (list)]
-      [(cons (channel (== from) (== to) msgs) rst)
-       (cons (channel from to (append msgs (list msg))) rst)]
-      [(cons c rst) (cons c (go rst))])))
+  (define (update ht)
+    (hash-update ht from (curryr append (list msg)) null))
+  (hash-update channels to update (hash)))
 
-(define (unroute pkt channels)
-  (match-define (packet from to msg) pkt)
-  (let go ([channels channels])
-    (match channels
-      [(list) (list)]
-      [(cons (channel (== from) (== to) (cons msg rst-msgs)) rst)
-       (cons (channel from to rst-msgs) rst)]
-      [(cons c rst) (cons c (go rst))])))
+(define (pop-inbox channels from to)
+  (define inboxes (hash-ref channels to))
+  (hash-set channels to (hash-update inboxes from rest)))
