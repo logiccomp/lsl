@@ -10,7 +10,8 @@
 ;; integration tests
 
 (define (hash=? x y)
-  (equal? (make-hash x) (make-hash y)))
+  (equal? (make-hash (map (λ (l) (cons (list-ref l 0) (list-ref l 1))) x))
+          (make-hash y)))
 
 (module+ test
   (chk
