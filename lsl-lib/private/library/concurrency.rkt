@@ -24,6 +24,7 @@
          racket/function
          racket/list
          racket/match
+         (prefix-in ^ rosette/safe)
          "../syntax/interface.rkt"
          "../syntax/grammar.rkt")
 
@@ -95,7 +96,7 @@
     (cond
       [(empty? possible)
        (for/list ([(name state) (in-hash states)])
-         (cons name state))]
+         (^list name state))]
       [else
        (match-define (packet from to msg)
          (scheduler possible))
