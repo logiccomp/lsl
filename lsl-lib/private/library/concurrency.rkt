@@ -9,10 +9,10 @@
  (struct-out packet)
  (struct-out send-packet)
  (struct-out receive-packet)
- action
  SendPacket
  ReceivePacket
- Action
+ (rename-out [Action~ Action]
+             [make-action action])
  start
  start-debug)
 
@@ -25,6 +25,7 @@
          racket/list
          racket/match
          (prefix-in ^ rosette/safe)
+         (only-in "core.rkt" define-struct)
          "../syntax/interface.rkt"
          "../syntax/grammar.rkt")
 
@@ -32,7 +33,9 @@
 ;; data
 
 (struct process (name start recv) #:transparent)
-(struct action (state packets))
+
+
+(define-struct action (state packets))
 
 (struct packet (from to msg))
 (struct send-packet (to msg) #:transparent)
@@ -47,11 +50,8 @@
 (define-contract ReceivePacket
   (Immediate (check receive-packet?)))
 
-(define-contract Action
-  (Immediate (check (lambda (v)
-                      (and (action? v)
-                           (list? (action-packets v))
-                           (andmap send-packet? (action-packets v)))))))
+(define-contract (Action~ S)
+  (Struct action S (List SendPacket)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
