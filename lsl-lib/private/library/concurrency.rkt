@@ -12,11 +12,11 @@
   [process-macro process])
  (rename-out [Packet~ Packet]
              [SendPacket~ SendPacket]
-             [send-packet send-packet]
              [ReceivePacket~ ReceivePacket]
-             [receive-packet receive-packet]
              [Action~ Action]
-             [action action])
+             [make-action action]
+             [make-send-packet send-packet]
+             [make-receive-packet receive-packet])
  packet-from
  packet-to
  packet-msg
@@ -46,11 +46,11 @@
 ;; data
 
 (struct process (name start recv) #:transparent)
-(struct action (state packets))
+(define-struct action (state packets))
 
-(struct packet (from to msg))
-(struct send-packet (to msg))
-(struct receive-packet (from msg))
+(define-struct packet (from to msg))
+(define-struct send-packet (to msg))
+(define-struct receive-packet (from msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
@@ -67,18 +67,24 @@
 (define-contract (Action~ S)
   (Struct action S (List (SendPacket~ Any))))
 
-(define recv-packet/c
-  (struct/c receive-packet string? any/c))
-
 (define (send-packet/c names)
-  (struct/c send-packet (valid-process? names) any/c))
+  (flat-named-contract
+   'valid-send-packet?
+   (λ (pkt)
+     (and (send-packet? pkt)
+          (member (send-packet-to pkt) names)))))
 
 (define (action/c names)
-  (struct/c action any/c (listof (send-packet/c names))))
-
-(define (valid-process? candidates)
   (flat-named-contract
-   `valid-process?
+   'valid-action?
+   (λ (act)
+     (define sp? (send-packet/c names))
+     (and (action? act)
+          (andmap sp? (action-packets act))))))
+
+(define (valid-packet? candidates)
+  (flat-named-contract
+   'valid-packet?
    (curryr member candidates)))
 
 (define (self/c make-ctc)
@@ -93,7 +99,7 @@
 
 (define start/c
   (-> (->i ([candidates (listof packet?)])
-           [result (candidates) (and/c packet? (valid-process? candidates))])
+           [result (candidates) (and/c packet? (valid-packet? candidates))])
       (and/c
        (listof process?)
        (self/c
@@ -117,7 +123,7 @@
      #:declare n (expr/c #'string? #:name "process name")
      #:declare start (expr/c #'(-> (listof string?) action?)
                              #:name "start handler")
-     #:declare recv (expr/c #'(-> any/c recv-packet/c action?)
+     #:declare recv (expr/c #'(-> any/c receive-packet? action?)
                             #:name "receive handler")
      #'(process n.c start.c recv.c)]))
 
@@ -160,7 +166,7 @@
        (define recv (process-recv (hash-ref process-hash to)))
        (define old-state (hash-ref states to))
        (match-define (action next-state next-packets)
-         (recv old-state (receive-packet from msg)))
+         (recv old-state (make-receive-packet from msg)))
        (when debug
          (displayln (format ";;;; (state #:process ~e #:value ~e)" to next-state)))
        (go (hash-set states to next-state)
@@ -170,7 +176,7 @@
   (for*/list ([(to inbox) (in-hash channels)]
               [(from msgs) (in-hash inbox)]
               #:when (not (empty? msgs)))
-    (packet from to (first msgs))))
+    (make-packet from to (first msgs))))
 
 (define (route* channels from pkts)
   (for/fold ([channels channels])

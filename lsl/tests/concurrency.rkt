@@ -93,13 +93,13 @@
            (on-start (λ (others) (action 0 (list (send-packet 10 0)))))
            (on-receive (λ (state pkt) (action state (list))))))
         (start first (list p)))
-   "expected: valid-process?"
+   "expected: valid-action?"
 
    #:x
    (run (define p
           (process
            (name "A")
-           (on-start (λ (others) (action 0 (list (send-packet "A" 0) (send-packet "A" 0)))))
+           (on-start (λ (others) (action 0 (list (send-packet "A" 0) (send-packet "A" 1)))))
            (on-receive (λ (state pkt) (action state (list))))))
         (define old #f)
         (start (λ (pkts)
@@ -107,7 +107,7 @@
                      (begin (set! old (first pkts)) (first pkts))
                      old))
                (list p)))
-   "expected: valid-process?"
+   "expected: valid-packet?"
 
    #:x
    (run (define p
@@ -116,5 +116,5 @@
            (on-start (λ (others) (action 0 (list (send-packet "A" 0) (send-packet "B" 0)))))
            (on-receive (λ (state pkt) (action state (list))))))
         (start first (list p)))
-   "expected: valid-process?"
+   "expected: valid-action?"
    ))
