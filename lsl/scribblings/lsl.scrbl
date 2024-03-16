@@ -470,19 +470,27 @@ and symbolic execution.
   Describes a packet to send to a process identified by a @racket[String] and
   containing a message that satisfies @racket[contract].
   @examples[#:eval evaluator #:no-prompt #:label #f
-    (: SP Any)
-    ;; (: SP (SendPacket Natural))
+    (: SP (SendPacket Natural))
     (define SP (send-packet "process-1" 42))]
 }
 
-@defform[(ReceivedPacket contract)]{
+@defproc[(send-packet [to string?] [msg contract]) (SendPacket contract)]{
+A packet to be sent to process @racket[to] with message @racket[msg].
+}
+
+
+@defform[(ReceivePacket contract)]{
   Describes a packet received from a process identified by a @racket[String]
   containing a message that satisfies @racket[contract].
   @examples[#:eval evaluator #:no-prompt #:label #f
-    ;; (: RP (ReceivedPacket Natural))
-    (: RP Any)
+    (: RP (ReceivePacket Natural))
     (define RP (receive-packet "process-1" 42))]
 }
+
+@defproc[(receive-packet [from string?] [msg contract]) (ReceivePacket contract)]{
+A packet that was sent from process @racket[from] with message @racket[msg].
+}
+
 
 @defform[(Action contract)]{
   Describes an action containing a new state
@@ -491,6 +499,11 @@ and symbolic execution.
     (: A (Action Natural))
     (define A (action 5 (list (send-packet "process-1" 42) 
                               (send-packet "process-2" "Hello!"))))]
+}
+
+@defproc[(action [state contract] [packets (List (SendPacket Any))]) (Action contract)]{ The
+result of a process handler: the updated process state and a list of packets to
+send (which may be empty).
 }
 
 @defform/subs[#:id process
@@ -517,7 +530,7 @@ All of the clauses of a @racket[process] description are mandatory:
 @item{
 @defform[(on-start handler)
          #:contracts
-         ([handler (-> (List String) (Action ...))])]{
+         ([handler (-> (List String) (Action contract))])]{
   tells LSL to call the function @racket[handler] with the list of all the other
   processes (string identifiers) when the process starts. The result of the call is an action,
   containing the new state of the process and a list of packets to send. LSL uses the resulting
@@ -528,7 +541,7 @@ All of the clauses of a @racket[process] description are mandatory:
 @item{
 @defform[(on-receive handler)
          #:contracts
-         ([handler (-> Any ReceievePacket (Action ...))])]{
+         ([handler (-> contract ReceivePacket (Action contract))])]{
   tells LSL to call the function @racket[handler] with the process's state and the received packet
   when the process receives a packet. The result of the call is an action,
   containing the new state of the process and a list of packets to send. LSL uses the resulting
@@ -536,3 +549,14 @@ All of the clauses of a @racket[process] description are mandatory:
  } 
 }
 ]
+
+
+@defproc[(start [scheduler (-> list? any/c)]
+                [processes (List process?)]) (List (Tuple String Any))]{
+Runs a concurrent program using a fixed list of processes. When it finished, will return a list of pairs of the process names and their final state.
+}
+
+@defproc[(start-debug [scheduler (-> list? any/c)]
+                [processes (List process?)]) (List (Tuple String Any))]{
+Like @racket[start], but prints to the interactions window as each message is received and what the corresponding process state updates to.
+}
