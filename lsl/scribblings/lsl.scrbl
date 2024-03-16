@@ -105,6 +105,13 @@ and symbolic execution.
     (posn-x a-posn)]
   }
 
+@section{Testing}
+
+@defform[(test-suite "name" ...)]{
+Declares a named block of tests. Aside from printing and for autograding, no different from
+putting @racket[check-expect] or similar at the top-level.
+}
+
 @section{Contracts}
 
 @defform[(define-contract id contract)]{
@@ -307,6 +314,11 @@ and symbolic execution.
   Only values @racket[equal?] to @racket[expr] are permitted.
 }
 
+@defform[(Maybe contract)]{
+  Either @racket[#f] or a value satisfying the specified contract.
+}
+
+
 @defform[(-> arg-contract ... result-contract)]{
   A shorthand for a @racket[Function] contract
   with no dependencies.
@@ -460,6 +472,8 @@ and symbolic execution.
 }
 
 @defproc[(visualize [args list?] [f (-> any/c any/c)]) any/c]{
+  To use this, @racket[(require lsl/performance)].
+
   Outputs a visualization graphing how much time
   @racket[f] takes for each of the given @racket[args].
 }
