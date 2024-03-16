@@ -127,4 +127,8 @@
         (f x)
         (f x)
         (eq? (first L) (second L)))
+   #:t
+   (run (: A (Action Natural))
+        (define A (action 5 (list)))
+        A)
    ))
