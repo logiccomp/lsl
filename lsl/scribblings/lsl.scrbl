@@ -299,7 +299,8 @@ putting @racket[check-expect] or similar at the top-level.
 
 @subsection{Derived}
 
-@deftogether[(@defidform[True]
+@deftogether[(@defidform[Any]
+              @defidform[True]
               @defidform[False]
               @defidform[Boolean]
               @defidform[Natural]
@@ -480,44 +481,60 @@ putting @racket[check-expect] or similar at the top-level.
 
 @section{Concurrency}
 
+@margin-note{
+  Concurrency is not the same as parallelism.
+  In parallelism,
+  computations occur simultaneously,
+  not just in an arbitrary order.
+}
+A concurrent system is one in which the order of computations occur may vary.
+There are many models of concurrency, but the one supported by LSL is
+based on the @emph{actor model}.
+
+An actor system consists of a number of actors (or processes) that are
+identified by a unique name. Actors send immutable values (or messages) to one
+another. These messages are then processed by the receiving actor. Messages are
+guaranteed to be delivered in FIFO (first-in-first-out) between two actors.
+However, the order in which messages are delivered among all actors is
+unspecified. When starting an actor system, a scheduler can be provided to fix
+some delivery policy.
+
 @defform[(SendPacket contract)]{
   Describes a packet to send to a process identified by a @racket[String] and
   containing a message that satisfies @racket[contract].
   @examples[#:eval evaluator #:no-prompt #:label #f
-    (: SP (SendPacket Natural))
-    (define SP (send-packet "process-1" 42))]
+    (: sp (SendPacket Natural))
+    (define sp (send-packet "process-1" 42))]
 }
 
-@defproc[(send-packet [to string?] [msg contract]) (SendPacket contract)]{
-A packet to be sent to process @racket[to] with message @racket[msg].
+@defproc[(send-packet [to string?] [msg any/c]) (SendPacket Any)]{
+  A packet to be sent to process @racket[to] with message @racket[msg].
 }
-
 
 @defform[(ReceivePacket contract)]{
   Describes a packet received from a process identified by a @racket[String]
   containing a message that satisfies @racket[contract].
   @examples[#:eval evaluator #:no-prompt #:label #f
-    (: RP (ReceivePacket Natural))
-    (define RP (receive-packet "process-1" 42))]
+    (: rp (ReceivePacket Natural))
+    (define rp (receive-packet "process-1" 42))]
 }
 
-@defproc[(receive-packet [from string?] [msg contract]) (ReceivePacket contract)]{
-A packet that was sent from process @racket[from] with message @racket[msg].
+@defproc[(receive-packet [from string?] [msg any/c]) (ReceivePacket Any)]{
+  A packet that was sent from process @racket[from] with message @racket[msg].
 }
-
 
 @defform[(Action contract)]{
   Describes an action containing a new state
   that satisfies @racket[contract] and a list of packets to send satisfying @racket[(List (SendPacket Any))].
   @examples[#:eval evaluator #:no-prompt #:label #f
-    (: A (Action Natural))
-    (define A (action 5 (list (send-packet "process-1" 42) 
+    (: a (Action Natural))
+    (define a (action 5 (list (send-packet "process-1" 42)
                               (send-packet "process-2" "Hello!"))))]
 }
 
-@defproc[(action [state contract] [packets (List (SendPacket Any))]) (Action contract)]{ The
-result of a process handler: the updated process state and a list of packets to
-send (which may be empty).
+@defproc[(action [state Any] [packets (List (SendPacket Any))]) (Action Any)]{
+  The result of a process handler: combines the updated process state and a list of packets to
+  send (which may be empty).
 }
 
 @defform/subs[#:id process
@@ -527,50 +544,44 @@ send (which may be empty).
               ([clause
                  (name s)
                  (on-start handler)
-                 (on-receive handler)])]{Defines a process.}
+                 (on-receive handler)])]{
+  Defines a process that represents a single actor in a concurrent system.
+  All of the clauses of a @racket[process] description are mandatory.
 
-All of the clauses of a @racket[process] description are mandatory:
-@itemize[
+  @defsubform[(name s)
+              #:contracts
+              ([s String])]{
+    Names a process. This needs to be unique across all processes in a system.
+  }
 
-@item{
-@defform[(name s)
-         #:contracts
-         ([s String])]{
- gives a name to the process. This needs to
- be unique across all processes in a program.
- } 
+  @defsubform[(on-start handler)
+              #:contracts
+              ([handler (-> (List String) (Action contract))])]{
+    The @racket[handler] function is applied to the list of all the other
+    processes (as strings) when the process starts. The result of the call is an action,
+    containing the new state of the process and a list of packets to send to other processes.
+  }
+
+  @defsubform[(on-receive handler)
+              #:contracts
+              ([handler (-> contract ReceivePacket (Action contract))])]{
+    The @racket[handler] function is applied to the process's state and a packet
+    when the process receives a new packet. The result of the call is an action,
+    containing the new state of the process and a list of packets to send to other processes.
+  }
 }
-
-@item{
-@defform[(on-start handler)
-         #:contracts
-         ([handler (-> (List String) (Action contract))])]{
-  tells LSL to call the function @racket[handler] with the list of all the other
-  processes (string identifiers) when the process starts. The result of the call is an action,
-  containing the new state of the process and a list of packets to send. LSL uses the resulting
-  action and updates the state of the process and performs the sending of the packets to other processes.
- } 
-}
-
-@item{
-@defform[(on-receive handler)
-         #:contracts
-         ([handler (-> contract ReceivePacket (Action contract))])]{
-  tells LSL to call the function @racket[handler] with the process's state and the received packet
-  when the process receives a packet. The result of the call is an action,
-  containing the new state of the process and a list of packets to send. LSL uses the resulting
-  action and updates the state of the process and performs the sending of the packets to other processes.
- } 
-}
-]
-
 
 @defproc[(start [scheduler (-> list? any/c)]
-                [processes (List process?)]) (List (Tuple String Any))]{
-Runs a concurrent program using a fixed list of processes. When it finished, will return a list of pairs of the process names and their final state.
+                [processes (List process?)])
+                (List (Tuple String Any))]{
+  Runs a concurrent program using a fixed list of processes.
+  When no more messages need to be processed, the function returns a list of pairs
+  of the process name and final state.
 }
 
 @defproc[(start-debug [scheduler (-> list? any/c)]
-                [processes (List process?)]) (List (Tuple String Any))]{
-Like @racket[start], but prints to the interactions window as each message is received and what the corresponding process state updates to.
+                      [processes (List process?)])
+                      (List (Tuple String Any))]{
+  Like @racket[start], but prints to the interactions window as each message is received
+  and what the corresponding process state updates to.
 }
