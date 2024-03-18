@@ -617,7 +617,7 @@ some delivery policy.
   }
 }
 
-@defproc[(start [scheduler (-> (List (Packet Any)))]
+@defproc[(start [scheduler (-> (List (Packet Any)) (Packet Any))]
                 [processes (List process?)])
                 (List (Tuple String Any))]{
   Runs a concurrent program using a fixed list of processes.
@@ -625,7 +625,7 @@ some delivery policy.
   of the process name and final state.
 }
 
-@defproc[(start-debug [scheduler (-> (List (Packet Any)))]
+@defproc[(start-debug [scheduler (-> (List (Packet Any)) (Packet Any))]
                       [processes (List process?)])
                       (List (Tuple String Any))]{
   Like @racket[start], but prints to the interactions window as each message is received
