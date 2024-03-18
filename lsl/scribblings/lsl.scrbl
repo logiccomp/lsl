@@ -499,6 +499,28 @@ However, the order in which messages are delivered among all actors is
 unspecified. When starting an actor system, a scheduler can be provided to fix
 some delivery policy.
 
+@defform[(Packet contract)]{
+  Describes a packet sent from a process identified by a @racket[String], sent to
+  a process identified by a @racket[String], and
+  containing a message that satisfies @racket[contract].
+}
+
+@defproc[(packet-from [p (Packet Any)]) String]{
+ Extracts an identifier representing the process (or actor) that a packet was sent from.
+}
+
+@defproc[(packet-to [sp (Packet Any)]) String]{
+ Extracts an identifier representing the process (or actor) that a packet was sent to.
+}
+
+@defproc[(packet-msg [sp (Packet Any)]) Any]{
+ Extracts the message (data) from a packet.
+}
+
+@defproc[(packet? [x Any]) Boolean]{
+ Determines if its input is a packet.
+}
+
 @defform[(SendPacket contract)]{
   Describes a packet to send to a process identified by a @racket[String] and
   containing a message that satisfies @racket[contract].
@@ -511,6 +533,18 @@ some delivery policy.
   A packet to be sent to process @racket[to] with message @racket[msg].
 }
 
+@defproc[(send-packet-to [sp (SendPacket Any)]) String]{
+ Extracts an identifier representing the process (or actor) that a packet should be sent to.
+}
+
+@defproc[(send-packet-msg [sp (SendPacket Any)]) Any]{
+ Extracts the message (data) from a packet to be sent.
+}
+
+@defproc[(send-packet? [x Any]) Boolean]{
+ Determines if its input is a packet to be sent.
+}
+
 @defform[(ReceivePacket contract)]{
   Describes a packet received from a process identified by a @racket[String]
   containing a message that satisfies @racket[contract].
@@ -521,6 +555,18 @@ some delivery policy.
 
 @defproc[(receive-packet [from string?] [msg any/c]) (ReceivePacket Any)]{
   A packet that was sent from process @racket[from] with message @racket[msg].
+}
+
+@defproc[(receive-packet-from [rp (ReceivePacket Any)]) String]{
+ Extracts an identifier representing the process (or actor) that a packet was sent from.
+}
+
+@defproc[(receive-packet-msg [rp (ReceivePacket Any)]) Any]{
+ Extracts the message (data) from a received packet.
+}
+
+@defproc[(receive-packet? [x Any]) Boolean]{
+ Determines if its input is a received packet.
 }
 
 @defform[(Action contract)]{
@@ -571,7 +617,7 @@ some delivery policy.
   }
 }
 
-@defproc[(start [scheduler (-> list? any/c)]
+@defproc[(start [scheduler (-> (List (Packet Any)))]
                 [processes (List process?)])
                 (List (Tuple String Any))]{
   Runs a concurrent program using a fixed list of processes.
@@ -579,7 +625,7 @@ some delivery policy.
   of the process name and final state.
 }
 
-@defproc[(start-debug [scheduler (-> list? any/c)]
+@defproc[(start-debug [scheduler (-> (List (Packet Any)))]
                       [processes (List process?)])
                       (List (Tuple String Any))]{
   Like @racket[start], but prints to the interactions window as each message is received
