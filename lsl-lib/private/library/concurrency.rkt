@@ -26,7 +26,11 @@
  send-packet?
  receive-packet-from
  receive-packet-msg
- receive-packet?)
+ receive-packet?
+
+ action-state
+ action-packets
+ )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require

@@ -47,7 +47,6 @@
  (all-from-out
   "private/library/automata.rkt"
   "private/library/boolean.rkt"
-  "private/library/concurrency.rkt"
   "private/library/contract.rkt"
   "private/library/core.rkt"
   "private/library/equal.rkt"
@@ -57,6 +56,12 @@
   "private/library/string.rkt"
   "private/library/char.rkt"
   "private/library/test.rkt")
+
+ (except-out
+  (all-from-out "private/library/concurrency.rkt")
+  action-state
+  action-packets)
+
 
  (all-from-out "private/library/time.rkt"))
 
