@@ -21,8 +21,8 @@
  (contract-out
   [member? (-> any? any-list? any)]
   [rename ^member member (-> any? any-list? any)]
-  [rename ^memq memq (-> any? any-list? any)]
   [memq? (-> any? any-list? any)]
+  [memq (-> any? any-list? any)]
   [rename ^remove remove (-> any? any-list? any)]
   [rename ^list? list? (-> any? ^boolean?)]
   [rename ^cons? cons? (-> any? ^boolean?)]
@@ -66,3 +66,5 @@
 
 (define (memq? x l)
   (^ormap (lambda (el) (eq? x el)) l))
+
+(define memq memq?)
