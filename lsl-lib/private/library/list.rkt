@@ -8,7 +8,8 @@
          racket/contract
          racket/list
          racket/provide
-         "../util.rkt")
+         "../util.rkt"
+         "equal.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -64,4 +65,4 @@
   (filter (lambda (y) (not (equal? y x))) l))
 
 (define (memq? x l)
-  (^cons? (^memq x l)))
+  (^ormap (lambda (el) (eq? x el)) l))
