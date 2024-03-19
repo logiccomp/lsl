@@ -90,10 +90,10 @@
    (run (define p
           (process
            (name "A")
-           (on-start (λ (others) (action 0 (list (send-packet 10 0)))))
+           (on-start (λ (others) (action 0 (list 'foo))))
            (on-receive (λ (state pkt) (action state (list))))))
         (start first (list p)))
-   "expected: valid-action?"
+   "expected: SendPacket"
 
    #:x
    (run (define p
@@ -116,5 +116,5 @@
            (on-start (λ (others) (action 0 (list (send-packet "A" 0) (send-packet "B" 0)))))
            (on-receive (λ (state pkt) (action state (list))))))
         (start first (list p)))
-   "expected: valid-action?"
+   "expected: a valid process name"
    ))

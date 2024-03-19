@@ -67,20 +67,31 @@
 (define-contract (Action~ S)
   (Struct action S (List (SendPacket~ Any))))
 
-(define (send-packet/c names)
-  (flat-named-contract
-   'valid-send-packet?
-   (λ (pkt)
-     (and (send-packet? pkt)
-          (member (send-packet-to pkt) names)))))
-
 (define (action/c names)
-  (flat-named-contract
-   'valid-action?
-   (λ (act)
-     (define sp? (send-packet/c names))
-     (and (action? act)
-          (andmap sp? (action-packets act))))))
+  (and/c
+   action?
+   (flat-contract-with-explanation
+    (λ (val)
+      (define pkts (action-packets val))
+      (cond
+        [(findf (negate send-packet?) pkts)
+         =>
+         (λ (bad-packet)
+           (λ (blm)
+             (raise-blame-error blm val
+                                '(expected: "SendPacket" given: "~v")
+                                bad-packet)))]
+        [(findf (invalid-send-packet names) pkts)
+         =>
+         (λ (bad-packet)
+           (λ (blm)
+             (raise-blame-error blm val
+                                '(expected: "a valid process name" given: "~a")
+                                (send-packet-to bad-packet))))]
+        [else #t])))))
+
+(define ((invalid-send-packet names) pkt)
+  (not (member (send-packet-to pkt) names)))
 
 (define (valid-packet? candidates)
   (flat-named-contract
