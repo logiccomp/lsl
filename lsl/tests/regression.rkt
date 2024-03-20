@@ -131,4 +131,8 @@
    (run (: A (Action Natural))
         (define A (action 5 (list)))
         A)
+   #:x (run (: x Integer)
+            (define x 10)
+            (set! x ""))
+   "expected: Integer"
    ))

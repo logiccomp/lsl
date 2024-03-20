@@ -12,6 +12,7 @@
          json
          (except-in net/http-easy
                     proxy?)
+         racket/class
          racket/file
          racket/provide
          racket/runtime-path
@@ -23,6 +24,7 @@
          "test.rkt"
          "../contract/common.rkt"
          "../syntax/grammar.rkt"
+         "../syntax/compile.rkt"
          "../syntax/expand.rkt"
          "../syntax/interface.rkt"
          "../proxy.rkt"
@@ -146,8 +148,15 @@
   #:declare arg (expr/c #'is-boolean?)
   (^or arg.c ...))
 
-(define-syntax-parse-rule ($set! x:id arg:expr)
-  (^set! x arg))
+(define-syntax $set!
+  (syntax-parser
+    [(_ x:id arg:expr)
+     #:do [(define ctc (contract-table-ref #'x))]
+     (if ctc
+         (let ([ctc (compile-contract (expand-contract ctc))])
+           #`(let ([y arg])
+               (^set! x ((send #,ctc protect y #f) y #f))))
+         #'(^set! x arg))]))
 
 (begin-for-syntax
   (define-syntax-class def
