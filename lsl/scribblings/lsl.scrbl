@@ -43,7 +43,7 @@ and symbolic execution.
 
 @section{Inherited from ISL}
 
-@(define stx (select '(... lambda λ local letrec let* let define quote cond else if and or require)))
+@(define stx (select '(... lambda λ local letrec let* let define quote cond else if and or require begin)))
 @(define test (select '(check-expect check-random check-satisfied check-within check-error check-member-of check-range)))
 @(define eqn (select '(eq? equal?)))
 @(define bool (select '(boolean=? boolean? not true false)))
