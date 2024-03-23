@@ -10,6 +10,7 @@
   [start-debug start/c])
  (rename-out
   [process-macro process])
+ Process
  (rename-out [Packet~ Packet]
              [SendPacket~ SendPacket]
              [ReceivePacket~ ReceivePacket]
@@ -58,6 +59,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
+
+(define-contract Process process?)
 
 (define-contract (Packet~ S)
   (Struct packet String String S))

@@ -583,6 +583,10 @@ some delivery policy.
   send (which may be empty).
 }
 
+@defidform[Process]{
+A contract for a process.
+}
+
 @defform/subs[#:id process
               #:literals
               (name on-start on-receive)
@@ -618,7 +622,7 @@ some delivery policy.
 }
 
 @defproc[(start [scheduler (-> (List (Packet Any)) (Packet Any))]
-                [processes (List process?)])
+                [processes (List Process)])
                 (List (Tuple String Any))]{
   Runs a concurrent program using a fixed list of processes.
   When no more messages need to be processed, the function returns a list of pairs
@@ -626,7 +630,7 @@ some delivery policy.
 }
 
 @defproc[(start-debug [scheduler (-> (List (Packet Any)) (Packet Any))]
-                      [processes (List process?)])
+                      [processes (List Process)])
                       (List (Tuple String Any))]{
   Like @racket[start], but prints to the interactions window as each message is received
   and what the corresponding process state updates to.
