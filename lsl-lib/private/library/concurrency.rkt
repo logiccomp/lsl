@@ -343,12 +343,12 @@
      [(send-move? m) (draw-send-move ht (send-move-packets m))])))
 
 (define (draw-recv-move ht pkt)
-  (draw-packets ht (list pkt) "orange"))
+  (draw-packets ht (list pkt) 'recv))
 
 (define (draw-send-move ht pkts)
   (define groups (group-by packet-to pkts))
   (for/draw ([group (in-list groups)])
-    (draw-packets ht group "green")))
+    (draw-packets ht group 'send)))
 
 (define (draw-system ht sys)
   (for/draw ([(proc st) (in-hash (system-states sys))])
@@ -357,19 +357,27 @@
                p
                (if (> (pt-y p) 1/2) (top) (bot)))))
 
-(define (draw-packets ht pkts clr)
+(define (draw-packets ht pkts dir)
   (for/draw ([pkt (in-list pkts)] [k (in-naturals 1)])
-    (draw-packet ht pkt (/ k (add1 (length pkts))) clr)))
+    (draw-packet ht pkt (/ k (add1 (length pkts))) dir)))
 
-(define (draw-packet ht pkt α clr)
+(define (draw-packet ht pkt α dir)
   (match-define (packet from to msg) pkt)
   (define src (hash-ref ht from))
   (define dst (hash-ref ht to))
   (define txt (~a (packet-msg pkt)))
   (define dot (dot-label txt (med α src dst) (top)))
-  (let* ([result (draw-arrow (curve src .. dst)
+  (let* ([result
+          (if (equal? dir 'send)
+              (draw-arrow (curve src .. dst)
+                             #:tail (reverse-head arrow-head)
+                             #:head line-head
                              #:length AH
-                             #:color clr)]
+                             #:color "green")
+              (draw-arrow (curve src .. dst)
+                             #:head arrow-head
+                             #:length AH
+                             #:color "orange"))]
          [result (draw result dot)])
     result))
 
