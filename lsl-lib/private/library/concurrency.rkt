@@ -273,11 +273,16 @@
      (list "To" "From" "Messages")
      (@steps . ~> . (compose1 move->table history-current))))
 
+  (define history-view
+    (table
+     (list "States")
+     (@steps . ~> . history->table)))
+
   (render
    (window
     (vpanel
      (tabs
-      '(graph queues)
+      '(graph queues history)
       #:choice->label (compose1 string-titlecase symbol->string)
       (λ (event _choices selection)
         (match event
@@ -286,7 +291,8 @@
        @tab
        (match-lambda
          ['graph graph-view]
-         ['queues queues-view])))
+         ['queues queues-view]
+         ['history history-view])))
      (hpanel
       #:alignment '(center center)
       (button "←"
@@ -325,6 +331,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; drawing helpers
+
+(define (history->table h)
+  (for*/vector ([move (in-list (history-context h))])
+    (vector (string-join (map (λ(st) (format "~a:~a" (car st) (cdr st)))
+                              (sort (hash->list (system-states (move-system move)))
+                                    (λ(p1 p2) (string<? (car p1) (car p2))))) ", "))))
 
 (define (move->table m)
   (define sys (move-system m))
