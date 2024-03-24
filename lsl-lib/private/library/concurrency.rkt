@@ -8,7 +8,7 @@
  (contract-out
   [start start/c]
   [start-debug start/c]
-  [start-gui start/c])
+  [start-gui start-gui/c])
  (rename-out
   [process-macro process])
  Process
@@ -49,6 +49,7 @@
 
          (except-in metapict identity text color table window @)
          (prefix-in metapict: (only-in metapict text color))
+         (only-in racket/vector vector-sort)
          racket/format
          racket/string
          racket/gui/easy
@@ -138,6 +139,7 @@
        (define late-neg-proj (get/build-late-neg-projection ctc))
        ((late-neg-proj blm) arg neg-party)))))
 
+;; TODO: refactor these two together :P
 (define start/c
   (-> (->i ([candidates (listof packet?)])
            [result (candidates) (and/c packet? (valid-packet? candidates))])
@@ -151,6 +153,22 @@
                             (-> any/c (action/c names))
                             (-> any/c any/c (action/c names)))))))
       (listof (cons/c string? any/c))))
+
+(define start-gui/c
+  (-> (->i ([candidates (listof packet?)])
+           [result (candidates) (and/c packet? (valid-packet? candidates))])
+      (and/c
+       (listof process?)
+       (self/c
+        (λ (procs)
+          (define names (map process-name procs))
+          (listof (struct/c process
+                            any/c
+                            (-> any/c (action/c names))
+                            (-> any/c any/c (action/c names)))))))
+      (-> any/c string?)
+      (listof (cons/c string? any/c))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; operations
@@ -256,7 +274,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gui
 
-(define (start-gui scheduler processes)
+(define (start-gui scheduler processes state-repr)
+  (render-state state-repr)
   (define-values (result transcript)
     (start-transcript scheduler processes))
   (define @steps (@ (make-history transcript)))
@@ -332,18 +351,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; drawing helpers
 
+(define render-state (make-parameter (λ (st) (format "~a" st))))
+
 (define (history->table h)
   (for*/vector ([move (in-list (history-context h))])
-    (vector (string-join (map (λ(st) (format "~a:~a" (car st) (cdr st)))
+    (vector (string-join (map (λ(st) (format "~a:~a" (car st) ((render-state) (cdr st))))
                               (sort (hash->list (system-states (move-system move)))
                                     (λ(p1 p2) (string<? (car p1) (car p2))))) ", "))))
 
 (define (move->table m)
   (define sys (move-system m))
   (define channels (system-channels sys))
-  (for*/vector ([(to inbox) (in-hash channels)]
-                [(from msgs) (in-hash inbox)])
-    (vector from to (string-join (map ~a msgs) ", "))))
+  (vector-sort
+   (for*/vector ([(to inbox) (in-hash channels)]
+                 [(from msgs) (in-hash inbox)])
+     (vector from to (string-join (map ~a msgs) ", ")))
+   (λ(v1 v2) (string<? (vector-ref v1 0) (vector-ref v2 0)))))
 
 (define (move->pict m)
   (define sys (move-system m))
@@ -365,13 +388,17 @@
 (define (draw-system ht sys)
   (for/draw ([(proc st) (in-hash (system-states sys))])
     (define p (hash-ref ht proc))
-    (dot-label (format "~a ⟨~a⟩" proc st)
+    (dot-label (format "~a ⟨~a⟩" proc ((render-state) st))
                p
                (if (> (pt-y p) 1/2) (top) (bot)))))
 
 (define (draw-packets ht pkts dir)
   (for/draw ([pkt (in-list pkts)] [k (in-naturals 1)])
     (draw-packet ht pkt (/ k (add1 (length pkts))) dir)))
+
+(define (move-towards twds orig)
+  (pt (+ (* 0.8 (pt-x orig)) (* 0.2 (pt-x twds)))
+      (+ (* 0.8 (pt-y orig)) (* 0.2 (pt-y twds)))))
 
 (define (draw-packet ht pkt α dir)
   (match-define (packet from to msg) pkt)
@@ -381,15 +408,12 @@
   (define dot (dot-label txt (med α src dst) (top)))
   (let* ([result
           (if (equal? dir 'send)
-              (draw-arrow (curve src .. dst)
-                             #:tail (reverse-head arrow-head)
-                             #:head line-head
-                             #:length AH
-                             #:color "green")
-              (draw-arrow (curve src .. dst)
-                             #:head arrow-head
-                             #:length AH
-                             #:color "orange"))]
+              (draw-arrow (curve src .. (move-towards src dst))
+                          #:length AH
+                          #:color "green")
+              (draw-arrow (curve (move-towards dst src) .. dst)
+                          #:length AH
+                          #:color "orange"))]
          [result (draw result dot)])
     result))
 
