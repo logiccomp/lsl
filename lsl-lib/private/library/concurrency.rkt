@@ -166,7 +166,7 @@
                             any/c
                             (-> any/c (action/c names))
                             (-> any/c any/c (action/c names)))))))
-      (-> any/c string?)
+      (-> any/c any/c)
       (listof (cons/c string? any/c))))
 
 
@@ -274,8 +274,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gui
 
-(define (start-gui scheduler processes state-repr)
-  (render-state state-repr)
+(define (start-gui scheduler processes summarize-state)
+  (render-state (λ (st) (format "~a" (summarize-state st))))
   (define-values (result transcript)
     (start-transcript scheduler processes))
   (define @steps (@ (make-history transcript)))
