@@ -8,6 +8,7 @@
  (contract-out
   [start start/c]
   [start-debug start/c])
+ start-transcript
  (rename-out
   [process-macro process])
  Process
