@@ -10,5 +10,5 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: 'current'
-      - run: raco pkg install --auto lsl-lib/ lsl/
+      - run: xvfb-run raco pkg install --auto lsl-lib/ lsl/
       - run: raco test --drdr lsl/
