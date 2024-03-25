@@ -44,26 +44,7 @@
          (only-in "core.rkt" define-struct)
          (only-in "contract.rkt" String Any)
          "../syntax/interface.rkt"
-         "../syntax/grammar.rkt"
-
-         (except-in metapict identity text color table window @)
-         (prefix-in metapict: (only-in metapict text color))
-         (only-in racket/vector vector-sort)
-         racket/format
-         racket/string
-         racket/gui/easy
-         racket/gui/easy/operator
-         racket/list
-         racket/match
-         racket/math)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; constants
-
-(define R 1)
-(define AH 0.05)
-(define SIZE 800)
-(set-curve-pict-size SIZE SIZE)
+         "../syntax/grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
