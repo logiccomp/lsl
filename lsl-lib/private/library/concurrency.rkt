@@ -8,7 +8,7 @@
  (contract-out
   [start start/c]
   [start-debug start/c])
- start-transcript
+ (rename-out [start-transcript-list start-transcript])
  (rename-out
   [process-macro process])
  Process
@@ -29,6 +29,11 @@
  receive-packet-from
  receive-packet-msg
  receive-packet?
+
+ (struct-out system)
+ (struct-out move)
+ (struct-out recv-move)
+ (struct-out send-move)
 
  action-state
  action-packets)
@@ -57,10 +62,10 @@
 (define-struct send-packet (to msg))
 (define-struct receive-packet (from msg))
 
-(struct system (states channels))
-(struct move (system))
-(struct recv-move move (packet))
-(struct send-move move (packets))
+(struct system (states channels) #:transparent)
+(struct move (system) #:transparent)
+(struct recv-move move (packet) #:transparent)
+(struct send-move move (packets) #:transparent)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; contracts
@@ -174,6 +179,10 @@
 
 (define (start-transcript scheduler processes)
   (start-help scheduler processes #:transcript null))
+
+(define (start-transcript-list scheduler processes)
+  (let-values ([(result transcript) (start-transcript scheduler processes)])
+    (list result transcript)))
 
 (define (start-help scheduler processes
                     #:debug [debug #f]
