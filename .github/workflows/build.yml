@@ -12,5 +12,5 @@ jobs:
           version: 'current'
       - run: xvfb-run raco pkg install -D --auto lsl-lib/ lsl/
       # Just for documentation
-      - run: raco setup lsl
+      - run: xvfb-run raco setup lsl
       - run: raco test --drdr lsl/
