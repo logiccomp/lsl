@@ -25,6 +25,9 @@
          "private/library/test.rkt"
          "private/library/time.rkt")
 
+(lazy-require
+ ["private/library/concurrency-gui.rkt" (start-gui)])
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
@@ -39,6 +42,7 @@
  contract-generate
  contract-shrink
  contract-symbolic
+ start-gui
 
  (except-out
   (all-from-out "private/syntax/grammar.rkt")
