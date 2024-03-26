@@ -43,7 +43,7 @@ and symbolic execution.
 
 @section{Inherited from ISL}
 
-@(define stx (select '(... lambda λ local letrec let* let define quote cond else if and or require begin)))
+@(define stx (select '(... lambda λ local letrec let* let define quote cond else if and or require)))
 @(define test (select '(check-expect check-random check-satisfied check-within check-error check-member-of check-range)))
 @(define eqn (select '(eq? equal?)))
 @(define bool (select '(boolean=? boolean? not true false)))
@@ -104,6 +104,14 @@ and symbolic execution.
     (set-posn-x! a-posn 1)
     (posn-x a-posn)]
   }
+
+@defform[(begin expr0 ... expr)]{
+  Executes the given expressions in sequence, returning the last @racket[expr].
+}
+
+@defform[(set! id expr)]{
+  Mutates the variable @racket[id] with the value of @racket[expr].
+}
 
 @section{Testing}
 
@@ -329,12 +337,62 @@ putting @racket[check-expect] or similar at the top-level.
          #:grammar
          [(maybe-folder (code:line)
                         folding-expr)]]{
+  @margin-note{
+    The name of this contract rhymes with @emph{sword}
+    since the contract @emph{records} values in a trace.
+  }
   Uses the folding function @racket[folding-expr]
   to integrate values that pass through the contract
   into the value at @racket[trace-id].
+  The folding function takes two arguments:
+  the current value of @racket[trace-id]
+  and the contracted value.
+  @examples[#:eval evaluator #:label #f
+    (: down-prev (Maybe Natural))
+    (define down-prev #f)
+
+    (: down-folder (-> (Maybe Natural) Natural Natural))
+    (define (down-folder prev cur)
+      (cond
+        [(equal? prev cur) #f]
+        [else cur]))
+
+    (: down (-> (AllOf Natural (Record down-folder down-prev))))
+    (define down
+      (let ([x 3])
+        (lambda ()
+          (begin
+            (set! x (if (< x 1) 0 (sub1 x)))
+            x))))
+
+    (down)
+    (down)
+    (down)
+    (eval:error (down))]
+
   If no folding function is provided,
   values will be appended to the end of
   list at @racket[trace-id].
+  @examples[#:eval evaluator #:label #f
+    (define-contract Increasing
+      (AllOf (List Real)
+             (lambda (xs) (equal? (sort xs <) xs))))
+
+    (: up-results Increasing)
+    (define up-results '())
+
+    (: up (-> (AllOf Natural (Record up-results))))
+    (define up
+      (let ([x 0])
+        (lambda ()
+          (begin
+            (set! x (modulo (add1 x) 4))
+            x))))
+
+    (up)
+    (up)
+    (up)
+    (eval:error (up))]
 }
 
 @section{Property-Based Randomized Testing}
