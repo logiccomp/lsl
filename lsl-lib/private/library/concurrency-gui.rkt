@@ -16,6 +16,7 @@
          (prefix-in metapict: (only-in metapict text color))
          (only-in racket/vector vector-sort)
          racket/format
+         racket/function
          racket/string
          racket/gui/easy
          racket/gui/easy/operator
@@ -77,6 +78,13 @@
       (button "←"
               (λ () (@steps . <~ . history-prev))
               #:enabled? (@steps . ~> . history-has-prev?))
+      (input (@steps . ~> . (compose1 number->string history-when))
+             (λ (evt num)
+               (when (eq? evt 'return)
+                 (@steps . <~ . (curry history-move (string->number num)))))
+             #:min-size '(48 0)
+             #:stretch '(#f #f))
+      (text (format " of ~a" (length transcript)))
       (button "→"
               (λ () (@steps . <~ . history-next))
               #:enabled? (@steps . ~> . history-has-next?))))))
@@ -107,6 +115,20 @@
 
 (define (history-has-prev? h)
   (cons? (history-context h)))
+
+(define (history-when h)
+  (length (history-context h)))
+
+(define (history-move n h)
+  (match-define (history context focus) h)
+  (define full (append (reverse context) focus))
+  (define N (length full))
+  (cond
+    [(and n (<= 0 n) (< n N))
+     (define-values (rev-context* focus*) (split-at full n))
+     (history (reverse rev-context*) focus*)]
+    [else
+     h]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; drawing helpers
