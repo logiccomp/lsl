@@ -83,8 +83,9 @@
                (when (eq? evt 'return)
                  (@steps . <~ . (curry history-move (string->number num)))))
              #:min-size '(48 0)
-             #:stretch '(#f #f))
-      (text (format " of ~a" (length transcript)))
+             #:stretch '(#f #f)
+             #:value=? (λ _ #f))
+      (text (format " of ~a" (sub1 (length transcript))))
       (button "→"
               (λ () (@steps . <~ . history-next))
               #:enabled? (@steps . ~> . history-has-next?))))))
