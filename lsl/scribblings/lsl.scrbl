@@ -629,16 +629,25 @@ some delivery policy.
 
 @defform[(Action contract)]{
   Describes an action containing a new state
-  that satisfies @racket[contract] and a list of packets to send satisfying @racket[(List (SendPacket Any))].
+  that satisfies @racket[contract] and a list of packets to send satisfying
+  @racket[(List (SendPacket Any))].
   @examples[#:eval evaluator #:no-prompt #:label #f
     (: a (Action Natural))
     (define a (action 5 (list (send-packet "process-1" 42)
+                              (send-packet "process-1" 43)
                               (send-packet "process-2" "Hello!"))))]
 }
 
 @defproc[(action [state Any] [packets (List (SendPacket Any))]) (Action Any)]{
   The result of a process handler: combines the updated process state and a list of packets to
   send (which may be empty).
+  The list of packets is sorted (per process) from earliest to latest.
+  In the example above,
+  @racket[process-1] is guaranteed to receive the @racket[42] packet
+  before it receives the @racket[43] packet.
+  However, the relative order the packets are received
+  among different processes is unknown @emph{a priori}
+  (as it is determined by the scheduler).
 }
 
 @defidform[Process]{
