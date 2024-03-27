@@ -49,7 +49,7 @@
 
   (define queues-view
     (table
-     (list "To" "From" "Messages")
+     (list "From" "To" "Messages")
      (@steps . ~> . (compose1 move->table history-current))))
 
   (define history-view
@@ -125,7 +125,7 @@
   (vector-sort
    (for*/vector ([(to inbox) (in-hash channels)]
                  [(from msgs) (in-hash inbox)])
-     (vector from to (string-join (map ~a msgs) ", ")))
+     (vector from to (string-join (map ~v msgs) ", ")))
    (λ(v1 v2) (string<? (vector-ref v1 0) (vector-ref v2 0)))))
 
 (define (move->pict m)
@@ -153,7 +153,7 @@
                (if (> (pt-y p) 1/2) (top) (bot)))))
 
 (define (draw-packets ht pkts dir)
-  (for/draw ([pkt (in-list pkts)] [k (in-naturals 1)])
+  (for/draw ([pkt (in-list (reverse pkts))] [k (in-naturals 1)])
     (draw-packet ht pkt (/ k (add1 (length pkts))) dir)))
 
 (define (move-towards twds orig)
@@ -164,7 +164,7 @@
   (match-define (packet from to msg) pkt)
   (define src (hash-ref ht from))
   (define dst (hash-ref ht to))
-  (define txt (~a (packet-msg pkt)))
+  (define txt (~v (packet-msg pkt)))
   (define dot (dot-label txt (med α src dst) (top)))
   (let* ([result
           (if (equal? dir 'send)
