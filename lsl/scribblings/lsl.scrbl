@@ -702,3 +702,17 @@ A contract for a process.
   Like @racket[start], but prints to the interactions window as each message is received
   and what the corresponding process state updates to.
 }
+
+@defproc[(start-gui [scheduler (-> (List (Packet Any)) (Packet Any))]
+                    [processes (List Process)]
+                    [summarize-state (-> Any Any)])
+                    (List (Tuple String Any))]{
+  Like @racket[start], but runs the program in an interactive graphical interface instead.
+  The interface allows you to step forward and backward through the program, viewed through
+  either a graph showing the current packet being sent/received, a table of the current messages
+  waiting to be processed, or a history of all process states up to the current moment.
+
+  The extra argument, @racket[summarize-state], is a function that is applied to the process
+  state before it is displayed, since large process states can make the interface harder to use.
+  The @racket[identity] function can be provided if you want the entire process state visible.
+}
