@@ -18,6 +18,7 @@
          racket/format
          racket/function
          racket/string
+         racket/gui/base
          racket/gui/easy
          racket/gui/easy/operator
          racket/list
@@ -27,9 +28,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; constants
 
-(define R 1)
+(define (get-size)
+  (define-values (w h)
+    (get-display-size))
+  (if h (inexact->exact (floor (* SIZE-PCT h))) 800))
+
+(define R 0.8)
 (define AH 0.05)
-(define SIZE 800)
+(define SIZE-PCT 0.7)
+(define SIZE (get-size))
 (set-curve-pict-size SIZE SIZE)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,6 +81,7 @@
          ['queues queues-view]
          ['history history-view])))
      (hpanel
+      #:stretch '(#t #f)
       #:alignment '(center center)
       (button "←"
               (λ () (@steps . <~ . history-prev))
