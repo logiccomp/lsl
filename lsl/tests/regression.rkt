@@ -135,4 +135,9 @@
             (define x 10)
             (set! x ""))
    "expected: Integer"
+   #:x (run (: f (All (X Y) (-> X Y)))
+            (define (f x) x)
+            (set! f (lambda (x) x))
+            (f 10))
+   "expected: ∀Y"
    ))

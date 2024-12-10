@@ -3,21 +3,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require (for-syntax racket/base
+(require (for-syntax ee-lib
+                     racket/base
                      racket/sequence
-                     racket/string
-                     syntax/parse
                      syntax/parse/lib/function-header
                      syntax/struct)
          json
          (except-in net/http-easy
                     proxy?)
-         racket/class
          racket/file
          racket/provide
          racket/runtime-path
          racket/struct
-         racket/splicing
          (prefix-in ^ rosette/safe)
          syntax/parse/define
          version/utils
@@ -153,9 +150,8 @@
     [(_ x:id arg:expr)
      #:do [(define ctc (contract-table-ref #'x))]
      (if ctc
-         (let ([ctc (compile-contract (expand-contract ctc))])
-           #`(let ([y arg])
-               (^set! x ((send #,ctc protect y #f) y #f))))
+         #`(let ([y arg])
+             (^set! x #,(attach-contract #'x (expand-contract (flip-intro-scope ctc)) #'arg)))
          #'(^set! x arg))]))
 
 (begin-for-syntax

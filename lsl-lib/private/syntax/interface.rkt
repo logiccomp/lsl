@@ -14,11 +14,9 @@
          (only-in automata/machine
                   machine?)
          racket/class
-         syntax/location
          "grammar.rkt"
          "expand.rkt"
          "compile.rkt"
-         "../contract/common.rkt"
          "../contract/parametric.rkt"
          "../util.rkt")
 
@@ -51,18 +49,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(begin-for-syntax
-  (define (attach-contract name ctc val #:compiler [compiler compile-contract])
-    #`(let* ([name '#,name]
-             [path (quote-module-name)]
-             [pos (positive-blame name path)]
-             [neg (negative-blame name path)]
-             [ctc #,(compiler ctc)]
-             [val #,val])
-        ((send ctc protect val pos)
-         (maybe-wrap name val)
-         neg))))
-
 (define-syntax define-protected
   (syntax-parser
     [(_ ?head:define-header ?body:expr)
@@ -75,18 +61,6 @@
                #'?head.name
                (expand-contract (flip-intro-scope ctc))
                #'?new-body)))]))
-
-;; TODO: Could be made robust.
-(define (maybe-wrap name val)
-  (if (and (procedure? val) (not (machine? val)))
-      (procedure-reduce-arity
-       (λ args
-         (define logs (current-logs))
-         (when logs
-           (current-logs (hash-update logs name add1 0)))
-         (apply val args))
-       (procedure-arity val))
-      val))
 
 (define-syntax declare-contract
   (syntax-parser

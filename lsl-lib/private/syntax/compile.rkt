@@ -9,14 +9,16 @@
                      racket/sequence
                      racket/syntax-srcloc
                      syntax/stx
-                     syntax/kerncase
-                     syntax/private/boundmap
                      syntax/parse
                      syntax/parse/class/struct-id
                      mischief/dict
                      mischief/sort)
+         (only-in automata/machine
+                  machine?)
+         syntax/location
          racket/class
          racket/promise
+         "../contract/common.rkt"
          "../contract/immediate.rkt"
          "../contract/function.rkt"
          "../contract/oneof.rkt"
@@ -25,12 +27,14 @@
          "../contract/list.rkt"
          "../contract/recursive.rkt"
          "../contract/parametric.rkt"
+         "../util.rkt"
          "grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (for-syntax compile-contract))
+(provide (for-syntax compile-contract
+                     attach-contract))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; function dependency
@@ -158,3 +162,30 @@
      (for/list ([x (in-syntax #'(x ...))])
        (if (eq? (syntax-e x) '_) (gensym) x))
      #'(λ (x* ...) e)]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; `attach-contract`
+
+(begin-for-syntax
+  (define (attach-contract name ctc val #:compiler [compiler compile-contract])
+    #`(let* ([name '#,name]
+             [path (quote-module-name)]
+             [pos (positive-blame name path)]
+             [neg (negative-blame name path)]
+             [ctc #,(compiler ctc)]
+             [val #,val])
+        ((send ctc protect val pos)
+         (maybe-wrap name val)
+         neg))))
+
+;; TODO: Could be made robust.
+(define (maybe-wrap name val)
+  (if (and (procedure? val) (not (machine? val)))
+      (procedure-reduce-arity
+       (λ args
+         (define logs (current-logs))
+         (when logs
+           (current-logs (hash-update logs name add1 0)))
+         (apply val args))
+       (procedure-arity val))
+      val))
