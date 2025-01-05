@@ -1,4 +1,4 @@
-#lang rosette/safe
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -18,19 +18,17 @@
 
 (define immediate-contract%
   (class contract%
-    (init-field syntax checker [generator #f] [shrinker #f] [symbol #f])
+    (init-field syntax checker [generator #f] [shrinker #f])
 
     (super-new)
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (if (checker val)
-           (passed-guard
-            (λ (val neg) val))
-           (failed-guard
-            (λ (val neg)
-              (contract-error this syntax val pos))))))
+      (if (checker val)
+          (passed-guard
+           (λ (val neg) val))
+          (failed-guard
+           (λ (val neg)
+             (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
       (if generator (generator fuel) (none)))
@@ -39,7 +37,4 @@
       (if shrinker (shrinker fuel val) (none)))
 
     (define/override (interact val name mode)
-      #f)
-
-    (define/override (symbolic)
-      (if symbol (symbol) (none)))))
+      #f)))

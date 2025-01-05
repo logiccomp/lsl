@@ -53,7 +53,6 @@
    (send even-or-bool-ctc shrink 1 #t)  #f
 
    ;; TODO: interact
-   ;; TODO: symbolic
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,18 +68,4 @@
    (run (contract-shrink (OneOf (Constant -10) Integer) 10))  5
    #:? (or/c 0 1)
    (run (contract-generate (OneOf (Constant 0) (Constant 1))))
-
-   #:t (run*
-        (: f (-> (OneOf Integer Boolean) True))
-        (define (f x)
-          (or (integer? x)
-              (boolean? x)))
-        (verify-contract f))
-
-   #:x (run*
-        (: f (-> (OneOf Integer Boolean) True))
-        (define (f x)
-          (integer? x))
-        (verify-contract f))
-   "counterexample: (f #f)"
    ))

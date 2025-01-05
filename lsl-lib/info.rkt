@@ -24,7 +24,6 @@
     "ee-lib"
     "errortrace-lib"
     "mischief"
-    "rosette"
     "syntax-classes"
     "threading"))
 

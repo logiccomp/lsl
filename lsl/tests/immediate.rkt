@@ -87,8 +87,7 @@
           '(define-contract Even
              (Immediate (check (λ (x) (and (integer? x) (even? x))))
                         (generate (λ (fuel) (* 2 (contract-generate Integer))))
-                        (shrink (λ (fuel val) (floor (/ val 2))))
-                        (symbolic (λ () (* 2 (contract-symbolic Integer)))))))
+                        (shrink (λ (fuel val) (floor (/ val 2)))))))
    (run/sexp even-sexp '(: x Even) '(define x 2) 'x)  2
    #:x (run/sexp even-sexp '(: x Even) '(define x 1) 'x)  "expected: Even"
    #:? even?

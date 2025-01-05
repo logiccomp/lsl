@@ -4,13 +4,9 @@
 ;; require
 
 (require (for-syntax racket/base)
-         (prefix-in ^ rosette/safe)
          racket/contract
-         racket/provide
          racket/string
-         racket/list
-         "time.rkt"
-         "../util.rkt")
+         racket/list)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
@@ -26,30 +22,25 @@
 
 (provide
  (contract-out
-  [rename $string=? string=? (-> string? string? any)])
+  [string=? (-> string? string? any)])
 
- (lift-out
-  explode
-  implode
-  format
-  list->string
-  make-string
-  string
-  string->list
-  string->number
-  number->string
-  string->symbol
-  string-append
-  string-contains?
-  string-copy
-  string-downcase
-  string-length
-  string-ref
-  string-upcase
-  string?
-  substring
-  string<?))
-
-(define ($string=? x y)
-  (^for*/all ([x x #:exhaustive] [y y #:exhaustive])
-    (string=? x y)))
+ explode
+ implode
+ format
+ list->string
+ make-string
+ string
+ string->list
+ string->number
+ number->string
+ string->symbol
+ string-append
+ string-contains?
+ string-copy
+ string-downcase
+ string-length
+ string-ref
+ string-upcase
+ string?
+ substring
+ string<?)

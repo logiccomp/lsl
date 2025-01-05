@@ -77,14 +77,12 @@
       #:literal-sets (contract-literal immediate-literal function-literal)
       [(Immediate (check chk)
                   (generate gen)
-                  (shrink shk)
-                  (symbolic sym))
+                  (shrink shk))
        #'(new immediate-contract%
               [syntax quoted-stx]
               [checker chk]
               [generator gen]
-              [shrinker shk]
-              [symbol sym])]
+              [shrinker shk])]
       [(Function (arguments [x fvs a] ...)
                  (result r)
                  (raises e:struct-id ...))

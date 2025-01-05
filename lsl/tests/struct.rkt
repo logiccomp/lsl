@@ -64,7 +64,6 @@
    (send eb-struct-ctc shrink 1 (eb 4 #t))  (eb 2 #f)
 
    ;; TODO: interact
-   ;; TODO: symbolic
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -126,19 +125,6 @@
         (define (f st) (foo-x st))
         (f (make-foo 1/2)))
    "expected: Integer"
-
-   #:t
-   (run* (define-struct foo (x))
-         (: f (-> (Foo Integer) True))
-         (define (f st) (= (foo-x st) (foo-x st)))
-         (verify-contract f))
-
-   #:x
-   (run* (define-struct foo (x))
-         (: f (-> (Foo Integer) True))
-         (define (f st) (zero? (foo-x st)))
-         (verify-contract f))
-   "counterexample: (f (make-foo 1))"
 
    #:x (run* (define-struct foo (x y))
              (check-expect (make-foo 1 2) #t))

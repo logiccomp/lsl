@@ -1,16 +1,9 @@
-#lang rosette/safe
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require (only-in racket/base
-                  for/fold
-                  for/list
-                  in-list
-                  in-cycle
-                  build-list
-                  random
-                  raise-user-error)
+(require racket/list
          racket/class
          "../guard.rkt"
          "../util.rkt"
@@ -34,14 +27,12 @@
     (define list-size (and fixed? (length contracts)))
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (define guards
-         (cond
-           [(not (list? val)) #f]
-           [(not fixed?) (map (λ (elem) (send elems-ctc protect elem pos)) val)]
-           [(not (= (length val) list-size)) #f]
-           [else (map (λ (ctc elem) (send ctc protect elem pos)) contracts val)]))
+      (define guards
+        (cond
+          [(not (list? val)) #f]
+          [(not fixed?) (map (λ (elem) (send elems-ctc protect elem pos)) val)]
+          [(not (= (length val) list-size)) #f]
+          [else (map (λ (ctc elem) (send ctc protect elem pos)) contracts val)]))
       (define guard-ctor
         (if (and guards (andmap passed-guard? guards))
             passed-guard
@@ -50,7 +41,7 @@
        (λ (val neg)
          (unless guards
            (contract-error this syntax val pos))
-         (map (λ (guard elem) (guard elem neg)) guards val)))))
+         (map (λ (guard elem) (guard elem neg)) guards val))))
 
     (define/override (generate fuel)
       (define result
@@ -84,12 +75,7 @@
         (for/list ([ctc (in-cycle (in-list contracts))]
                    [elem (in-list val)])
           (send ctc shrink fuel elem)))
-      (if (ormap none? result) (none) result))
-
-    (define/override (symbolic)
-      (if (not fixed?)
-          (raise-user-error 'symbolic "cannot create symbolic unbounded lists")
-          (map (λ (ctc) (send ctc symbolic)) contracts)))))
+      (if (ormap none? result) (none) result))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

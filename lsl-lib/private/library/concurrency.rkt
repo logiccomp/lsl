@@ -46,7 +46,6 @@
          racket/function
          racket/list
          racket/match
-         (prefix-in ^ rosette/safe)
          (only-in "core.rkt" define-struct)
          (only-in "contract.rkt" String Any)
          "../syntax/interface.rkt"
@@ -214,7 +213,7 @@
       [(empty? possible)
        (define result
          (for/list ([(name state) (in-hash states)])
-           (^list name state)))
+           (list name state)))
        (if transcript
            (values result (reverse transcript))
            result)]

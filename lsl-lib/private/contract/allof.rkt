@@ -25,18 +25,16 @@
     (super-new)
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (define guards (guards-of val pos))
-       (define guard-ctor
-         (if (andmap passed-guard? guards)
-             passed-guard
-             failed-guard))
-       (guard-ctor
-        (λ (val neg)
-          (for/fold ([val val])
-                    ([guard (in-list guards)])
-            (guard val neg))))))
+      (define guards (guards-of val pos))
+      (define guard-ctor
+        (if (andmap passed-guard? guards)
+            passed-guard
+            failed-guard))
+      (guard-ctor
+       (λ (val neg)
+         (for/fold ([val val])
+                   ([guard (in-list guards)])
+           (guard val neg)))))
 
     (define/override (generate fuel)
       (repeat/fuel

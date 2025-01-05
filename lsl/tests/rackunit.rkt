@@ -45,9 +45,9 @@
    #:t
    (contains-all-strings?
     output
-    '("foo > definition-area tests"
-      "bar > definition-area tests"
-      "anonymous tests > definition-area tests"
+    '("definition-area tests > foo"
+      "definition-area tests > bar"
+      "definition-area tests > anonymous tests"
       "2 success(es) 4 failure(s) 0 error(s) 6 test(s) run"))
 
    #:t (run* (check-expect 1 1))

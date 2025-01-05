@@ -1,4 +1,4 @@
-#lang rosette/safe
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -11,7 +11,7 @@
                   in-value
                   raise-user-error)
          racket/class
-         racket/match
+         racket/list
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -31,14 +31,12 @@
     (super-new)
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (define gvs (filter passed-guard? (guards-of val pos)))
-       (if (= (length gvs) 1)
-           (first gvs)
-           (failed-guard
-            (λ (val neg)
-              (contract-error this syntax val pos))))))
+      (define gvs (filter passed-guard? (guards-of val pos)))
+      (if (= (length gvs) 1)
+          (first gvs)
+          (failed-guard
+           (λ (val neg)
+             (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
       (for/fold ([val (none)])
@@ -54,21 +52,7 @@
 
     (define (guards-of val pos)
       (map (λ (disjunct) (send disjunct protect val pos))
-           disjuncts))
-
-    (define/override (symbolic)
-      (cond
-        [(empty? disjuncts)
-         (raise-user-error 'symbolic "cannot create symbolic value for empty disjunction")]
-        [else
-         (let go ([disjuncts disjuncts])
-           (cond
-             [(empty? (rest disjuncts)) (send (first disjuncts) symbolic)]
-             [else
-              (define x (first disjuncts))
-              (define xt (rest disjuncts))
-              (define-symbolic* b boolean?)
-              (if b (send x symbolic) (go xt))]))]))))
+           disjuncts))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

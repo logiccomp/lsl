@@ -55,16 +55,13 @@
         #:literal-sets (contract-literal immediate-literal function-literal)
         [(Immediate ~! (~alt (~optional (check chk:expr))
                              (~optional (generate gen:expr))
-                             (~optional (shrink shk:expr))
-                             (~optional (symbolic sym:expr))) ...)
+                             (~optional (shrink shk:expr))) ...)
          (define/syntax-parse chk^ (expand-racket #'(~? chk (λ _ #t))))
          (define/syntax-parse gen^ (expand-racket #'(~? gen #f)))
          (define/syntax-parse shk^ (expand-racket #'(~? shk #f)))
-         (define/syntax-parse sym^ (expand-racket #'(~? sym #f)))
          #'(Immediate (check (let-values () chk^))
                       (generate (let-values () gen^))
-                      (shrink (let-values () shk^))
-                      (symbolic (let-values () sym^)))]
+                      (shrink (let-values () shk^)))]
         [(Function ~! (~alt (~once (arguments [x:id a:expr] ...))
                             (~once (result r:expr))
                             (~optional (raises e:struct-id ...))) ...)
@@ -178,13 +175,11 @@
       #:literal-sets (contract-literal immediate-literal function-literal)
       [(Immediate (check chk:expr)
                   (generate gen:expr)
-                  (shrink shk:expr)
-                  (symbolic sym:expr))
+                  (shrink shk:expr))
        (free-id-set-union
         (immutable-free-id-set (free-vars #'chk))
         (immutable-free-id-set (free-vars #'gen))
-        (immutable-free-id-set (free-vars #'shk))
-        (immutable-free-id-set (free-vars #'sym)))]
+        (immutable-free-id-set (free-vars #'shk)))]
       [(Function (arguments [x:id (_:id ...) a:expr] ...)
                  (result r:expr)
                  (raises e:struct-id ...))

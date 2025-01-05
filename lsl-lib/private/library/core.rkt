@@ -15,7 +15,6 @@
          racket/provide
          racket/runtime-path
          racket/struct
-         (prefix-in ^ rosette/safe)
          syntax/parse/define
          version/utils
          "test.rkt"
@@ -31,19 +30,16 @@
 ;; provide
 
 (provide
+ #%top-interaction
  #%app
  #%top
  quote
-
- disable-contracts!
- enable-contracts!
 
  (filtered-out
   (strip "$")
   (combine-out
    $#%module-begin
    $#%datum
-   $#%top-interaction
 
    $...
    $require
@@ -81,12 +77,7 @@
 (define-syntax $#%datum
   (syntax-parser
     [(_ . (~or e:number e:boolean e:string e:character))
-     #'(^#%datum . e)]))
-
-(define-syntax $#%top-interaction
-  (syntax-parser
-    [(_ . e)
-     #'(#%top-interaction . (with-vc-reset e))]))
+     #'(#%datum . e)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; forms
@@ -97,25 +88,25 @@
          (error '… "expected a finished expression, but found a template"))]))
 
 (define-syntax-parse-rule ($require (~or* mod:string mod:id) ...)
-  (^require mod ...))
+  (require mod ...))
 
 (define-syntax-parse-rule ($lambda (param:id ...) body:expr)
-  (^lambda (param ...) body))
+  (lambda (param ...) body))
 
 (define-syntax-parse-rule ($λ (param:id ...) body:expr)
-  (^λ (param ...) body))
+  (λ (param ...) body))
 
 (define-syntax-parse-rule ($begin body:expr ...+)
-  (^begin body ...))
+  (begin body ...))
 
 (define-syntax-parse-rule ($letrec ([var:id rhs:expr] ...) body:expr)
-  (^letrec ([var rhs] ...) body))
+  (letrec ([var rhs] ...) body))
 
 (define-syntax-parse-rule ($let ([var:id rhs:expr] ...) body:expr)
-  (^let ([var rhs] ...) body))
+  (let ([var rhs] ...) body))
 
 (define-syntax-parse-rule ($let* ([var:id rhs:expr] ...) body:expr)
-  (^let* ([var rhs] ...) body))
+  (let* ([var rhs] ...) body))
 
 (define-syntax ($else stx)
   (raise-syntax-error 'else "else must be used in a cond"))
@@ -124,26 +115,26 @@
   (syntax-parser
     #:literals ($else)
     [(_ [(~and (~not $else) guard) arm:expr] ...+ [$else final-arm:expr])
-     #:declare guard (expr/c #'is-boolean? #:name "question")
-     #'(^cond [guard.c arm] ... [^else final-arm])]
+     #:declare guard (expr/c #'boolean? #:name "question")
+     #'(cond [guard.c arm] ... [else final-arm])]
     [(_ [(~and (~not $else) guard) arm:expr] ...+)
-     #:declare guard (expr/c #'is-boolean? #:name "question")
+     #:declare guard (expr/c #'boolean? #:name "question")
      #:with final-arm
      (syntax/loc this-syntax
        (error 'cond "all question results were false"))
-     #'(^cond [guard.c arm] ... [^else final-arm])]))
+     #'(cond [guard.c arm] ... [else final-arm])]))
 
 (define-syntax-parse-rule ($if guard then:expr else:expr)
-  #:declare guard (expr/c #'is-boolean? #:name "question")
-  (^if guard.c then else))
+  #:declare guard (expr/c #'boolean? #:name "question")
+  (if guard.c then else))
 
 (define-syntax-parse-rule ($and arg ...+)
-  #:declare arg (expr/c #'is-boolean?)
-  (^and arg.c ...))
+  #:declare arg (expr/c #'boolean?)
+  (and arg.c ...))
 
 (define-syntax-parse-rule ($or arg ...+)
-  #:declare arg (expr/c #'is-boolean?)
-  (^or arg.c ...))
+  #:declare arg (expr/c #'boolean?)
+  (or arg.c ...))
 
 (define-syntax $set!
   (syntax-parser
@@ -151,8 +142,8 @@
      #:do [(define ctc (contract-table-ref #'x))]
      (if ctc
          #`(let ([y arg])
-             (^set! x #,(attach-contract #'x (expand-contract (flip-intro-scope ctc)) #'arg)))
-         #'(^set! x arg))]))
+             (set! x #,(attach-contract #'x (expand-contract (flip-intro-scope ctc)) #'arg)))
+         #'(set! x arg))]))
 
 (begin-for-syntax
   (define-syntax-class def
@@ -162,15 +153,12 @@
     (pattern (declare-contract x:id c:expr))))
 
 (define-syntax-parse-rule ($local [d:def ...] e:expr)
-  (^let () d ... e))
+  (let () d ... e))
 
 (define-syntax-rule ($raise v)
   (do-raise v))
 
 (define (do-raise v)
-  (define cur (current-allowed-exns))
-  (when (and cur (ormap (λ (pred?) (pred? v)) cur))
-    (^assume #f))
   (raise (exn:fail:lsl:user (format "exception raised: ~v" v)
                             (current-continuation-marks)
                             v)))
@@ -199,54 +187,50 @@
          (define-syntax Name
            (contract-macro
             (struct-contract-macro #'name)))
-         (^struct name root (field ...)
-                  #:transparent
-                  #:mutable
-                  #:constructor-name ctor
-                  #:methods gen:equatable
-                  [(define (base-equal? self other)
-                     (and (pred self)
-                          (pred other)
-                          (equal? (acc self) (acc other)) ...))]
-                  #:property prop:custom-print-quotable 'never
-                  #:methods gen:custom-write
-                  [(define write-proc
-                     (make-constructor-style-printer
-                      (λ (obj) 'ctor)
-                      (λ (obj) (list (acc obj) ...))))])
+         (struct name root (field ...)
+           #:transparent
+           #:mutable
+           #:constructor-name ctor
+           #:methods gen:equatable
+           [(define (base-equal? self other)
+              (and (pred self)
+                   (pred other)
+                   (equal? (acc self) (acc other)) ...))]
+           #:property prop:custom-print-quotable 'never
+           #:methods gen:custom-write
+           [(define write-proc
+              (make-constructor-style-printer
+               (λ (obj) 'ctor)
+               (λ (obj) (list (acc obj) ...))))])
          (set! pred (redirect-pred pred))
          (set! acc (redirect-accessor 'acc pred acc k)) ...
          (set! mut (redirect-mutator 'acc pred mut k)) ...)]))
 
 (define (redirect-pred pred)
   (procedure-rename
-   (λ (val)
-     (^for/all ([val val])
-       (pred (unproxy val))))
+   (λ (val) (pred (unproxy val)))
    (object-name pred)))
 
 (define (redirect-accessor name pred acc k)
   (procedure-rename
    (λ (val)
-     (^for/all ([val val])
-       (check-struct-type name val pred)
-       (let go ([val val])
-         (if (proxy? val)
-             ((vector-ref (proxy-info val) k)
-              (go (proxy-target val)))
-             (acc val)))))
+     (check-struct-type name val pred)
+     (let go ([val val])
+       (if (proxy? val)
+           ((vector-ref (proxy-info val) k)
+            (go (proxy-target val)))
+           (acc val))))
    (object-name acc)))
 
 (define (redirect-mutator name pred mut k)
   (procedure-rename
    (λ (val to-set)
-     (^for/all ([val val])
-       (check-struct-type name val pred)
-       (let go ([val val] [to-set to-set])
-         (if (proxy? val)
-             (go (proxy-target val)
-                 ((vector-ref (proxy-info val) k) to-set))
-             (mut val to-set)))))
+     (check-struct-type name val pred)
+     (let go ([val val] [to-set to-set])
+       (if (proxy? val)
+           (go (proxy-target val)
+               ((vector-ref (proxy-info val) k) to-set))
+           (mut val to-set))))
    (object-name mut)))
 
 (define (check-struct-type name val pred)

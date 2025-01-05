@@ -9,7 +9,6 @@
          racket/string
          racket/syntax-srcloc
          errortrace/errortrace-key
-         (prefix-in ^ rosette/safe)
          "../guard.rkt"
          "../util.rkt")
 
@@ -25,11 +24,7 @@
          contract->predicate
          contract-error
          generate-error
-         unimplemented-error
-         current-disable-contract
-         skip-symbolic
-         disable-contracts!
-         enable-contracts!)
+         unimplemented-error)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exceptions
@@ -63,10 +58,7 @@
       (none))
 
     (define/public (interact val name mode)
-      (unimplemented-error 'interact))
-
-    (define/public (symbolic)
-      (unimplemented-error 'symbolic))))
+      (unimplemented-error 'interact))))
 
 (define (unimplemented-error method-name)
   (raise-user-error method-name "is not implemented"))
@@ -127,22 +119,3 @@
 
 (define GEN-FMT
   "cannot generate ~a")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; skip symbolic
-
-(define current-disable-contract (make-parameter #f))
-
-(define-syntax-rule (skip-symbolic val body ...)
-  (skip-symbolic-fn val (λ () body ...)))
-
-(define (skip-symbolic-fn val thk)
-  (if (current-disable-contract)
-      (passed-guard (λ (val neg) val))
-      (thk)))
-
-(define-syntax-rule (disable-contracts!)
-  (current-disable-contract #t))
-
-(define-syntax-rule (enable-contracts!)
-  (current-disable-contract #f))

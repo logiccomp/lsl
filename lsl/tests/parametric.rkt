@@ -94,7 +94,7 @@
    (run (: make-counter (Exists (A) (-> A)))
         (define (make-counter) 0)
         (+ 1 (make-counter)))
-   "expected real?"
+   "expected: number?"
 
    (run (define-struct foo [x])
         (: f (-> (Foo Integer) (Foo Integer)))

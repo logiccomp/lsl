@@ -106,16 +106,6 @@
    #:? (λ (xs) (andmap integer? xs))
    (run (contract-generate (List Integer)))
 
-   #:t (run*
-        (: f (-> (Tuple Integer Integer) Integer))
-        (define (f l) (length l))
-        (verify-contract f))
-
-   #:x (run* (: f (-> (Tuple Integer Integer) (List Integer)))
-             (define (f x) (list (third x)))
-             (verify-contract f))
-   "third: contract violation"
-
    (run (: xs (NonemptyList Integer))
         (define xs '(1 2 3))
         xs)

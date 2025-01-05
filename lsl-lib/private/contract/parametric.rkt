@@ -1,4 +1,4 @@
-#lang rosette/safe
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -35,23 +35,21 @@
     (super-new)
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (define infos
-         (for/list ([base-name (in-list names)])
-           (set! seal-number (add1 seal-number))
-           (define name
-             (or seal-name (make-name base-name polarity seal-number)))
-           (define actual-polarity
-             (if (positive-blame? pos)
-                 polarity
-                 (not polarity)))
-           (struct seal base-seal (val)
-             #:methods gen:custom-write
-             [(define write-proc (make-seal-writer name))])
-           (seal-info seal seal? seal-val name actual-polarity)))
-       (define ctc (apply make-body infos))
-       (send ctc protect val pos)))))
+      (define infos
+        (for/list ([base-name (in-list names)])
+          (set! seal-number (add1 seal-number))
+          (define name
+            (or seal-name (make-name base-name polarity seal-number)))
+          (define actual-polarity
+            (if (positive-blame? pos)
+                polarity
+                (not polarity)))
+          (struct seal base-seal (val)
+            #:methods gen:custom-write
+            [(define write-proc (make-seal-writer name))])
+          (seal-info seal seal? seal-val name actual-polarity)))
+      (define ctc (apply make-body infos))
+      (send ctc protect val pos))))
 
 (define (make-name base-name polarity seal-number)
   (format "~a~a~a"
@@ -69,20 +67,18 @@
     (super-new)
 
     (define/override (protect val pos)
-      (skip-symbolic
-       val
-       (match-define (seal-info ctor pred? get name polarity) info)
-       (define wrap?
-         (or (and polarity (negative-blame? pos))
-             (and (not polarity) (positive-blame? pos))))
-       (cond
-         [wrap? (passed-guard (λ (val neg) (ctor val)))]
-         [(pred? val) (passed-guard (λ (val neg) (get val)))]
-         [else
-          (failed-guard
-           (λ (val neg)
-             (contract-error this syntax val pos
-                             #:expected name)))])))
+      (match-define (seal-info ctor pred? get name polarity) info)
+      (define wrap?
+        (or (and polarity (negative-blame? pos))
+            (and (not polarity) (positive-blame? pos))))
+      (cond
+        [wrap? (passed-guard (λ (val neg) (ctor val)))]
+        [(pred? val) (passed-guard (λ (val neg) (get val)))]
+        [else
+         (failed-guard
+          (λ (val neg)
+            (contract-error this syntax val pos
+                            #:expected name)))]))
 
     (define/override (generate fuel)
       (match-define (seal-info ctor pred? get name polarity) info)

@@ -1,24 +1,13 @@
-#lang rosette/safe
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require (for-syntax racket/base
-                     syntax/parse
-                     syntax/id-table)
-         (only-in racket/base
-                  integer->char
-                  random
-                  build-string
-                  string?
-                  symbol?
-                  string->symbol
-                  build-list)
-         (only-in racket/stream
-                  stream
-                  empty-stream)
-         (only-in racket/random
-                  random-ref)
+                     racket/list
+                     syntax/parse)
+         racket/random
+         racket/list
          racket/class
          "../syntax/expand.rkt"
          "../syntax/compile.rkt"
@@ -48,9 +37,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; atomic
 
-(define ((predicate->symbolic predicate))
-  (define-symbolic* x predicate) x)
-
 (define-contract Any
   (Immediate
    (check (λ _ #t))
@@ -66,13 +52,11 @@
 
 (define-contract Boolean
   (Immediate (check boolean?)
-             (generate (λ (fuel) (< (random) 1/2)))
-             (symbolic (predicate->symbolic boolean?))))
+             (generate (λ (fuel) (< (random) 1/2)))))
 
 (define-contract (Constant v)
   (Immediate (check (λ (x) (equal? x v)))
-             (generate (λ (fuel) v))
-             (symbolic (λ _ v))))
+             (generate (λ (fuel) v))))
 
 (define-contract True (Constant #t))
 (define-contract False (Constant #f))
@@ -87,13 +71,11 @@
              (shrink (λ (fuel val)
                        (if (zero? val)
                            (none)
-                           (floor (/ val 2)))))
-             (symbolic (predicate->symbolic integer?))))
+                           (floor (/ val 2)))))))
 
 (define-contract Real
   (Immediate (check real?)
-             (generate (λ (fuel) (- (* 2 fuel (random)) fuel)))
-             (symbolic (predicate->symbolic real?))))
+             (generate (λ (fuel) (- (* 2 fuel (random)) fuel)))))
 
 (define (natural? n)
   (and (integer? n)
@@ -101,32 +83,21 @@
 
 (define-contract Natural
   (Immediate (check natural?)
-             (generate (λ (fuel) (random 0 (add1 fuel))))
-             (symbolic (λ ()
-                         (define v (contract-symbolic Integer))
-                         (if (positive? v) v (- v))))))
+             (generate (λ (fuel) (random 0 (add1 fuel))))))
 
 (define (random-alpha-char)
   (integer->char (random 33 127)))
 
 (define-contract String
-  (Immediate (check lifted-string?)
+  (Immediate (check string?)
              (generate (λ (fuel) (random-string fuel)))))
-
-(define (lifted-string? x)
-  (for/all ([x x])
-    (string? x)))
 
 (define (random-string fuel)
   (build-string (random 0 (add1 fuel)) (λ (_) (random-alpha-char))))
 
 (define-contract Symbol
-  (Immediate (check lifted-symbol?)
+  (Immediate (check symbol?)
              (generate (λ (fuel) (string->symbol (random-string fuel))))))
-
-(define (lifted-symbol? x)
-  (for/all ([x x])
-    (symbol? x)))
 
 (define-contract (NonemptyList X)
   (AllOf (List X) cons?))

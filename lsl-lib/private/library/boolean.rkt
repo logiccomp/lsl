@@ -4,9 +4,8 @@
 ;; require
 
 (require (for-syntax racket/base)
-         (prefix-in ^ rosette/safe)
+         racket/bool
          racket/contract
-         racket/provide
          "../util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -14,13 +13,10 @@
 
 (provide
  (contract-out
-  [rename equal? boolean=? (-> is-boolean? is-boolean? is-boolean?)]
-  [rename ^boolean? boolean? (-> any? is-boolean?)]
-  [rename ^false? false? (-> any? is-boolean?)]
-  [rename ^not not (-> is-boolean? is-boolean?)])
+  [rename equal? boolean=? (-> boolean? boolean? boolean?)]
+  [boolean? (-> any? boolean?)]
+  [false? (-> any? boolean?)]
+  [not (-> boolean? boolean?)])
 
- (filtered-out
-  (strip "^")
-  (combine-out
-   ^false
-   ^true)))
+ false
+ true)

@@ -5,8 +5,6 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         (prefix-in ^ rosette/safe)
-         (prefix-in ^ rosette/solver/smt/z3)
          racket/lazy-require
          racket/provide
          "private/syntax/grammar.rkt"
@@ -41,7 +39,6 @@
   [declare-contract :])
  contract-generate
  contract-shrink
- contract-symbolic
  start-gui
 
  (except-out
@@ -68,11 +65,6 @@
 
 
  (all-from-out "private/library/time.rkt"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; z3
-
-(^current-solver (^z3 #:path (find-executable-path "z3")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; reader

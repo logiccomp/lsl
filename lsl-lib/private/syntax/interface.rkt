@@ -29,8 +29,7 @@
          define-package
          define-interface
          contract-generate
-         contract-shrink
-         contract-symbolic)
+         contract-shrink)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; phase-1 definitions
@@ -206,15 +205,6 @@
                 shrink
                 (~? fuel FUEL)
                 val)))]))
-
-(define-syntax contract-symbolic
-  (syntax-parser
-    [(_ ctc:expr)
-     #`(perform-or-error
-        'contract-symbolic
-        (λ ()
-          (send #,(compile-contract (expand-contract #'ctc))
-                symbolic)))]))
 
 (define (perform-or-error name thk)
   (define result (thk))

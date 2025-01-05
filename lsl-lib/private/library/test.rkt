@@ -11,7 +11,6 @@
                      syntax/parse/class/struct-id)
          racket/stxparam
          racket/class
-         (prefix-in ^ rosette/safe)
          (except-in racket/contract blame?)
          racket/match
          racket/provide
@@ -46,8 +45,7 @@
    $check-raises
 
    $contracted?
-   $check-contract
-   $verify-contract)))
+   $check-contract)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test environments
@@ -58,8 +56,7 @@
   (define anon-tests null)
   (define test-suites null)
 
-  (define (push-form! raw-stx [suite-name #f])
-    (define stx #`(with-vc-reset #,raw-stx))
+  (define (push-form! stx [suite-name #f])
     (match (syntax-local-context)
       [(or 'top-level (? (λ _ (syntax-parameter-value #'dont-push?))))
        stx]
@@ -74,7 +71,7 @@
           (set! test-suites (cons (cons suite-name stx) test-suites))
           #'(void)])]
       [(or 'expression (? list?))
-       (raise-syntax-error 'check "a test cannot be inside a definition or expression" raw-stx)])))
+       (raise-syntax-error 'check "a test cannot be inside a definition or expression" stx)])))
 
 (define-syntax $with-tests
   (syntax-parser
@@ -244,28 +241,13 @@
   (define ctc (proxy->contract val))
   (if ctc
       (for ([fuel (in-range 2 (+ n 2))])
-        (check-or-verify-contract
+        (do-check-contract
          ctc val name
          (λ (ctc) (send ctc generate (scale-fuel fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
 
-(define-syntax ($verify-contract stx)
-  (syntax-parse stx
-    [(_ name:id)
-     #:with thk-body (syntax/loc stx (verify-contract name 'name))
-     (push-form!
-      #'(with-default-check-info*
-          (list (make-check-params (list name)))
-          (λ () thk-body)))]))
-
-(define-check (verify-contract val name)
-  (define ctc (proxy->contract val))
-  (if ctc
-      (check-or-verify-contract ctc val name symbolic-mode)
-      (fail-check (format "unknown contract for ~a" name))))
-
-(define (check-or-verify-contract ctc val name mode)
-  (match (send ctc interact val name mode)
+(define (do-check-contract ctc val name contract->value)
+  (match (send ctc interact val name contract->value)
     [(list eg exn)
      (fail-check (format VERIFY-FMT eg (indent (exn-message exn))))]
     [(none)

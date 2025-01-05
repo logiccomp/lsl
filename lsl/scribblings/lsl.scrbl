@@ -37,9 +37,8 @@ Intermediate Student Language (ISL)
 from @emph{How to Design Programs}
 with features that support formally reasoning about programs.
 In particular,
-LSL tightly integrates contracts,
-property-based randomized testing,
-and symbolic execution.
+LSL tightly integrates contracts
+and property-based randomized testing.
 
 @section{Inherited from ISL}
 
@@ -163,8 +162,7 @@ putting @racket[check-expect] or similar at the top-level.
                  (generate (lambda (fuel) (* 2 (random (add1 fuel)))))
                  (shrink (lambda (fuel x)
 	                   (let ([y (/ x 2)])
-                             (if (even? y) y (sub1 y)))))
-                 (symbolic (lambda () (* 2 (contract-symbolic Integer))))))]
+                             (if (even? y) y (sub1 y)))))))]
 
   @defsubform[(check predicate-expr)]{
     The @racket[predicate-expr] is expected to produce a predicate
@@ -185,12 +183,6 @@ putting @racket[check-expect] or similar at the top-level.
     The @racket[shrink-expr] function takes two arguments,
     fuel and a value to shrink. The value to shrink is
     guaranteed to satisfy the contract.
-  }
-
-  @defsubform[(symbolic sym-expr)]{
-    The @racket[sym-expr] function takes no arguments
-    and produces a symbolic value that represents
-    @emph{all} values that satisfy the contract.
   }
 }
 
@@ -225,7 +217,7 @@ putting @racket[check-expect] or similar at the top-level.
   @defsubform[(raises exn-id)]{
     Permits the @racket[exn-id] struct to be raised in the function.
     Such exceptions are not considered failures
-    during property-based testing and symbolic execution.
+    during property-based testing.
   }
 }
 
@@ -420,26 +412,6 @@ putting @racket[check-expect] or similar at the top-level.
   using the supplied fuel.
   @examples[#:eval evaluator #:label #f
     (contract-generate Even)]
-}
-
-@section{Verification via Symbolic Execution}
-
-@defform[(verify-contract id)]{
-  Similar to @racket[check-contract],
-  except it uses symbolic execution
-  try and break the contract.
-  @examples[#:eval evaluator #:label #f
-    (: usually-fine (-> Integer Even))
-    (define (usually-fine x)
-      (if (= x 1000) 17 (* 2 x)))
-    (verify-contract usually-fine)]
-}
-
-@defform[(contract-symbolic contract)]{
-  Returns a symbolic value that represents
-  all values satisfying the given contract.
-  @examples[#:eval evaluator #:label #f
-    (contract-symbolic Even)]
 }
 
 @section{State Machines}
