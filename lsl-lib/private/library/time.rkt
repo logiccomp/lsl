@@ -16,7 +16,7 @@
 ;; definitions
 
 (define SAMPLES 1000)
-(define LEVEL 0.0001)
+(define LEVEL 0.000001)
 
 (define (distinguishable? thk1 thk2)
   (collect-garbage 'major)
