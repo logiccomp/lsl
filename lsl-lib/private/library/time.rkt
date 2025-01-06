@@ -27,17 +27,15 @@
           (measure thk1)
           (measure thk2))))
   (define thk1-vals
-    (clamp-to-iqr
-     (for/list ([val (in-list all-vals)]
-                [k (in-naturals)]
-                #:when (even? k))
-       val)))
+    (for/list ([val (in-list all-vals)]
+               [k (in-naturals)]
+               #:when (even? k))
+      val))
   (define thk2-vals
-    (clamp-to-iqr
-     (for/list ([val (in-list all-vals)]
-                [k (in-naturals)]
-                #:when (odd? k))
-       val)))
+    (for/list ([val (in-list all-vals)]
+               [k (in-naturals)]
+               #:when (odd? k))
+      val))
   (if (and (= (length (remove-duplicates thk1-vals)) 1)
            (= (length (remove-duplicates thk2-vals)) 1))
       (not (equal? (first thk1-vals) (first thk2-vals)))
