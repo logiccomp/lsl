@@ -5,7 +5,6 @@
 
 (require (except-in plot ticks)
          racket/list
-         syntax/parse/define
          "private/library/time.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,7 +26,7 @@
       (define name (or (object-name f) '???))
       (define results
         (for/list ([arg (in-list args)])
-          (ticks (λ () (f arg)))))
+          (measure (λ () (f arg)))))
       (points (map vector (range (length args)) results)
               #:color k
               #:fill-color k

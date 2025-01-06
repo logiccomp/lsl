@@ -497,9 +497,11 @@ putting @racket[check-expect] or similar at the top-level.
 
 @section{Resources}
 
-@defproc[(ticks [thunk (-> any/c)]) integer?]{
-  Returns a unitless quantity that represents
-  how much "time" it takes to execute @racket[thunk].
+@defproc[(distinguishable? [thunk1 (-> any/c)] [thunk2 (-> any/c)]) boolean?]{
+  Returns a Boolean that determines whether
+  @racket[thunk1] and @racket[thunk2]
+  are statistically distinguishable
+  by how much time they take.
 }
 
 @defproc[(visualize [args list?] [f (-> any/c any/c)]) any/c]{
