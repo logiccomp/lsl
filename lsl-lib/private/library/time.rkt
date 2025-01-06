@@ -15,7 +15,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(define SAMPLES 500)
+(define SAMPLES 1000)
 (define LEVEL 0.0001)
 
 (define (distinguishable? thk1 thk2)
