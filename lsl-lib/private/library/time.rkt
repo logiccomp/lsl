@@ -20,9 +20,9 @@
 
 (define (distinguishable? thk1 thk2)
   (collect-garbage 'major)
-  (define thk1-vals (map (λ _ (measure thk1)) (range SAMPLES)))
+  (define thk1-vals (drop (map (λ _ (measure thk1)) (range SAMPLES)) 50))
   (collect-garbage 'major)
-  (define thk2-vals (map (λ _ (measure thk2)) (range SAMPLES)))
+  (define thk2-vals (drop (map (λ _ (measure thk2)) (range SAMPLES)) 50))
   (when (and (= (length (remove-duplicates thk1-vals)) 1)
              (= (length (remove-duplicates thk2-vals)) 1))
     (error 'distinguishable? "not enough variance to detect difference (try larger input sizes)"))
