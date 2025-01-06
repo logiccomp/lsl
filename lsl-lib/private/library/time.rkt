@@ -15,7 +15,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
-(define SAMPLES 1000)
+(define SAMPLES 500)
 (define LEVEL 0.0001)
 
 ;; Alternatively measure `thk1` and `thk2` to reduce correlation.
