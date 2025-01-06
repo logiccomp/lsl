@@ -11,8 +11,7 @@
 ;; dependencies
 
 (define deps
-  '("math-lib"
-    "gui-lib"
+  '("gui-lib"
     "t-test"
     "gui-easy-lib"
     "metapict"

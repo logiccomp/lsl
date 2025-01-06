@@ -10,15 +10,15 @@
 ;; require
 
 (require t-test
-         math/statistics
          racket/list)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
 (define SAMPLES 1000)
-(define LEVEL 0.000001)
+(define LEVEL 0.0001)
 
+;; Alternatively measure `thk1` and `thk2` to reduce correlation.
 (define (distinguishable? thk1 thk2)
   (collect-garbage 'major)
   (define all-vals
@@ -45,8 +45,3 @@
   (define-values (_results cpu _real _gc)
     (time-apply thk '()))
   cpu)
-
-(define (clamp-to-iqr vals)
-  (define q1 (quantile 0.25 < vals))
-  (define q3 (quantile 0.75 < vals))
-  (filter (λ (x) (<= q1 x q3)) vals))
