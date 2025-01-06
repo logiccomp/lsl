@@ -21,9 +21,23 @@
 
 (define (distinguishable? thk1 thk2)
   (collect-garbage 'major)
-  (define thk1-vals (clamp-to-iqr (map (λ _ (measure thk1)) (range SAMPLES))))
-  (collect-garbage 'major)
-  (define thk2-vals (clamp-to-iqr (map (λ _ (measure thk2)) (range SAMPLES))))
+  (define all-vals
+    (for/list ([k (in-range (* SAMPLES 2))])
+      (if (even? k)
+          (measure thk1)
+          (measure thk2))))
+  (define thk1-vals
+    (clamp-to-iqr
+     (for/list ([val (in-list all-vals)]
+                [k (in-naturals)]
+                #:when (even? k))
+       val)))
+  (define thk2-vals
+    (clamp-to-iqr
+     (for/list ([val (in-list all-vals)]
+                [k (in-naturals)]
+                #:when (odd? k))
+       val)))
   (if (and (= (length (remove-duplicates thk1-vals)) 1)
            (= (length (remove-duplicates thk2-vals)) 1))
       (not (equal? (first thk1-vals) (first thk2-vals)))
