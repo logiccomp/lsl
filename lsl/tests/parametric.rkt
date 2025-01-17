@@ -97,7 +97,7 @@
    "expected: number?"
 
    (run (define-struct foo [x])
-        (: f (-> (Foo Integer) (Foo Integer)))
+        (: f (-> (Struct foo [Integer]) (Struct foo [Integer])))
         (define (f x) x)
         (foo-x (f (make-foo 10))))
    10
@@ -105,6 +105,8 @@
    #:t
    (run* (define-struct leaf [value])
          (define-struct node [left right])
+         (define-contract (Leaf X) (Struct leaf [X]))
+         (define-contract (Node X Y) (Struct node [X Y]))
          (define-contract (Tree X) (OneOf (Leaf X) (Node (Tree X) (Tree X))))
          (: tree-map (All (X Y) (-> (-> X Y) (Tree X) (Tree Y))))
          (define (tree-map f t)
@@ -132,9 +134,10 @@
 
         (define-contract Counter
           (Exists (T)
-                  (CounterPkg (-> T)
-                              (-> T T)
-                              (-> T Natural))))
+            (Struct counter-pkg
+                    [(-> T)
+                     (-> T T)
+                     (-> T Natural)])))
 
         (: nat-counter Counter)
         (define-package nat-counter
@@ -152,7 +155,7 @@
    #:x
    (run* (define-struct counter-pkg (make))
          (define-contract Counter
-           (Exists (T) (CounterPkg (-> T))))
+           (Exists (T) (Struct counter-pkg [(-> T)])))
 
          (: nat-counter Counter)
          (define-package nat-counter
@@ -169,7 +172,7 @@
    #:x
    (run* (define-struct counter-pkg (f))
          (define-contract Counter
-           (Exists (T) (CounterPkg (-> T Any))))
+           (Exists (T) (Struct counter-pkg [(-> T Any)])))
 
          (: nat-counter Counter)
          (define-package nat-counter

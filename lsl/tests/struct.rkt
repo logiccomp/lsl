@@ -76,14 +76,14 @@
    "(make-foo 7)"
 
    (run (define-struct foo (x))
-        (: f (-> (Foo Integer) Integer))
+        (: f (-> (Struct foo (Integer)) Integer))
         (define (f st) (foo-x st))
         (f (make-foo 10)))
    10
 
    #:t
    (run (define-struct foo (x))
-        (: f (-> Any (Foo Integer)))
+        (: f (-> Any (Struct foo (Integer))))
         (define (f x) x)
         (define orig (make-foo 10))
         (define prox (f orig))
@@ -96,14 +96,16 @@
 
    #:? integer?
    (run (define-struct foo (x))
+        (define-contract (Foo X) (Struct foo (X)))
         (foo-x (contract-generate (Foo Integer))))
 
    (run (define-struct foo (x))
-        (foo-x (contract-shrink (Foo Integer) (make-foo 10))))
+        (foo-x (contract-shrink (Struct foo (Integer)) (make-foo 10))))
    5
 
    #:x
    (run (define-struct foo (x))
+        (define-contract (Foo X) (Struct foo (X)))
         (: f (-> Any (Foo Integer)))
         (define (f x) x)
         (set-foo-x! (f (make-foo 10)) ""))
@@ -111,6 +113,7 @@
 
    #:x
    (run (define-struct foo (x))
+        (define-contract (Foo X) (Struct foo (X)))
         (: f (-> Any (Foo Integer)))
         (define (f x) x)
         (define orig (make-foo 10))
@@ -121,7 +124,7 @@
 
    #:x
    (run (define-struct foo (x))
-        (: f (-> (Foo Integer) Integer))
+        (: f (-> (Struct foo (Integer)) Integer))
         (define (f st) (foo-x st))
         (f (make-foo 1/2)))
    "expected: Integer"

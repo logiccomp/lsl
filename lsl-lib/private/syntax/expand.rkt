@@ -91,10 +91,10 @@
          (define/syntax-parse (e^ ...)
            (stx-map expand-contract #'(e ...)))
          #'(AllOf e^ ...)]
-        [(Struct ~! s:struct-id e:expr ...)
+        [(Struct ~! s:struct-id (e:expr ...))
          (define/syntax-parse (e^ ...)
            (stx-map expand-contract #'(e ...)))
-         #'(Struct s e^ ...)]
+         #'(Struct s (e^ ...))]
         [(List ~! e:expr)
          (define/syntax-parse e^ (expand-contract #'e))
          #'(List e^)]
@@ -190,7 +190,7 @@
         (immutable-free-id-set (syntax-e #'(x ...))))]
       [(OneOf e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
       [(AllOf e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
-      [(Struct s:struct-id e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
+      [(Struct s:struct-id (e:expr ...)) (free-id-set-union* (stx-map fvs #'(e ...)))]
       [(List e:expr) (fvs #'e)]
       [(Tuple e:expr ...) (free-id-set-union* (stx-map fvs #'(e ...)))]
       [(Recursive x:id e:expr)
