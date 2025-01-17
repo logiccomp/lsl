@@ -263,11 +263,9 @@ putting @racket[check-expect] or similar at the top-level.
 
 @defform[(Struct struct-id (field-contract ...))]{
   Struct contracts describe each individual field on the struct.
-  Each struct definition automatically generates a shorthand
-  for such a contract, as such:
   @examples[#:eval evaluator #:label #f
     (define-struct my-point (x y))
-    (contract-generate (MyPoint Integer Integer))]
+    (contract-generate (Struct my-point [Integer Integer]))]
 }
 
 @defform[(All (id ...) contract)]{

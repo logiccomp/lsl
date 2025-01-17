@@ -12,11 +12,11 @@
  (rename-out
   [process-macro process])
  Process
- (rename-out [Packet~ Packet]
-             [SendPacket~ SendPacket]
-             [ReceivePacket~ ReceivePacket]
-             [Action~ Action]
-             [make-action action]
+ Packet
+ SendPacket
+ ReceivePacket
+ Action
+ (rename-out [make-action action]
              [make-send-packet send-packet]
              [make-receive-packet receive-packet])
  packet-from
@@ -71,17 +71,17 @@
 
 (define-contract Process process?)
 
-(define-contract (Packet~ S)
-  (Struct packet String String S))
+(define-contract (Packet S)
+  (Struct packet (String String S)))
 
-(define-contract (SendPacket~ S)
-  (Struct send-packet String S))
+(define-contract (SendPacket S)
+  (Struct send-packet (String S)))
 
-(define-contract (ReceivePacket~ S)
-  (Struct receive-packet String S))
+(define-contract (ReceivePacket S)
+  (Struct receive-packet (String S)))
 
-(define-contract (Action~ S)
-  (Struct action S (List (SendPacket~ Any))))
+(define-contract (Action S)
+  (Struct action (S (List (SendPacket Any)))))
 
 (define (action/c names)
   (and/c

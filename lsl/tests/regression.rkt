@@ -13,6 +13,7 @@
   (chk
    #:t (run (: f (-> (AllOf) Any)) (define (f x) 10) #t)
    #:t (run (define-struct foo (x))
+            (define-contract (Foo X) (Struct foo (X)))
             (: f (-> (Foo Integer) (Foo Integer)))
             (define (f x) x)
             (and (equal? (make-foo 10) (make-foo 10))
@@ -41,7 +42,7 @@
    "FAILURE"
    #:x (run (define-struct foo (x))
             (define-struct bar (x y))
-            (: f (-> (Foo Integer) Any))
+            (: f (-> (Struct foo (Integer)) Any))
             (define (f x) x)
             (bar-y (f (make-foo 10))))
    "expected: bar?"
@@ -51,6 +52,7 @@
             (foo 10))
    "expected a finished contract, but found a template"
    #:x (run* (define-struct posn (x y))
+             (define-contract (Posn X Y) (Struct posn (X Y)))
              (: f (-> (List (Posn Natural Natural)) Any))
              (define (f m)
                (if (empty? m) '()
@@ -89,7 +91,7 @@
         (define x (make-foo 1))
         (: L (List Any))
         (define L empty)
-        (: f (-> (Foo Any) (Record L)))
+        (: f (-> (Immediate (check foo?)) (Record L)))
         (define (f x)
           (begin (set-foo-v! x 2)
                  x))

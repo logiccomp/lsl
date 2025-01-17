@@ -96,7 +96,7 @@
    #:do (define node '(define-struct node (left value right)))
    #:do (define tree-sexp
           '(define-contract (Tree X)
-             (OneOf X (Node (Tree X) X (Tree X)))))
+             (OneOf X (Struct node ((Tree X) X (Tree X))))))
    #:do (define sum-sexp
           '(define (sum x)
              (if (integer? x)
@@ -107,7 +107,7 @@
 
    (run/sexp node
              '(define-contract IntTree
-               (OneOf Integer (Node IntTree Integer IntTree)))
+               (OneOf Integer (Struct node (IntTree Integer IntTree))))
              '(: sum (-> IntTree Integer))
              sum-sexp
              '(sum (make-node (make-node 1 2 3) 0 (make-node (make-node 4 5 6) 7 8))))
@@ -133,10 +133,9 @@
                '(int-tree? (contract-generate (Tree Integer)))))
 
    (run (define-struct counter (incr get))
-        (define-contract Counter~
-          (Counter (-> Counter~)
-                   (-> Natural)))
-        (: new-counter (-> Natural Counter~))
+        (define-contract Counter
+          (Struct counter ((-> Counter) (-> Natural))))
+        (: new-counter (-> Natural Counter))
         (define (new-counter n)
           (make-counter (λ () (new-counter (add1 n)))
                         (λ () n)))
@@ -149,7 +148,7 @@
    #:x
    (run/sexp node
              '(define-contract IntTree
-               (OneOf Integer (Node IntTree Integer IntTree)))
+               (OneOf Integer (Struct node (IntTree Integer IntTree))))
              '(: sum (-> IntTree Integer))
              sum-sexp
              '(sum (make-node (make-node 1 2 #f) 0 (make-node (make-node 4 5 6) 7 8))))
@@ -163,7 +162,7 @@
    #:x
    (run/sexp node
              '(define-contract (Tree X)
-               (OneOf X (Node (Tree Boolean) X (Tree X))))
+               (OneOf X (Struct node ((Tree Boolean) X (Tree X)))))
              '(: sum (-> (Tree Integer) Integer))
              sum-sexp)
    "must be exactly (Tree Integer)"
@@ -172,8 +171,7 @@
           (incr get))
 
         (define-interface Counter
-          (CounterObj (-> Counter)
-                      (-> Natural)))
+          (Struct counter-obj ((-> Counter) (-> Natural))))
 
         (: nat-counter (-> Counter))
         (define (nat-counter)

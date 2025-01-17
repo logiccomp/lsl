@@ -106,7 +106,7 @@
        #'(new allof-contract%
               [syntax quoted-stx]
               [conjuncts (list e^ ...)])]
-      [(Struct s:struct-id e ...)
+      [(Struct s:struct-id (e ...))
        (define/syntax-parse (e^ ...) (stx-map compile-contract #'(e ...)))
        #'(new struct-contract%
               [syntax quoted-stx]

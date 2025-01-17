@@ -100,7 +100,7 @@
     #:expression
     (syntax-parse stx
       #:literal-sets (contract-literal)
-      [(Exists (x) (Struct s:struct-id e ...))
+      [(Exists (x) (Struct s:struct-id (e ...)))
        #:with (?pkg-fld ...)
        (derived-field-names name #'s (attribute s.accessor-id))
        #`(begin (define ?pkg-fld (s.accessor-id #,pkg-name)) ...)]
@@ -155,7 +155,7 @@
     #:expression
     (syntax-parse stx
       #:literal-sets (contract-literal)
-      [(Recursive x (Struct s:struct-id e ...))
+      [(Recursive x (Struct s:struct-id (e ...)))
        #:with (?meth ...)
        (derived-field-names (camel->kebab name) #'s (attribute s.accessor-id))
        #'(begin

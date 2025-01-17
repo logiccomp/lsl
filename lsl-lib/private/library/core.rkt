@@ -170,12 +170,12 @@
   (define (struct-contract-macro sname)
     (syntax-parser
       [(_ ctc ...)
-       #`(Struct #,sname ctc ...)])))
+       #`(Struct #,sname (ctc ...))])))
 
 (define-syntax $define-struct
   (syntax-parser
     [(_ name:id (field:id ...))
-     #:with Name (kebab->camel #'name)
+     ;#:with Name (kebab->camel #'name)
      #:with (k ...)
      (for/list ([k (in-naturals)] [field-id (in-syntax #'(field ...))])
        #`(#%datum . #,k))
@@ -184,7 +184,7 @@
      #:with (_ _ _ mut ...)
      (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
      #'(begin
-         (define-syntax Name
+         #;(define-syntax Name
            (contract-macro
             (struct-contract-macro #'name)))
          (struct name root (field ...)
