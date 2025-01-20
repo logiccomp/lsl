@@ -5,10 +5,12 @@
 
 (provide tyche-button)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require racket/class
+         racket/gui
          pict)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -16,9 +18,13 @@
 
 (define tyche-button
   (list
-   "Press Me!"
+   "Launch Tyche"
    (pict->bitmap (standard-fish 32 16 #:color "salmon"))
    (λ (window)
-     (define editor (send window get-interactions-text))
-     (send editor insert "Ouch!"))
+     (define editor (send window get-definitions-text))
+     (define tmp (make-temporary-file))
+     (with-output-to-file tmp (lambda () (write-string (editor->string editor))) #:exists 'replace))
    #f))
+
+(define (editor->string ed)
+  (send ed get-text))
