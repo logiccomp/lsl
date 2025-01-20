@@ -224,26 +224,35 @@
 (define ($contracted? p)
   (if (proxy->contract p) #t #f))
 
+(define default-size 
+    (lambda (fuel) fuel))
+
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ name:id (~optional n:number #:defaults ([n #'100])))
-     #:with thk-body (syntax/loc stx (check-contract name 'name n))
+    [(_ name:id 
+        (~optional n:number #:defaults ([n #'100]))
+        (~optional (~seq #:size size:expr) #:defaults ([size #'default-size])))
+     #:with thk-body (syntax/loc stx (check-contract name 'name n size))
      (push-form!
       #'(with-default-check-info*
           (list (make-check-params (list name (~? n))))
           (λ () (parameterize ([current-logs #f]) thk-body))))]))
 
-;; TODO: parameterize by scaling?
-(define (scale-fuel x)
-  (if (zero? x) x (inexact->exact (ceiling (log x)))))
+(define (scale-fuel size n)
+  (if (procedure? size)
+    (size n)
+    (if (number? size)
+      size
+      (fail-check "Expected procedure or number for size parameter"))))
 
-(define-check (check-contract val name n)
+
+(define-check (check-contract val name n size)
   (define ctc (proxy->contract val))
   (if ctc
       (for ([fuel (in-range 2 (+ n 2))])
         (do-check-contract
          ctc val name
-         (λ (ctc) (send ctc generate (scale-fuel fuel)))))
+         (λ (ctc) (send ctc generate (scale-fuel size fuel)))))
       (fail-check (format "unknown contract for ~a" name))))
 
 (define (do-check-contract ctc val name contract->value)
