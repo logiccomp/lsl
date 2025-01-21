@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/tyche-extension/static/css/main.css",
+    "main.js": "/tyche-extension/static/js/main.js",
+    "static/media/codicon.ttf?": "/tyche-extension/static/media/codicon.4aaddb7331018c430116.ttf",
+    "index.html": "/tyche-extension/index.html",
+    "main.css.map": "/tyche-extension/static/css/main.css.map",
+    "main.js.map": "/tyche-extension/static/js/main.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.css",
+    "static/js/main.js"
+  ]
+}
