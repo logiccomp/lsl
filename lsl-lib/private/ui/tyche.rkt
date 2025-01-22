@@ -9,14 +9,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require json
-         racket/class
-         racket/gui
-         racket/runtime-path
+(require images/icons/misc
+         json
          net/sendurl
-         pict)
-
-(require "tyche-core.rkt")
+         racket/gui
+         racket/runtime-path)
 
 (define-runtime-path tyche-site "./site/index.html")
 (define-runtime-path tyche-data.js "./site/static/js/data.js")
@@ -26,8 +23,8 @@
 
 (define tyche-button
   (list
-   "Launch Tyche"
-   (pict->bitmap (standard-fish 32 16 #:color "salmon"))
+   "Tyche"
+   (magnifying-glass-icon #:height 16)
    (λ (window)
      (define editor (send window get-definitions-text))
      (define tmp (make-temporary-file))
@@ -47,3 +44,9 @@
 (define (hash-to-json-string hash)
   (let ([json-data (jsexpr->string hash)])
     (string-append "var MY_GLOBAL = " json-data)))
+
+;; process-prog : Path -> OpenPBTStats
+;; Produces an OpenPBTStats JSON representing the results of
+;; running the PBT in the given LSL file.
+(define (process-prog f)
+  ((hash-ref (dynamic-require f 'run-tests) 'tyche)))

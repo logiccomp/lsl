@@ -76,18 +76,27 @@
         (contract->value (apply dom acc)))
       (define args (list-update-many domains domain-order dom-apply))
       (cond
-        [(ormap none? args) #f]
+        ;; Failed generation
+        [(ormap none? args)
+         (none)]
         [else
          (define init-exn (fail-exn val args))
+         (define args-fmt
+           (if (empty? args)
+               (format "(~a)" name)
+               (format "(~a ~a)" name (string-join (map ~v args)))))
          (cond
+           ;; Found counterexample
            [init-exn
             (define-values (best-args best-exn)
               (find-best-args val args init-exn))
             (list (if (empty? best-args)
                       (format "(~a)" name)
                       (format "(~a ~a)" name (string-join (map ~v best-args))))
+                  args-fmt
                   best-exn)]
-           [else #f])]))
+           ;; Good test
+           [else args-fmt])]))
 
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))

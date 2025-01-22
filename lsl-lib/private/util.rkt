@@ -21,6 +21,7 @@
          (struct-out none)
          (struct-out base-seal)
          current-logs
+         current-pbt-stats
          λ/memoize
          repeat/fuel
          any?
@@ -35,6 +36,7 @@
 (struct base-seal ())
 
 (define current-logs (make-parameter #f))
+(define current-pbt-stats (make-parameter #f))
 (define current-allowed-exns (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

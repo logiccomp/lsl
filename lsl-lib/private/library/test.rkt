@@ -9,6 +9,7 @@
                      syntax/id-table
                      syntax/parse
                      syntax/parse/class/struct-id)
+         racket/format
          racket/stxparam
          racket/class
          (except-in racket/contract blame?)
@@ -98,6 +99,10 @@
            (syntax-parameterize ([dont-push? #t])
              (hash (~@ (#%datum . name) (λ () (run-test suite))) ...
                    #f run-anon-tests
+                   'tyche (λ ()
+                            (parameterize ([current-pbt-stats (list)])
+                              (run-anon-tests)
+                              (reverse (current-pbt-stats))))
                    'logs (λ ()
                            (parameterize ([current-logs (hash)])
                              (run-anon-tests)
@@ -224,12 +229,12 @@
 (define ($contracted? p)
   (if (proxy->contract p) #t #f))
 
-(define default-size 
+(define default-size
     (lambda (fuel) fuel))
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ name:id 
+    [(_ name:id
         (~optional n:number #:defaults ([n #'100]))
         (~optional (~seq #:size size:expr) #:defaults ([size #'default-size])))
      #:with thk-body (syntax/loc stx (check-contract name 'name n size))
@@ -238,31 +243,50 @@
           (list (make-check-params (list name (~? n))))
           (λ () (parameterize ([current-logs #f]) thk-body))))]))
 
-(define (scale-fuel size n)
+(define (get-fuel size n)
   (if (procedure? size)
-    (size n)
-    (if (number? size)
-      size
-      (fail-check "Expected procedure or number for size parameter"))))
-
+      (size n)
+      (if (number? size)
+          size
+          (fail-check "Expected procedure or number for size parameter"))))
 
 (define-check (check-contract val name n size)
   (define ctc (proxy->contract val))
+  (define time (floor (current-inexact-monotonic-milliseconds)))
   (if ctc
-      (for ([fuel (in-range 2 (+ n 2))])
+      (for ([iter (in-range 2 (+ n 2))])
         (do-check-contract
-         ctc val name
-         (λ (ctc) (send ctc generate (scale-fuel size fuel)))))
+         ctc val name time
+         (λ (ctc)
+           (send ctc generate (get-fuel size iter)))))
       (fail-check (format "unknown contract for ~a" name))))
 
-(define (do-check-contract ctc val name contract->value)
+(define (push-stats! ht)
+  (current-pbt-stats (cons ht (current-pbt-stats))))
+
+(define (do-check-contract ctc val name time contract->value)
+  (define tyche? (current-pbt-stats))
+  (define base-hash
+    (hash 'type "test_case"
+          'run_start time
+          'status_reason ""
+          'features (hash)
+          'coverage "no_coverage_info"
+          'metadata (hash)
+          'property (~a name)))
   (match (send ctc interact val name contract->value)
-    [(list eg exn)
-     (fail-check (format VERIFY-FMT eg (indent (exn-message exn))))]
+    [(list shrunk-eg init-eg exn)
+     (if tyche?
+         (push-stats! (hash-set* base-hash 'status "failed" 'representation (~a init-eg)))
+         (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
     [(none)
-     (fail-check "failed to generate values associated with contract")]
-    [#f
-     (void)]))
+     (if tyche?
+         (push-stats! (hash-set* base-hash 'status "gave_up"))
+         (fail-check "failed to generate values associated with contract"))]
+    [(? string? pass-eg)
+     (if tyche?
+         (push-stats! (hash-set* base-hash 'status "passed" 'representation (~a pass-eg)))
+         (void))]))
 
 (define (indent str)
   (string-append "  " (string-replace str "\n" "\n    ")))
