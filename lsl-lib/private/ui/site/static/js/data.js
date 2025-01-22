@@ -1,11 +1,1 @@
-var MY_GLOBAL = {
-  "type":"test_case",
-  "run_start":1,
-  "property":"example_property",
-  "status":"passed",
-  "status_reason":"example_reason",
-  "representation":"example_representation",
-  "features":{},
-  "coverage":"no_coverage_info",
-  "metadata":{}
-}
+var MY_GLOBAL = [{"coverage":"no_coverage_info","features":{},"metadata":{},"property":"example_property","representation":"2","run_start":1,"status":"passed","status_reason":"example_reason","type":"test_case"},{"coverage":"no_coverage_info","features":{},"metadata":{},"property":"example_property","representation":"1","run_start":1,"status":"failed","status_reason":"example_reason","type":"test_case"}]
