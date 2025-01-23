@@ -6,21 +6,18 @@
 (require (for-syntax racket/base
                      racket/list
                      racket/match
-                     syntax/id-table
                      syntax/parse
                      syntax/parse/class/struct-id)
-         racket/format
-         racket/stxparam
          racket/class
-         (except-in racket/contract blame?)
+         (except-in racket/contract
+                    blame?)
+         racket/format
          racket/match
          racket/provide
          racket/string
+         racket/stxparam
          rackunit
          rackunit/text-ui
-         "equal.rkt"
-         "../syntax/expand.rkt"
-         "../syntax/compile.rkt"
          "../contract/common.rkt"
          "../proxy.rkt"
          "../util.rkt")
@@ -275,17 +272,25 @@
           'metadata (hash)
           'property (~a name)))
   (match (send ctc interact val name contract->value)
-    [(list shrunk-eg init-eg exn)
+    [(list shrunk-eg init-eg feats exn)
      (if tyche?
-         (push-stats! (hash-set* base-hash 'status "failed" 'representation (~a init-eg)))
+         (push-stats!
+          (hash-set* base-hash
+                     'status "failed"
+                     'representation (~a init-eg)
+                     'features feats))
          (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
     [(none)
      (if tyche?
          (push-stats! (hash-set* base-hash 'status "gave_up"))
          (fail-check "failed to generate values associated with contract"))]
-    [(? string? pass-eg)
+    [(list pass-eg feats)
      (if tyche?
-         (push-stats! (hash-set* base-hash 'status "passed" 'representation (~a pass-eg)))
+         (push-stats!
+          (hash-set* base-hash
+                     'status "passed"
+                     'representation (~a pass-eg)
+                     'features feats))
          (void))]))
 
 (define (indent str)

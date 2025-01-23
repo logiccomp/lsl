@@ -77,17 +77,18 @@
       #:literal-sets (contract-literal immediate-literal function-literal)
       [(Immediate (check chk)
                   (generate gen)
-                  (shrink shk))
+                  (shrink shk)
+                  (feature feat))
        #'(new immediate-contract%
               [syntax quoted-stx]
               [checker chk]
               [generator gen]
-              [shrinker shk])]
+              [shrinker shk]
+              [feature feat])]
       [(Function (arguments [x fvs a] ...)
                  (result r)
                  (raises e:struct-id ...))
        #:with (k ...) (sort-indices #'stx #'(x ...) #'(fvs ...))
-       #:with r* #'(λ* (x ...) (compile-contract r))
        (define/syntax-parse (a^ ...) (stx-map compile-contract #'(a ...)))
        (define/syntax-parse r^ (compile-contract #'r))
        #'(new function-contract%

@@ -5,6 +5,7 @@
 
 (require racket/class
          racket/format
+         racket/function
          racket/list
          racket/set
          racket/string
@@ -73,8 +74,12 @@
 
     (define/override (interact val name contract->value)
       (define ((dom-apply acc k) dom)
-        (contract->value (apply dom acc)))
-      (define args (list-update-many domains domain-order dom-apply))
+        (define ctc (apply dom acc))
+        (define val (contract->value ctc))
+        (list val (send ctc describe val)))
+      (define args+feats (list-update-many domains domain-order dom-apply))
+      (define args (map first args+feats))
+      (define feats (filter (negate none?) (map second args+feats)))
       (cond
         ;; Failed generation
         [(ormap none? args)
@@ -94,9 +99,12 @@
                       (format "(~a)" name)
                       (format "(~a ~a)" name (string-join (map ~v best-args))))
                   args-fmt
+                  (make-immutable-hash feats)
                   best-exn)]
            ;; Good test
-           [else args-fmt])]))
+           [else
+            (list args-fmt
+                  (make-immutable-hash feats))])]))
 
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))

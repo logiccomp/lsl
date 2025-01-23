@@ -58,7 +58,10 @@
       (none))
 
     (define/public (interact val name mode)
-      (unimplemented-error 'interact))))
+      (unimplemented-error 'interact))
+
+    (define/public (describe val)
+      (none))))
 
 (define (unimplemented-error method-name)
   (raise-user-error method-name "is not implemented"))
