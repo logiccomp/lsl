@@ -79,7 +79,7 @@
         (list val (send ctc describe val)))
       (define args+feats (list-update-many domains domain-order dom-apply))
       (define args (map first args+feats))
-      (define feats (filter (negate none?) (map second args+feats)))
+      (define feats (append-map second args+feats))
       (cond
         ;; Failed generation
         [(ormap none? args)

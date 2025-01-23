@@ -61,7 +61,7 @@
       (unimplemented-error 'interact))
 
     (define/public (describe val)
-      (none))))
+      (list))))
 
 (define (unimplemented-error method-name)
   (raise-user-error method-name "is not implemented"))

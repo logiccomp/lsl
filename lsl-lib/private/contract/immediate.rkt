@@ -41,6 +41,6 @@
       #f)
 
     (define/override (describe val)
-      (match feature
-        [(list name func) (cons (string->symbol name) (func val))]
-        [#f (none)]))))
+      (for/list ([feat (in-list feature)])
+        (match-define (list name func) feat)
+        (cons (string->symbol name) (func val))))))
