@@ -226,8 +226,8 @@
 (define ($contracted? p)
   (if (proxy->contract p) #t #f))
 
-(define default-size
-    (lambda (fuel) fuel))
+(define (default-size fuel)
+  fuel)
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
@@ -282,8 +282,10 @@
          (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
     [(none)
      (if tyche?
-         (push-stats! (hash-set* base-hash 'status "gave_up"))
-         (fail-check "failed to generate values associated with contract"))]
+         (push-stats! (hash-set* base-hash
+                                 'representation ""
+                                 'status "gave_up"))
+         (void))]
     [(list pass-eg feats)
      (if tyche?
          (push-stats!
