@@ -159,9 +159,10 @@ putting @racket[check-expect] or similar at the top-level.
   @examples[#:eval evaluator #:no-prompt #:label #f
     (define-contract Even
       (Immediate (check (lambda (x) (and (integer? x) (even? x))))
-                 (generate (lambda (fuel) (* 2 (random (add1 fuel)))))
+                 (generate (lambda (fuel) (* 2 (contract-generate Integer fuel))))
+                 (feature "positive?" positive?)
                  (shrink (lambda (fuel x)
-	                   (let ([y (/ x 2)])
+                           (let ([y (/ x 2)])
                              (if (even? y) y (sub1 y)))))))]
 
   @defsubform[(check predicate-expr)]{
@@ -177,6 +178,13 @@ putting @racket[check-expect] or similar at the top-level.
     Fuel provides a rough measure of how
     hard the generator is willing to work
     to produce a value.
+  }
+
+  @defsubform[(feature name-string feature-expr)]{
+    The @racket[feature-expr] function takes one argument,
+    a value satisfying the contract. It then computes some
+    property of that value for use in Tyche.
+    An @racket[Immediate] can have more than one @racket[feature].
   }
 
   @defsubform[(shrink shrink-expr)]{
