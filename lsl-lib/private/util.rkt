@@ -18,7 +18,9 @@
                      camel->kebab
                      contract-table-ref
                      contract-table-set!)
-         (struct-out none)
+         (rename-out [make-none none])
+         none?
+         none-witness
          (struct-out base-seal)
          current-logs
          current-pbt-stats
@@ -32,8 +34,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
 
-(struct none ())
+(struct none (witness))
 (struct base-seal ())
+
+(define (make-none [witness #f])
+  (none witness))
 
 (define current-logs (make-parameter #f))
 (define current-pbt-stats (make-parameter #f))
@@ -53,7 +58,7 @@
 
 (define (repeat/fuel f fuel)
   (cond
-    [(zero? fuel) (none)]
+    [(zero? fuel) (make-none)]
     [else
      (define x (f))
      (if (none? x) (repeat/fuel f (sub1 fuel)) x)]))

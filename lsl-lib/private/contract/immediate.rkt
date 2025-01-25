@@ -32,7 +32,11 @@
              (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
-      (if generator (generator fuel) (none)))
+      (cond
+        [generator
+         (define val (generator fuel))
+         (if (checker val) val (none val))]
+        [else (none)]))
 
     (define/override (shrink fuel val)
       (if shrinker (shrinker fuel val) (none)))
@@ -41,6 +45,7 @@
       #f)
 
     (define/override (describe val)
-      (for/list ([feat (in-list feature)])
+      (for/list ([feat (in-list feature)]
+                 #:unless (none? val))
         (match-define (list name func) feat)
         (cons (string->symbol name) (func val))))))

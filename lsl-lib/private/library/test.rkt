@@ -250,13 +250,18 @@
 (define-check (check-contract val name n size)
   (define ctc (proxy->contract val))
   (define time (floor (current-inexact-monotonic-milliseconds)))
-  (if ctc
-      (for ([iter (in-range 2 (+ n 2))])
-        (do-check-contract
-         ctc val name time
-         (λ (ctc)
-           (send ctc generate (get-fuel size iter)))))
-      (fail-check (format "unknown contract for ~a" name))))
+  (define tyche? (current-pbt-stats))
+  (cond
+    [ctc
+     (define sample-results
+       (for/list ([iter (in-range 2 (+ n 2))])
+         (do-check-contract
+          ctc val name time
+          (λ (ctc)
+            (send ctc generate (get-fuel size iter))))))
+     (unless (or (ormap values sample-results) tyche?)
+       (fail-check "failed to generate values associated with contract"))]
+     [else (fail-check (format "unknown contract for ~a" name))]))
 
 (define (push-stats! ht)
   (current-pbt-stats (cons ht (current-pbt-stats))))
@@ -280,12 +285,12 @@
                      'representation (~a init-eg)
                      'features feats))
          (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
-    [(none)
+    [(? none? val)
      (if tyche?
          (push-stats! (hash-set* base-hash
-                                 'representation ""
+                                 'representation (or (none-witness val) "")
                                  'status "gave_up"))
-         (void))]
+         #f)]
     [(list pass-eg feats)
      (if tyche?
          (push-stats!
@@ -293,7 +298,7 @@
                      'status "passed"
                      'representation (~a pass-eg)
                      'features feats))
-         (void))]))
+         #t)]))
 
 (define (indent str)
   (string-append "  " (string-replace str "\n" "\n    ")))

@@ -80,16 +80,25 @@
       (define args+feats (list-update-many domains domain-order dom-apply))
       (define args (map first args+feats))
       (define feats (append-map second args+feats))
+      (define args-str
+        (for/list ([arg (in-list args)])
+          (~v (if (none? arg)
+                  (none-witness arg)
+                  arg))))
+      (define args-fmt
+        (if (empty? args)
+            (format "(~a)" name)
+            (format "(~a ~a)" name (string-join args-str))))
       (cond
         ;; Failed generation
         [(ormap none? args)
-         (none)]
+         ;; TODO: Technically an invalid witness that happens to be false will be treated incorrectly...
+         (define any-gave-up? (findf (λ (x) (and (none? x) (not (none-witness x)))) args))
+         ;; Any argument generator absent, bail.
+         ;; Otherwise one is invalid and we'll show it in Tyche.
+         (if any-gave-up? (none) (none args-fmt))]
         [else
          (define init-exn (fail-exn val args))
-         (define args-fmt
-           (if (empty? args)
-               (format "(~a)" name)
-               (format "(~a ~a)" name (string-join (map ~v args)))))
          (cond
            ;; Found counterexample
            [init-exn
