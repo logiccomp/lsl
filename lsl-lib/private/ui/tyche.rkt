@@ -15,8 +15,8 @@
          racket/gui
          racket/runtime-path)
 
-(define-runtime-path tyche-site "./site/index.html")
-(define-runtime-path tyche-data.js "./site/static/js/data.js")
+(define-runtime-path tyche-site (build-path "site" "index.html"))
+(define-runtime-path tyche-data.js (build-path "site" "static" "js" "data.js"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; button
