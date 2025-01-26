@@ -39,7 +39,7 @@
   (send ed get-text))
 
 (define (open-html-in-browser file-path)
-  (send-url file-path))
+  (send-url/file file-path))
 
 (define (hash-to-json-string hash)
   (let ([json-data (jsexpr->string hash)])
