@@ -21,6 +21,7 @@
          (struct-out positive-blame)
          (struct-out negative-blame)
          contract%
+         current-disable-contract
          contract->predicate
          contract-error
          generate-error
@@ -68,6 +69,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; errors
+
+(define current-disable-contract (make-parameter #f))
 
 (define (contract-error ctc stx val blm
                         #:expected [expected #f]

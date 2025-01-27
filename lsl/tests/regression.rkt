@@ -111,4 +111,9 @@
             (set! f (lambda (x) x))
             (f 10))
    "expected: ∀Y"
+   (run (disable-contracts!)
+        (: f (-> Integer Integer))
+        (define (f x) x)
+        (f "hi"))
+   "hi"
    ))

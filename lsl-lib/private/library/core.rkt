@@ -35,6 +35,9 @@
  #%top
  quote
 
+ disable-contracts!
+ enable-contracts!
+
  (filtered-out
   (strip "$")
   (combine-out
@@ -162,6 +165,12 @@
   (raise (exn:fail:lsl:user (format "exception raised: ~v" v)
                             (current-continuation-marks)
                             v)))
+
+(define (disable-contracts!)
+  (current-disable-contract #t))
+
+(define (enable-contracts!)
+  (current-disable-contract #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; structs

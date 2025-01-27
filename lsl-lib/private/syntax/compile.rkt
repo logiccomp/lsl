@@ -172,9 +172,14 @@
              [neg (negative-blame name path)]
              [ctc #,(compiler ctc)]
              [val #,val])
-        ((send ctc protect val pos)
-         (maybe-wrap name val)
-         neg))))
+        (attach-contract-fn name pos neg ctc val))))
+
+(define (attach-contract-fn name pos neg ctc val)
+  (if (current-disable-contract)
+      val
+      ((send ctc protect val pos)
+       (maybe-wrap name val)
+       neg)))
 
 ;; TODO: Could be made robust.
 (define (maybe-wrap name val)
