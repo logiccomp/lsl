@@ -6,20 +6,17 @@
 (require (for-syntax racket/base
                      racket/list
                      racket/match
-                     syntax/id-table
                      syntax/parse
                      syntax/parse/class/struct-id)
-         racket/stxparam
          racket/class
-         (except-in racket/contract blame?)
+         (except-in racket/contract
+                    blame?)
          racket/match
          racket/provide
          racket/string
+         racket/stxparam
          rackunit
          rackunit/text-ui
-         "equal.rkt"
-         "../syntax/expand.rkt"
-         "../syntax/compile.rkt"
          "../contract/common.rkt"
          "../proxy.rkt"
          "../util.rkt")
@@ -224,14 +221,14 @@
 (define ($contracted? p)
   (if (proxy->contract p) #t #f))
 
-(define default-size 
-    (lambda (fuel) fuel))
+(define (default-size fuel)
+  fuel)
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ name:id 
-        (~optional n:number #:defaults ([n #'100]))
-        (~optional (~seq #:size size:expr) #:defaults ([size #'default-size])))
+    [(_ name:id) #'($check-contract name 100 default-size)]
+    [(_ name:id n:number) #'($check-contract name n default-size)]
+    [(_ name:id n:number size:expr)
      #:with thk-body (syntax/loc stx (check-contract name 'name n size))
      (push-form!
       #'(with-default-check-info*
@@ -239,12 +236,10 @@
           (λ () (parameterize ([current-logs #f]) thk-body))))]))
 
 (define (scale-fuel size n)
-  (if (procedure? size)
-    (size n)
-    (if (number? size)
-      size
-      (fail-check "Expected procedure or number for size parameter"))))
-
+  (match size
+    [(? procedure?) (size n)]
+    [(? number?) size]
+    [_ (fail-check "Expected procedure or number for size parameter")]))
 
 (define-check (check-contract val name n size)
   (define ctc (proxy->contract val))

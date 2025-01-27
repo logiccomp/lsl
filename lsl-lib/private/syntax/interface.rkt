@@ -7,18 +7,15 @@
                      racket/base
                      racket/function
                      racket/syntax
-                     syntax/id-table
                      syntax/parse
-                     syntax/parse/lib/function-header
-                     syntax/parse/class/struct-id)
-         (only-in automata/machine
-                  machine?)
+                     syntax/parse/class/struct-id
+                     syntax/parse/lib/function-header)
          racket/class
-         "grammar.rkt"
-         "expand.rkt"
-         "compile.rkt"
          "../contract/parametric.rkt"
-         "../util.rkt")
+         "../util.rkt"
+         "compile.rkt"
+         "expand.rkt"
+         "grammar.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide

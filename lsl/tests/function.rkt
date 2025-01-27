@@ -116,6 +116,10 @@
          (define (f e)
            (if (integer? e) e (raise (make-bad))))
          (check-contract f))
+   #:t
+   (run* (: f (-> Integer Integer))
+         (define (f x) x)
+         (check-contract f 100 5))
 
    #:x (run (: f (-> Integer Boolean))
             (define (f x) x)

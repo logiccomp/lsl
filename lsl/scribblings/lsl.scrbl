@@ -387,14 +387,18 @@ putting @racket[check-expect] or similar at the top-level.
 
 @section{Property-Based Randomized Testing}
 
-@defform[(check-contract id maybe-attempts)
-         #:grammar
-         [(maybe-attempts (code:line)
-                          nat-expr)]]{
+@defform*[[(check-contract id)
+           (check-contract id attempts)
+           (check-contract id attempts size-expr)]]{
   Attempts to break the contract placed on @racket[id]
   by randomly generating inputs.
   The number of times it attempts to do so is
-  controlled by @racket[maybe-attempts].
+  controlled by @racket[attempts].
+  The @racket[size-expr] controls the fuel given to
+  generators. If @racket[size-expr] is a number,
+  that is used as the fuel. If it is a procedure,
+  then it accepts the iteration number and
+  returns the fuel.
   @examples[#:eval evaluator #:label #f
     (: bigger-even (-> Integer Even))
     (define (bigger-even x)
