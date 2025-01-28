@@ -17,12 +17,16 @@
 (define (implode l)
   (apply string-append l))
 
+(define (slow-string=? s1 s2)
+  (begin (sleep 0.0001)
+         (string=? s1 s2)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
 (provide
  (contract-out
-  [string=? (-> string? string? any)])
+  [rename slow-string=? string=? (-> string? string? any)])
 
  explode
  implode
