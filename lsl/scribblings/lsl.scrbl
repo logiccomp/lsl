@@ -112,6 +112,27 @@ and property-based randomized testing.
   Mutates the variable @racket[id] with the value of @racket[expr].
 }
 
+@defform[(raise (make-struct-name ...))]{
+  Raises an exception, where @racket[make-struct-name] constructs a struct
+  that can have multiple arguments.
+  @examples[#:eval evaluator #:label #f
+  (define-struct foo ())
+  (eval:error (raise (make-foo)))]
+}
+
+@defform*[[(check-raises expression)
+          (check-raises expression structure-name)]]{
+  Checks that the @racket[expression] raises an exception via @racket[raise], where
+  the name of the struct raised in the exception matches @racket[structure-name], if it is present.
+  @examples[#:eval evaluator #:label #f
+  (define-struct foo ())
+  (define (always-raise) (raise (make-foo)))
+  (check-raises (always-raise))
+  (check-raises (always-raise) foo)
+  (define-struct bar ())
+  (check-raises (always-raise) bar)]
+}
+
 @section{Testing}
 
 @defform[(test-suite "name" ...)]{
