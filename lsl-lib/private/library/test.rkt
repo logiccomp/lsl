@@ -231,15 +231,9 @@
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-<<<<<<< HEAD
     [(_ name:id) #'($check-contract name 100 default-size)]
     [(_ name:id n:number) #'($check-contract name n default-size)]
     [(_ name:id n:number size:expr)
-=======
-    [(_ name:id
-        (~optional n:number #:defaults ([n #'100]))
-        (~optional (~seq #:size size:expr) #:defaults ([size #'default-size])))
->>>>>>> tyche
      #:with thk-body (syntax/loc stx (check-contract name 'name n size))
      (push-form!
       #'(with-default-check-info*
