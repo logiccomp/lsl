@@ -8,8 +8,6 @@
                      racket/syntax
                      ee-lib
                      syntax/stx
-                     syntax/apply-transformer
-                     syntax/id-table
                      syntax/id-set
                      syntax/parse
                      syntax/parse/class/struct-id
@@ -55,13 +53,16 @@
         #:literal-sets (contract-literal immediate-literal function-literal)
         [(Immediate ~! (~alt (~optional (check chk:expr))
                              (~optional (generate gen:expr))
-                             (~optional (shrink shk:expr))) ...)
+                             (~optional (shrink shk:expr))
+                             (feature feat-name:string feat:expr)) ...)
          (define/syntax-parse chk^ (expand-racket #'(~? chk (λ _ #t))))
          (define/syntax-parse gen^ (expand-racket #'(~? gen #f)))
          (define/syntax-parse shk^ (expand-racket #'(~? shk #f)))
+         (define/syntax-parse feat^ (expand-racket #'(list (list (#%datum . feat-name) feat) ...)))
          #'(Immediate (check (let-values () chk^))
                       (generate (let-values () gen^))
-                      (shrink (let-values () shk^)))]
+                      (shrink (let-values () shk^))
+                      (feature (let-values () feat^)))]
         [(Function ~! (~alt (~once (arguments [x:id a:expr] ...))
                             (~once (result r:expr))
                             (~optional (raises e:struct-id ...))) ...)
@@ -175,11 +176,13 @@
       #:literal-sets (contract-literal immediate-literal function-literal)
       [(Immediate (check chk:expr)
                   (generate gen:expr)
-                  (shrink shk:expr))
+                  (shrink shk:expr)
+                  (feature feat:expr))
        (free-id-set-union
         (immutable-free-id-set (free-vars #'chk))
         (immutable-free-id-set (free-vars #'gen))
-        (immutable-free-id-set (free-vars #'shk)))]
+        (immutable-free-id-set (free-vars #'shk))
+        (immutable-free-id-set (free-vars #'feat)))]
       [(Function (arguments [x:id (_:id ...) a:expr] ...)
                  (result r:expr)
                  (raises e:struct-id ...))

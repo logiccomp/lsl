@@ -4,6 +4,7 @@
 ;; require
 
 (require racket/class
+         racket/match
          "common.rkt"
          "../guard.rkt"
          "../util.rkt")
@@ -18,7 +19,7 @@
 
 (define immediate-contract%
   (class contract%
-    (init-field syntax checker [generator #f] [shrinker #f])
+    (init-field syntax checker [feature #f] [generator #f] [shrinker #f])
 
     (super-new)
 
@@ -31,10 +32,20 @@
              (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
-      (if generator (generator fuel) (none)))
+      (cond
+        [generator
+         (define val (generator fuel))
+         (if (checker val) val (none val))]
+        [else (none)]))
 
     (define/override (shrink fuel val)
       (if shrinker (shrinker fuel val) (none)))
 
     (define/override (interact val name mode)
-      #f)))
+      #f)
+
+    (define/override (describe val)
+      (for/list ([feat (in-list feature)]
+                 #:unless (none? val))
+        (match-define (list name func) feat)
+        (cons (string->symbol name) (func val))))))

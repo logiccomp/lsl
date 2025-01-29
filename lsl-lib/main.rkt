@@ -74,4 +74,6 @@
   (λ (key default use-default)
     (case key
       [(drracket:opt-out-toolbar-buttons) #f]
+      [(drracket:toolbar-buttons)
+       (list (dynamic-require 'lsl/private/ui/tyche 'tyche-button))]
       [else (use-default key default)])))

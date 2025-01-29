@@ -5,6 +5,7 @@
 
 (require racket/class
          racket/format
+         racket/function
          racket/list
          racket/set
          racket/string
@@ -73,21 +74,46 @@
 
     (define/override (interact val name contract->value)
       (define ((dom-apply acc k) dom)
-        (contract->value (apply dom acc)))
-      (define args (list-update-many domains domain-order dom-apply))
+        (define ctc (apply dom acc))
+        (define val (contract->value ctc))
+        (list val (send ctc describe val)))
+      (define args+feats (list-update-many domains domain-order dom-apply))
+      (define args (map first args+feats))
+      (define feats (append-map second args+feats))
+      (define args-str
+        (for/list ([arg (in-list args)])
+          (~v (if (none? arg)
+                  (none-witness arg)
+                  arg))))
+      (define args-fmt
+        (if (empty? args)
+            (format "(~a)" name)
+            (format "(~a ~a)" name (string-join args-str))))
       (cond
-        [(ormap none? args) #f]
+        ;; Failed generation
+        [(ormap none? args)
+         ;; TODO: Technically an invalid witness that happens to be false will be treated incorrectly...
+         (define any-gave-up? (findf (λ (x) (and (none? x) (not (none-witness x)))) args))
+         ;; Any argument generator absent, bail.
+         ;; Otherwise one is invalid and we'll show it in Tyche.
+         (if any-gave-up? (none) (none args-fmt))]
         [else
          (define init-exn (fail-exn val args))
          (cond
+           ;; Found counterexample
            [init-exn
             (define-values (best-args best-exn)
               (find-best-args val args init-exn))
             (list (if (empty? best-args)
                       (format "(~a)" name)
                       (format "(~a ~a)" name (string-join (map ~v best-args))))
+                  args-fmt
+                  (make-immutable-hash feats)
                   best-exn)]
-           [else #f])]))
+           ;; Good test
+           [else
+            (list args-fmt
+                  (make-immutable-hash feats))])]))
 
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))

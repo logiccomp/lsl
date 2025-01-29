@@ -26,6 +26,7 @@
  check
  generate
  shrink
+ feature
 
  (for-syntax function-literal)
  arguments
@@ -41,7 +42,7 @@
 
 (define-literal-forms immediate-literal
   "literal clause must occur within Immediate"
-  (check generate shrink))
+  (check generate shrink feature))
 
 (define-literal-forms function-literal
   "literal clause must occur within Function"
