@@ -6,7 +6,8 @@
 (require (for-syntax racket/base)
          racket/contract
          racket/string
-         racket/list)
+         racket/list
+         lsl/private/library/time)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
@@ -17,8 +18,8 @@
 (define (implode l)
   (apply string-append l))
 
-(define (slow-string=? s1 s2)
-  (begin (sleep 0.0001)
+(define (string=?/ticks s1 s2)
+  (begin (ticks (add1 (ticks)))
          (string=? s1 s2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,7 +27,7 @@
 
 (provide
  (contract-out
-  [rename slow-string=? string=? (-> string? string? any)])
+  [rename string=?/ticks string=? (-> string? string? any)])
 
  explode
  implode
