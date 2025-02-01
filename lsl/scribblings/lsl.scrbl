@@ -55,7 +55,7 @@ and property-based randomized testing.
 @(define lst (select '(append assoc assq build-list car cdr cons cons? eighth empty? fifth first fourth length
                        list list-ref list? memq memq? null null? remove rest reverse second seventh sixth third empty
 		       member?)))
-@(define ho (select '(identity andmap apply argmax argmin compose filter foldl foldr for-each map memf ormap
+@(define ho (select '(identity andmap apply argmax argmin compose filter foldl foldr map memf ormap
                       procedure? sort)))
 
 @tabular[#:style (style #f (list (attributes '((class . "boxed") (style . "border-spacing: 10px 5px")))))

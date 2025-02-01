@@ -121,5 +121,5 @@
         (: foo (-> Integer String))
         (define (foo x) x)
         (foo 10))
-   " contract previously declared for foo"
+   "contract previously declared for foo"
    ))

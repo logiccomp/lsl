@@ -25,7 +25,6 @@
  filter
  foldl
  foldr
- for-each
  identity
  map
  memf
