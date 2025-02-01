@@ -61,7 +61,8 @@
    $raise
    $local
 
-   $define-struct)))
+   $define-struct
+   $define-mutable-struct)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; interposition forms
@@ -184,7 +185,22 @@
 (define-syntax $define-struct
   (syntax-parser
     [(_ name:id (field:id ...))
-     ;#:with Name (kebab->camel #'name)
+     #:with (_ ctor _ acc ...)
+     (build-struct-names #'name (syntax-e #'(field ...)) #f #t)
+     #'(begin
+         (struct name (field ...)
+           #:transparent
+           #:constructor-name ctor
+           #:property prop:custom-print-quotable 'never
+           #:methods gen:custom-write
+           [(define write-proc
+              (make-constructor-style-printer
+               (λ (obj) 'ctor)
+               (λ (obj) (list (acc obj) ...))))]))]))
+
+(define-syntax $define-mutable-struct
+  (syntax-parser
+    [(_ name:id (field:id ...))
      #:with (k ...)
      (for/list ([k (in-naturals)] [field-id (in-syntax #'(field ...))])
        #`(#%datum . #,k))
@@ -193,9 +209,6 @@
      #:with (_ _ _ mut ...)
      (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
      #'(begin
-         #;(define-syntax Name
-           (contract-macro
-            (struct-contract-macro #'name)))
          (struct name root (field ...)
            #:transparent
            #:mutable

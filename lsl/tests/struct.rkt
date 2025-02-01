@@ -82,7 +82,7 @@
    10
 
    #:t
-   (run (define-struct foo (x))
+   (run (define-mutable-struct foo (x))
         (: f (-> Any (Struct foo (Integer))))
         (define (f x) x)
         (define orig (make-foo 10))
@@ -104,7 +104,7 @@
    5
 
    #:x
-   (run (define-struct foo (x))
+   (run (define-mutable-struct foo (x))
         (define-contract (Foo X) (Struct foo (X)))
         (: f (-> Any (Foo Integer)))
         (define (f x) x)
@@ -112,7 +112,7 @@
    "expected: Integer"
 
    #:x
-   (run (define-struct foo (x))
+   (run (define-mutable-struct foo (x))
         (define-contract (Foo X) (Struct foo (X)))
         (: f (-> Any (Foo Integer)))
         (define (f x) x)

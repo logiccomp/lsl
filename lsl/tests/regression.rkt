@@ -87,7 +87,7 @@
    #:x (run* (if 1 2 3))
    "expected: boolean?"
    #:t
-   (run (define-struct foo (v))
+   (run (define-mutable-struct foo (v))
         (define x (make-foo 1))
         (: L (List Any))
         (define L empty)

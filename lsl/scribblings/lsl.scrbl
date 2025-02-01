@@ -100,9 +100,21 @@ and property-based randomized testing.
   @examples[#:eval evaluator #:no-prompt #:label #f
     (define-struct posn [x y])
     (define a-posn (make-posn 0 0))
-    (set-posn-x! a-posn 1)
     (posn-x a-posn)]
   }
+
+@defform[(define-mutable-struct structure-name (field-name ...))]{
+  Like @racket[define-struct], except functions that mutate the struct are available:
+  @racketidfont{set-}@racket[structure-name]@racketidfont{-}@racket[field-name]@racketidfont{!} takes an
+  instance of the structure and a value, and sets the field named by
+  @racket[field-name] in the given instance of the structure to the given value.
+
+  @examples[#:eval evaluator #:no-prompt #:label #f
+    (define-mutable-struct box [value])
+    (define a-box (make-box 0))
+    (set-box-value! a-box 1)
+    (box-value a-box)]
+}
 
 @defform[(begin expr0 ... expr)]{
   Executes the given expressions in sequence, returning the last @racket[expr].

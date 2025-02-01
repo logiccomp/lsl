@@ -30,6 +30,33 @@
     (super-new)
 
     (define/override (protect val pos)
+      (if mutators
+          (protect/mutable val pos)
+          (protect/immutable val pos)))
+
+    (define (protect/immutable val pos)
+      (define guards
+        (and (predicate val)
+             (for/list ([ctc (in-list contracts)]
+                        [field (in-list (struct->list val))])
+               (send ctc protect field pos))))
+      (if (and guards (andmap passed-guard? guards))
+          (passed-guard
+           (λ (val neg)
+             (define fields
+               (for/list ([ctc (in-list contracts)]
+                          [field (in-list (struct->list val))])
+                 ((send ctc protect field pos) field neg)))
+             (apply constructor fields)))
+          (failed-guard
+           (λ (val neg)
+             (unless guards
+               (contract-error this syntax val pos))
+             (for ([guard (in-list guards)]
+                   [field (in-list (struct->list val))])
+               (guard field neg))))))
+
+    (define (protect/mutable val pos)
       (define val* (unproxy val))
       (define guards
         (and (predicate val*)
@@ -47,7 +74,7 @@
                (define fields
                  (for/list ([ctc (in-list contracts)]
                             [field (in-list (struct->list val*))])
-                   ((send ctc protect field pos) field pos)))
+                   ((send ctc protect field pos) field neg)))
                (apply constructor fields))
              (proxy val info this unwrap)))
           (failed-guard

@@ -71,6 +71,7 @@
       (define wrap?
         (or (and polarity (negative-blame? pos))
             (and (not polarity) (positive-blame? pos))))
+      (displayln (list pos val wrap?))
       (cond
         [wrap? (passed-guard (λ (val neg) (ctor val)))]
         [(pred? val) (passed-guard (λ (val neg) (get val)))]

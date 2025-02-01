@@ -114,7 +114,7 @@
               [constructor s.constructor-id]
               [predicate s.predicate-id]
               [accessors (list s.accessor-id ...)]
-              [mutators (list s.mutator-id ...)]
+              [mutators (~? (list s.mutator-id ...) #f)]
               [contracts (list e^ ...)])]
       [(List e)
        (define/syntax-parse e^ (compile-contract #'e))
