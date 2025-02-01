@@ -61,6 +61,8 @@
 (define-syntax declare-contract
   (syntax-parser
     [(_ name:id ctc:expr)
+     #:fail-when (and (contract-table-ref #'name) this-syntax)
+     (format "contract previously declared for ~a" (syntax-e #'name))
      (contract-table-set! #'name #'ctc)
      #'(void)]))
 

@@ -116,4 +116,10 @@
         (define (f x) x)
         (f "hi"))
    "hi"
+   #:x
+   (run (: foo (-> Integer Integer))
+        (: foo (-> Integer String))
+        (define (foo x) x)
+        (foo 10))
+   " contract previously declared for foo"
    ))
