@@ -11,4 +11,4 @@ jobs:
           distribution: 'full'
           version: 'current'
       - run: raco pkg install --auto lsl-lib/ lsl/
-      - run: xvfb-run -a raco test --drdr lsl/
+      - run: xvfb-run -a raco test lsl/
