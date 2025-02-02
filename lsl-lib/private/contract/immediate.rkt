@@ -35,17 +35,23 @@
       (cond
         [generator
          (define val (generator fuel))
-         (if (checker val) val (none val))]
-        [else (none)]))
+         (unless (checker val)
+           (raise
+            (exn:fail:invalid
+             (format "contract-generate: generated value ~a does not satisfy contract" val)
+             (current-continuation-marks)
+             (list (syntax-property syntax 'unexpanded))
+             val)))
+         val]
+        [else (give-up syntax)]))
 
     (define/override (shrink fuel val)
-      (if shrinker (shrinker fuel val) (none)))
+      (if shrinker (shrinker fuel val) val))
 
     (define/override (interact val name mode)
       #f)
 
     (define/override (describe val)
-      (for/list ([feat (in-list feature)]
-                 #:unless (none? val))
+      (for/list ([feat (in-list feature)])
         (match-define (list name func) feat)
         (cons (string->symbol name) (func val))))))

@@ -93,7 +93,14 @@
    #:? even?
    (run/sexp even-sexp '(contract-generate Even))
    (run/sexp even-sexp '(contract-shrink Even 6))  3
-   #:x (run (contract-generate (Immediate (check even?))))  "contract-generate: failed"
+   #:x (run (contract-generate (Immediate (check even?))))
+   "contract-generate: failed to generate value satisfying contract"
+
+   #:x (run (define-contract Odd
+              (Immediate (check (lambda (x) (and (integer? x) (odd? x))))
+                         (generate (lambda (fuel) (* 2 (contract-generate Integer fuel))))))
+            (contract-generate Odd))
+   "does not satisfy contract"
 
    #:? integer?
    (run (define-contract MyInt
@@ -113,4 +120,10 @@
             (g x)))
         (f ""))
    "expected: Integer"
+
+   #:x
+   (run* (: foo (-> (Immediate (check odd?)) Integer))
+         (define (foo x) x)
+         (check-contract foo))
+   "failed to generate value satisfying contract"
    ))

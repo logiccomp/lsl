@@ -83,7 +83,9 @@
 
     (define/override (generate fuel)
       (match-define (seal-info ctor pred? get name polarity) info)
-      (if polarity (ctor 0) (none)))))
+      (if polarity
+          (ctor 0)
+          (give-up syntax)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; subscripts

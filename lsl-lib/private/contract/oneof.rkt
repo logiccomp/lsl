@@ -10,6 +10,7 @@
                   in-list
                   in-value
                   raise-user-error)
+         racket/random
          racket/class
          racket/list
          "common.rkt"
@@ -39,10 +40,8 @@
              (contract-error this syntax val pos)))))
 
     (define/override (generate fuel)
-      (for/fold ([val (none)])
-                ([disjunct (in-list (shuffle disjuncts))])
-        #:break (not (none? val))
-        (send disjunct generate fuel)))
+      (define disjunct (random-ref disjuncts))
+      (send disjunct generate fuel))
 
     (define/override (shrink fuel val)
       (for*/first ([disjunct (in-list (shuffle disjuncts))]

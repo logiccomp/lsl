@@ -65,13 +65,9 @@
 
 (define-contract Integer
   (Immediate (check integer?)
-             (generate (λ (fuel) (if (zero? fuel)
-                                     0
-                                     (random (* -1 fuel) fuel))))
+             (generate (λ (fuel) (if (zero? fuel) 0 (random (* -1 fuel) fuel))))
              (shrink (λ (fuel val)
-                       (if (zero? val)
-                           (none)
-                           (floor (/ val 2)))))))
+                       (if (zero? val) 0 (floor (/ val 2)))))))
 
 (define-contract Real
   (Immediate (check real?)

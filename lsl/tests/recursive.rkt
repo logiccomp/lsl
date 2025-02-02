@@ -75,11 +75,6 @@
           (match x
             [(thing (thing _)) #t]
             [_ #f]))
-   #:t
-   (let ([xs (map (λ _ (send rec-even-thing-ctc generate 5)) (range 20))])
-     (and (andmap (or/c thing? (and/c integer? even?)) xs)
-          (findf two-thing? xs)
-          (andmap even? (map unthing xs))))
 
    (send rec-even-thing-ctc shrink 1 good-thing)
    (thing (thing (thing 4)))

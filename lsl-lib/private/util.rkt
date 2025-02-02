@@ -18,14 +18,13 @@
                      camel->kebab
                      contract-table-ref
                      contract-table-set!)
-         (rename-out [make-none none])
-         none?
-         none-witness
          (struct-out base-seal)
+         (struct-out exn:fail:gave-up)
+         (struct-out exn:fail:invalid)
+         give-up
          current-logs
          current-pbt-stats
          λ/memoize
-         repeat/fuel
          any?
          any-list?
          error-if-parametric
@@ -34,15 +33,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
 
-(struct none (witness))
 (struct base-seal ())
-
-(define (make-none [witness #f])
-  (none witness))
 
 (define current-logs (make-parameter #f))
 (define current-pbt-stats (make-parameter #f))
 (define current-allowed-exns (make-parameter #f))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; exns
+
+(struct exn:fail:gave-up exn:fail:syntax ())
+(struct exn:fail:invalid exn:fail:syntax (witness))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; memoize
@@ -52,16 +53,6 @@
     [(_ args:id body:expr)
      #'(let ([table (make-hash)])
          (λ args (hash-ref! table args (λ () body))))]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; repeat
-
-(define (repeat/fuel f fuel)
-  (cond
-    [(zero? fuel) (make-none)]
-    [else
-     (define x (f))
-     (if (none? x) (repeat/fuel f (sub1 fuel)) x)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax
@@ -121,3 +112,10 @@
   (when (base-seal? x)
     (error 'if "cannot use parametric value ~a" x))
   x)
+
+(define (give-up stx)
+  (raise
+   (exn:fail:gave-up
+    "contract-generate: failed to generate value satisfying contract"
+    (current-continuation-marks)
+    (list (syntax-property stx 'unexpanded)))))

@@ -191,7 +191,7 @@
   #:x (run* (: f (-> (List Integer) Integer))
             (define (f x) "")
             (check-contract f))
-  "counterexample: (f '())"
+  "counterexample: (f '("
 
   #:x (run* (define-struct ok ())
             (: f (Function (arguments [_ (List Integer)])

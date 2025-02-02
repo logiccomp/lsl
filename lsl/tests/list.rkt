@@ -4,11 +4,11 @@
 ;; require
 
 (require chk
+         racket/contract
          racket/class
          racket/match
          lsl/private/contract/list
          lsl/private/guard
-         lsl/private/util
          "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,7 +101,8 @@
          (define x '(1)))
    "-2 must be non-negative"
 
-   (run (contract-shrink (List Integer) '(0) 20))  '()
+   #:? (listof integer?)
+   (run (contract-shrink (List Integer) '(0) 20))
 
    #:? (λ (xs) (andmap integer? xs))
    (run (contract-generate (List Integer)))

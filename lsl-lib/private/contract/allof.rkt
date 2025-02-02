@@ -37,24 +37,17 @@
            (guard val neg)))))
 
     (define/override (generate fuel)
-      (repeat/fuel
-       (λ ()
-         (define conjunct (random-ref conjuncts))
-         (satisfies-immediate (send conjunct generate fuel)))
-       fuel))
+      (define conjunct (random-ref conjuncts))
+      (satisfies-immediate (send conjunct generate fuel)))
 
     (define/override (shrink fuel val)
-      (repeat/fuel
-       (λ ()
-         (define conjunct (random-ref conjuncts))
-         (satisfies-immediate (send conjunct shrink fuel val)))
-       fuel))
+      (define conjunct (random-ref conjuncts))
+      (satisfies-immediate (send conjunct shrink fuel val)))
 
     (define (satisfies-immediate val)
-      (cond
-        [(none? val) (none)]
-        [(andmap passed-guard? (guards-of val #f)) val]
-        [else (none)]))
+      (unless (andmap passed-guard? (guards-of val #f))
+        (give-up syntax))
+      val)
 
     (define (guards-of val pos)
       (let go ([conjuncts conjuncts])

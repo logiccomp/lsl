@@ -44,38 +44,27 @@
          (map (λ (guard elem) (guard elem neg)) guards val))))
 
     (define/override (generate fuel)
-      (define result
-        (if fixed?
-            (for/list ([ctc (in-list contracts)])
-              (send ctc generate fuel))
-            (build-list
-             (random (add1 fuel))
-             (λ _ (send elems-ctc generate fuel)))))
-      (if (ormap none? result)
-          (none)
-          result))
+      (if fixed?
+          (for/list ([ctc (in-list contracts)])
+            (send ctc generate fuel))
+          (build-list
+           (random (add1 fuel))
+           (λ _ (send elems-ctc generate fuel)))))
 
     (define/override (shrink fuel val)
-      (if (or fixed? (empty? val))
-          (shrink-elems fuel val)
-          (try (list shrink-length shrink-elems) fuel val)))
-
-    (define (try fs fuel val)
-      (for/fold ([acc (none)])
-                ([f (in-list fs)])
-        #:break (not (none? acc))
-        (f fuel val)))
+      (cond
+        [(or fixed? (empty? val)) (shrink-elems fuel val)]
+        [(< (random) 1/2) (shrink-length fuel val)]
+        [else (shrink-elems fuel val)]))
 
     (define (shrink-length fuel val)
       (define k (random (length val)))
       (append (take val k) (drop val (add1 k))))
 
     (define (shrink-elems fuel val)
-      (define result
-        (for/list ([ctc (in-cycle (in-list contracts))]
-                   [elem (in-list val)])
-          (send ctc shrink fuel elem)))
-      (if (ormap none? result) (none) result))))
+      (for/list ([ctc (in-cycle (in-list contracts))]
+                 [elem (in-list val)])
+        (send ctc shrink fuel elem)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

@@ -187,26 +187,29 @@
 (define-syntax contract-generate
   (syntax-parser
     [(_ ctc:expr (~optional fuel:expr))
-     #`(perform-or-error
-        'contract-generate
+     #`(attempt
         (λ ()
           (send #,(compile-contract (expand-contract #'ctc))
                 generate
-                (~? fuel FUEL))))]))
+                (~? fuel FUEL)))
+        (~? fuel FUEL))]))
 
 (define-syntax contract-shrink
   (syntax-parser
     [(_ ctc:expr val:expr (~optional fuel:expr))
-     #`(perform-or-error
-        'contract-shrink
+     #`(attempt
         (λ ()
           (send #,(compile-contract (expand-contract #'ctc))
                 shrink
                 (~? fuel FUEL)
-                val)))]))
+                val))
+        (~? fuel FUEL))]))
 
-(define (perform-or-error name thk)
-  (define result (thk))
-  (if (none? result)
-      (raise-user-error name "failed")
-      result))
+(define (attempt thk num)
+  (let go ([k 0])
+    (define (fail exn)
+      (if (= (sub1 k) num)
+          (raise exn)
+          (go (add1 k))))
+    (with-handlers ([exn:fail:gave-up? fail])
+      (thk))))

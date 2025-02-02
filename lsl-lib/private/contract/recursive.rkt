@@ -27,7 +27,7 @@
 
     (define/override (generate fuel)
       (if (zero? fuel)
-          (none)
+          (give-up syntax)
           (send (force promise) generate (sub1 fuel))))
 
     (define/override (shrink fuel val)

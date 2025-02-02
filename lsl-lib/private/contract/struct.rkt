@@ -89,9 +89,7 @@
       (define fields
         (for/list ([ctc (in-list contracts)])
           (send ctc generate fuel)))
-      (if (ormap none? fields)
-          (none)
-          (apply constructor fields)))
+      (apply constructor fields))
 
     (define/override (shrink fuel val)
       (define fields (struct->list (unproxy val)))
@@ -99,11 +97,7 @@
         (for/list ([ctc (in-list contracts)]
                    [field (in-list fields)])
           (send ctc shrink fuel field)))
-      (define (replace-none x y)
-        (if (none? x) y x))
-      (if (andmap none? fields)
-          (none)
-          (apply constructor (map replace-none fields* fields))))))
+      (apply constructor fields*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO

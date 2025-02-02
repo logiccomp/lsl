@@ -53,10 +53,10 @@
       (unimplemented-error 'protect))
 
     (define/public (generate fuel)
-      (none))
+      (unimplemented-error 'generate))
 
     (define/public (shrink fuel val)
-      (none))
+      val)
 
     (define/public (interact val name mode)
       (unimplemented-error 'interact))

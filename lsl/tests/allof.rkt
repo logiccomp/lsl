@@ -43,13 +43,6 @@
    (send pos-even-ctc protect 3 '+)
    #:x ((send pos-even-ctc protect 3 '+) 3 '-)
    "expected: Even"
-
-   #:? (and/c even? positive?)
-   (send pos-even-ctc generate 20)
-   (send pos-even-ctc shrink 20 6)  2
-   ;; TODO: shrinking where "none replacement" is needed
-
-   ;; TODO: interact
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,5 +58,7 @@
 
    #:? (and/c integer? positive?)
    (run (contract-generate (AllOf Integer (Immediate (check positive?))) 40))
-   (run (contract-shrink (AllOf (Immediate (check positive?)) Integer) 10))  5
+
+   #:? (and/c integer? positive?)
+   (run (contract-shrink (AllOf (Immediate (check positive?)) Integer) 10))
    ))

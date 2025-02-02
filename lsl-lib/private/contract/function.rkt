@@ -65,11 +65,7 @@
 
     (define/override (generate fuel)
       (define generated
-        (λ/memoize args
-          (let ([result (send (apply codomain args) generate fuel)])
-            (when (none? result)
-              (generate-error syntax))
-            result)))
+        (λ/memoize args (send (apply codomain args) generate fuel)))
       (procedure-reduce-arity generated arity))
 
     (define/override (interact val name contract->value)
@@ -80,45 +76,32 @@
       (define args+feats (list-update-many domains domain-order dom-apply))
       (define args (map first args+feats))
       (define feats (append-map second args+feats))
-      (define args-str
-        (for/list ([arg (in-list args)])
-          (~v (if (none? arg)
-                  (none-witness arg)
-                  arg))))
+      (define args-str (map ~v args))
       (define args-fmt
         (if (empty? args)
             (format "(~a)" name)
             (format "(~a ~a)" name (string-join args-str))))
+      (define init-exn (fail-exn val args))
       (cond
-        ;; Failed generation
-        [(ormap none? args)
-         ;; TODO: Technically an invalid witness that happens to be false will be treated incorrectly...
-         (define any-gave-up? (findf (λ (x) (and (none? x) (not (none-witness x)))) args))
-         ;; Any argument generator absent, bail.
-         ;; Otherwise one is invalid and we'll show it in Tyche.
-         (if any-gave-up? (none) (none args-fmt))]
+        ;; Found counterexample
+        [init-exn
+         (define-values (best-args best-exn)
+           (find-best-args val args init-exn))
+         (list (if (empty? best-args)
+                   (format "(~a)" name)
+                   (format "(~a ~a)" name (string-join (map ~v best-args))))
+               args-fmt
+               (make-immutable-hash feats)
+               best-exn)]
+        ;; Good test
         [else
-         (define init-exn (fail-exn val args))
-         (cond
-           ;; Found counterexample
-           [init-exn
-            (define-values (best-args best-exn)
-              (find-best-args val args init-exn))
-            (list (if (empty? best-args)
-                      (format "(~a)" name)
-                      (format "(~a ~a)" name (string-join (map ~v best-args))))
-                  args-fmt
-                  (make-immutable-hash feats)
-                  best-exn)]
-           ;; Good test
-           [else
-            (list args-fmt
-                  (make-immutable-hash feats))])]))
+         (list args-fmt
+               (make-immutable-hash feats))]))
 
     (define (find-best-args val args last-exn)
       (define args* (shrink* args))
       (cond
-        [(or (ormap none? args*) (equal? args args*))
+        [(equal? args args*)
          (values args last-exn)]
         [(fail-exn val args*) => (λ (exn) (find-best-args val args* exn))]
         [else (values args last-exn)]))

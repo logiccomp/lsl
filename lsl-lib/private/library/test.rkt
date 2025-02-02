@@ -258,15 +258,19 @@
           ctc val name time
           (λ (ctc)
             (send ctc generate (get-fuel size iter))))))
-     (unless (or (ormap values sample-results) tyche?)
-       (fail-check "failed to generate values associated with contract"))]
+     (unless tyche?
+       (for/first ([result (in-list sample-results)]
+                   #:when (procedure? result))
+         (result))
+       (when (andmap exn:fail:gave-up? sample-results)
+         (raise (car sample-results))))]
      [else (fail-check (format "unknown contract for ~a" name))]))
 
 (define (push-stats! ht)
-  (current-pbt-stats (cons ht (current-pbt-stats))))
+  (define stats (current-pbt-stats))
+  (when stats (current-pbt-stats (cons ht stats))))
 
 (define (do-check-contract ctc val name time contract->value)
-  (define tyche? (current-pbt-stats))
   (define base-hash
     (hash 'type "test_case"
           'run_start time
@@ -275,29 +279,29 @@
           'coverage "no_coverage_info"
           'metadata (hash)
           'property (~a name)))
-  (match (send ctc interact val name contract->value)
-    [(list shrunk-eg init-eg feats exn)
-     (if tyche?
-         (push-stats!
-          (hash-set* base-hash
-                     'status "failed"
-                     'representation (~a init-eg)
-                     'features feats))
-         (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
-    [(? none? val)
-     (if tyche?
-         (push-stats! (hash-set* base-hash
-                                 'representation (or (none-witness val) "")
-                                 'status "gave_up"))
-         #f)]
-    [(list pass-eg feats)
-     (if tyche?
-         (push-stats!
-          (hash-set* base-hash
-                     'status "passed"
-                     'representation (~a pass-eg)
-                     'features feats))
-         #t)]))
+  (define (handle-gave-up exn)
+    (push-stats! (hash-set* base-hash 'representation "" 'status "gave_up"))
+    exn)
+  (define (handle-invalid exn)
+    (define witness (exn:fail:invalid-witness exn))
+    (push-stats! (hash-set* base-hash 'representation witness 'status "invalid"))
+    (λ () (raise exn)))
+  (with-handlers ([exn:fail:gave-up? handle-gave-up]
+                  [exn:fail:invalid? handle-invalid])
+    (match (send ctc interact val name contract->value)
+      [(list shrunk-eg init-eg feats exn)
+       (push-stats!
+        (hash-set* base-hash
+                   'status "failed"
+                   'representation (~a init-eg)
+                   'features feats))
+       (λ () (fail-check (format VERIFY-FMT shrunk-eg (indent (exn-message exn)))))]
+      [(list pass-eg feats)
+       (push-stats!
+        (hash-set* base-hash
+                   'status "passed"
+                   'representation (~a pass-eg)
+                   'features feats))])))
 
 (define (indent str)
   (string-append "  " (string-replace str "\n" "\n    ")))
