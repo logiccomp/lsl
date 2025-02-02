@@ -73,7 +73,10 @@
 
    #:do (define p3-result (process-prog p3))
    #:t (and (= (length p3-result) 100)
-            (andmap (λ (r) (equal? (hash-ref r 'status) "invalid")) p3-result))
+            (andmap (λ (r)
+                      (and (equal? (hash-ref r 'status) "gave_up")
+                           (string? (hash-ref r 'representation))))
+                    p3-result))
 
    #:do (define p4-result (process-prog p4))
    #:t (and (= (length p4-result) 100)

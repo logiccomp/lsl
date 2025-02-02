@@ -284,7 +284,7 @@
     exn)
   (define (handle-invalid exn)
     (define witness (exn:fail:invalid-witness exn))
-    (push-stats! (hash-set* base-hash 'representation witness 'status "invalid"))
+    (push-stats! (hash-set* base-hash 'representation (~a witness) 'status "gave_up"))
     (λ () (raise exn)))
   (with-handlers ([exn:fail:gave-up? handle-gave-up]
                   [exn:fail:invalid? handle-invalid])
