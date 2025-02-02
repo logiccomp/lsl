@@ -18,7 +18,6 @@
  ;; TODO: Really should use `any-list?` with all list operations.
  (contract-out
   [member? (-> any? any-list? any)]
-  [rename member member (-> any? any-list? any)]
   [memq? (-> any? any-list? boolean?)]
   [memq (-> any? any-list? boolean?)]
   [remove (-> any? any-list? any)]
