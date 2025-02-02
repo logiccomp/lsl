@@ -79,12 +79,14 @@
                   (generate gen)
                   (shrink shk)
                   (feature feat))
-       #'(new immediate-contract%
+       #'(if (procedure? chk)
+             (new immediate-contract%
               [syntax quoted-stx]
               [checker chk]
               [generator gen]
               [shrinker shk]
-              [feature feat])]
+              [feature feat]) 
+              (error "Invalid contract:" chk))]
       [(Function (arguments [x fvs a] ...)
                  (result r)
                  (raises e:struct-id ...))
