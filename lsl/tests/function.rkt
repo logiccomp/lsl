@@ -200,4 +200,14 @@
             (define (f x) (if (empty? x) (raise (make-ok)) ""))
             (check-contract f))
   "counterexample: (f '("
+
+  #:x (run* (: f (-> #t Integer))
+            (define (f x) 42)
+            (check-contract f))
+  "Problem in signature for f"
+
+  #:x (run* (: f (-> Integer #t))
+            (define (f x) 42)
+            (check-contract f))
+  "Problem in signature for f"
   ))
