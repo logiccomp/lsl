@@ -270,6 +270,10 @@
   (define stats (current-pbt-stats))
   (when stats (current-pbt-stats (cons ht stats))))
 
+(define (limited-error? exn)
+  (and (exn:fail? exn)
+       (not (exn:fail:gave-up? exn))))
+
 (define (do-check-contract ctc val name time contract->value)
   (define base-hash
     (hash 'type "test_case"
@@ -288,7 +292,7 @@
     (λ () (raise exn)))
   (with-handlers ([exn:fail:gave-up? handle-gave-up]
                   [exn:fail:invalid? handle-invalid])
-    (match (with-handlers ([exn:fail?
+    (match (with-handlers ([limited-error?
                           (λ (e)
                              (improper-contract-error name
                                                       (exn-message e)))])
