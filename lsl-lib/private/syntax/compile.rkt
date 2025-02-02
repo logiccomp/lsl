@@ -85,8 +85,12 @@
               [checker chk]
               [generator gen]
               [shrinker shk]
-              [feature feat]) 
-              (error "Invalid contract:" chk))]
+              [feature feat])
+             (raise
+              (exn:fail:invalid-signature-contract
+               (format "Invalid contract: ~a" chk)
+               (current-continuation-marks)
+               (list (syntax-property quoted-stx 'unexpanded)))))]
       [(Function (arguments [x fvs a] ...)
                  (result r)
                  (raises e:struct-id ...))
