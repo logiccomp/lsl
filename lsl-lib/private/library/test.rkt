@@ -248,7 +248,7 @@
 
 (define-check (check-contract val name n size)
   (define ctc (proxy->contract val))
-  (define time (floor (current-inexact-monotonic-milliseconds)))
+  (define time (current-seconds))
   (define tyche? (current-pbt-stats))
   (cond
     [ctc
