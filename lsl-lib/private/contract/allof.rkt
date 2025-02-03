@@ -4,6 +4,7 @@
 ;; require
 
 (require racket/class
+         racket/list
          racket/match
          racket/random
          "common.rkt"
@@ -37,11 +38,11 @@
            (guard val neg)))))
 
     (define/override (generate fuel)
-      (define conjunct (random-ref conjuncts))
+      (define conjunct (first conjuncts))
       (satisfies-immediate (send conjunct generate fuel)))
 
     (define/override (shrink fuel val)
-      (define conjunct (random-ref conjuncts))
+      (define conjunct (first conjuncts))
       (satisfies-immediate (send conjunct shrink fuel val)))
 
     (define (satisfies-immediate val)
