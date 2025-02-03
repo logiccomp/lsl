@@ -80,12 +80,18 @@
                   (generate gen)
                   (shrink shk)
                   (feature feat))
-       #'(new immediate-contract%
+       #'(if (procedure? chk)
+             (new immediate-contract%
               [syntax quoted-stx]
               [checker chk]
               [generator gen]
               [shrinker shk]
-              [feature feat])]
+              [feature feat])
+             (raise
+              (exn:fail:invalid-signature-contract
+               (format "Invalid contract: ~a" chk)
+               (current-continuation-marks)
+               (list (syntax-property quoted-stx 'unexpanded)))))]
       [(Function (arguments [x fvs a] ...)
                  (result r)
                  (raises e:struct-id ...))
