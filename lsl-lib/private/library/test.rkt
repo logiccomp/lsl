@@ -286,8 +286,14 @@
     (define witness (exn:fail:invalid-witness exn))
     (push-stats! (hash-set* base-hash 'representation (~a witness) 'status "gave_up"))
     (λ () (raise exn)))
+  (define (handle-other exn)
+    (push-stats! (hash-set* base-hash
+                            'representation (format "error: ~a" (exn-message exn))
+                            'status "gave_up"))
+    (λ () (raise exn)))
   (with-handlers ([exn:fail:gave-up? handle-gave-up]
-                  [exn:fail:invalid? handle-invalid])
+                  [exn:fail:invalid? handle-invalid]
+                  [exn? handle-other])
     (match (with-handlers ([exn:fail:invalid-signature-contract?
                           (λ (e)
                              (improper-contract-error name
