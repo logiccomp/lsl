@@ -22,7 +22,6 @@
                      mutable-struct-set)
          (struct-out base-seal)
          (struct-out exn:fail:gave-up)
-         (struct-out exn:fail:invalid-signature-contract)
          (struct-out exn:fail:invalid)
          give-up
          current-logs
@@ -46,7 +45,6 @@
 ;; exns
 
 (struct exn:fail:gave-up exn:fail:syntax ())
-(struct exn:fail:invalid-signature-contract exn:fail:syntax ())
 (struct exn:fail:invalid exn:fail:syntax (witness))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

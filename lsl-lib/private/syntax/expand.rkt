@@ -51,6 +51,7 @@
     (define new-stx
       (syntax-parse stx
         #:literal-sets (contract-literal immediate-literal function-literal)
+        ;; TODO: all constitutent components should be contracted with `expr/c`
         [(Immediate ~! (~alt (~optional (check chk:expr))
                              (~optional (generate gen:expr))
                              (~optional (shrink shk:expr))
@@ -163,7 +164,7 @@
          #:do [(define proc (contract-macro-proc v))]
          (expand-contract (apply-as-transformer proc #'head 'expression stx))]
         [e:expr
-         (expand-contract #'(Immediate (check e)))]))
+         (expand-contract #'(Immediate (check (check-validity e #'e))))]))
     (syntax-replace-srcloc stx new-stx))
 
   (define (free-id-set-union* xs)
@@ -211,3 +212,8 @@
 
   (define (non-wildcard? x)
     (not (eq? (syntax-e x) '_))))
+
+(define (check-validity e stx)
+  (unless (procedure? e)
+    (raise-syntax-error ': "invalid immediate contract (must be a predicate)" stx))
+  e)

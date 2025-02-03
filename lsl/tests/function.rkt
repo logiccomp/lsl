@@ -204,12 +204,10 @@
   #:x (run* (: f (-> #t Integer))
             (define (f x) 42)
             (check-contract f))
-  "Problem in signature for f
-  Invalid contract: #t"
+  "invalid immediate contract (must be a predicate)"
 
   #:x (run* (: f (-> Integer #t))
             (define (f x) 42)
             (check-contract f))
-  "Problem in signature for f
-  Invalid contract: #t"
+  "invalid immediate contract (must be a predicate)"
   ))

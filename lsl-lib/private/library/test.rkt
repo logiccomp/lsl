@@ -294,14 +294,8 @@
   (with-handlers ([exn:fail:gave-up? handle-gave-up]
                   [exn:fail:invalid? handle-invalid]
                   [exn? handle-other])
-    (match (with-handlers ([exn:fail:invalid-signature-contract?
-                          (λ (e)
-                             (improper-contract-error name
-                                                      (exn-message e)))])
-             (send ctc interact val name contract->value))
+    (match (send ctc interact val name contract->value)
       [(list shrunk-eg init-eg feats exn)
-       (when (string-contains? (exn-message exn) "Invalid contract:")
-        (improper-contract-error name (exn-message exn)))
        (push-stats!
         (hash-set* base-hash
                    'status "failed"
@@ -314,11 +308,6 @@
                    'status "passed"
                    'representation (~a pass-eg)
                    'features feats))])))
-
-(define (improper-contract-error name msg)
-  (error (string-append "Problem in signature for "
-                        (symbol->string name)
-                        "\n" "  " msg)))
 
 (define (indent str)
   (string-append "  " (string-replace str "\n" "\n    ")))
