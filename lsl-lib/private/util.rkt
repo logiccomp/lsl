@@ -6,6 +6,7 @@
 (require (for-syntax racket/base
                      racket/string
                      syntax/id-table
+                     syntax/id-set
                      syntax/parse
                      threading)
          racket/contract)
@@ -17,7 +18,8 @@
                      kebab->camel
                      camel->kebab
                      contract-table-ref
-                     contract-table-set!)
+                     contract-table-set!
+                     mutable-struct-set)
          (struct-out base-seal)
          (struct-out exn:fail:gave-up)
          (struct-out exn:fail:invalid)
@@ -86,6 +88,7 @@
 
 (begin-for-syntax
   (define free-contract-table (make-free-id-table))
+  (define mutable-struct-set (mutable-free-id-set))
 
   (define (contract-table-set! id val)
     (free-id-table-set! free-contract-table id val)

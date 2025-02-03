@@ -82,6 +82,13 @@
    10
 
    #:t
+   (run (define-struct foo ())
+        (: bar (-> (Struct foo []) Boolean))
+        (define (bar v)
+          (foo? v))
+        (bar (make-foo)))
+
+   #:t
    (run (define-mutable-struct foo (x))
         (: f (-> Any (Struct foo (Integer))))
         (define (f x) x)
