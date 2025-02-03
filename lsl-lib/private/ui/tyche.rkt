@@ -21,6 +21,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; button
 
+(define ERROR "Encountered an error while running Tyche.\nTry clicking Run for more information.")
+
 (define tyche-button
   (list
    "Tyche"
@@ -30,9 +32,12 @@
      (define tmp (make-temporary-file))
      (with-output-to-file tmp (lambda () (write-string (editor->string editor))) #:exists 'replace)
      (define open-pbt-stats-json (process-prog tmp))
-     (with-output-to-file tyche-data.js
-       (lambda () (printf (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
-     (open-html-in-browser (path->string tyche-site))
+     (cond
+       [open-pbt-stats-json
+        (with-output-to-file tyche-data.js
+          (λ () (printf (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
+        (open-html-in-browser (path->string tyche-site))]
+       [else (message-box "Tyche Error" ERROR)])
      #f)
    #f))
 
@@ -50,4 +55,5 @@
 ;; Produces an OpenPBTStats JSON representing the results of
 ;; running the PBT in the given LSL file.
 (define (process-prog f)
-  ((hash-ref (dynamic-require f 'run-tests) 'tyche)))
+  (with-handlers ([exn? (λ _ #f)])
+    ((hash-ref (dynamic-require f 'run-tests) 'tyche))))
