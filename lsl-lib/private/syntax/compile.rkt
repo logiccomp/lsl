@@ -8,6 +8,7 @@
                      racket/list
                      racket/sequence
                      racket/syntax-srcloc
+                     syntax/id-set
                      syntax/stx
                      syntax/parse
                      syntax/parse/class/struct-id
@@ -114,13 +115,17 @@
               [syntax quoted-stx]
               [conjuncts (list e^ ...)])]
       [(Struct s:struct-id (e ...))
+       #:with ?mutators
+       (if (free-id-set-member? mutable-struct-set #'s)
+           #'(list s.mutator-id ...)
+           #'#f)
        (define/syntax-parse (e^ ...) (stx-map compile-contract #'(e ...)))
        #'(new struct-contract%
               [syntax quoted-stx]
               [constructor s.constructor-id]
               [predicate s.predicate-id]
               [accessors (list s.accessor-id ...)]
-              [mutators (~? (list s.mutator-id ...) #f)]
+              [mutators ?mutators]
               [contracts (list e^ ...)])]
       [(List e)
        (define/syntax-parse e^ (compile-contract #'e))

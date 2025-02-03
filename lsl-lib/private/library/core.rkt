@@ -7,6 +7,7 @@
                      racket/base
                      racket/sequence
                      syntax/parse/lib/function-header
+                     syntax/id-set
                      syntax/struct)
          json
          (except-in net/http-easy
@@ -208,6 +209,7 @@
      (build-struct-names #'name (syntax-e #'(field ...)) #f #t)
      #:with (_ _ _ mut ...)
      (build-struct-names #'name (syntax-e #'(field ...)) #t #f)
+     (free-id-set-add! mutable-struct-set #'name)
      #'(begin
          (struct name root (field ...)
            #:transparent
