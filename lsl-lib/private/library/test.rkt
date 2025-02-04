@@ -231,8 +231,8 @@
 
 (define-syntax ($check-contract stx)
   (syntax-parse stx
-    [(_ name:id) #'($check-contract name 100 default-size)]
-    [(_ name:id n:number) #'($check-contract name n default-size)]
+    [(_ name:id) (syntax/loc stx ($check-contract name 100 default-size))]
+    [(_ name:id n:number) (syntax/loc stx ($check-contract name n default-size))]
     [(_ name:id n:number size:expr)
      #:with thk-body (syntax/loc stx (check-contract name 'name n size))
      (push-form!
