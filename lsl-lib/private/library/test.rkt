@@ -264,7 +264,7 @@
          (result))
        (when (andmap exn:fail:gave-up? sample-results)
          (raise (car sample-results))))]
-     [else (fail-check (format "unknown contract for ~a" name))]))
+     [else (fail-check (format "~a either has no contract or does not have a function contract" name))]))
 
 (define (push-stats! ht)
   (define stats (current-pbt-stats))
