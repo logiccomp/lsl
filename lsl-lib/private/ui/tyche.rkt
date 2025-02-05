@@ -23,6 +23,7 @@
 
 (define ERROR "Encountered an error while running Tyche.\nTry clicking Run for more information.")
 
+(define tyche-thread #f)
 (define tyche-button
   (list
    "Tyche"
@@ -31,14 +32,18 @@
      (define editor (send window get-definitions-text))
      (define tmp (make-temporary-file))
      (with-output-to-file tmp (lambda () (write-string (editor->string editor))) #:exists 'replace)
-     (define open-pbt-stats-json (process-prog tmp))
-     (cond
-       [open-pbt-stats-json
-        (with-output-to-file tyche-data.js
-          (λ () (display (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
-        (open-html-in-browser (path->string tyche-site))]
-       [else (message-box "Tyche Error" ERROR)])
-     #f)
+     (unless tyche-thread
+       (set! tyche-thread
+             (thread
+              (λ ()
+                (define open-pbt-stats-json (process-prog tmp))
+                (cond
+                  [open-pbt-stats-json
+                   (with-output-to-file tyche-data.js
+                     (λ () (display (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
+                   (open-html-in-browser (path->string tyche-site))]
+                  [else (message-box "Tyche Error" ERROR)])
+                (set! tyche-thread #f))))))
    #f))
 
 (define (editor->string ed)
