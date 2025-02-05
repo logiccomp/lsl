@@ -35,7 +35,7 @@
      (cond
        [open-pbt-stats-json
         (with-output-to-file tyche-data.js
-          (λ () (printf (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
+          (λ () (display (hash-to-json-string open-pbt-stats-json))) #:exists 'replace)
         (open-html-in-browser (path->string tyche-site))]
        [else (message-box "Tyche Error" ERROR)])
      #f)
