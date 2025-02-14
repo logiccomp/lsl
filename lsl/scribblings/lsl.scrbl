@@ -356,6 +356,22 @@ putting @racket[check-expect] or similar at the top-level.
 
 @defform[(Maybe contract)]{
   Either @racket[#f] or a value satisfying the specified contract.
+
+  To use a @racket[Maybe] value, you must check if the output is a Boolean with
+  @racket[false?], or by using the contract for the associated type.
+
+  @examples[#:eval evaluator #:label #f
+    (: >3 (-> Natural (Maybe Natural)))
+    (define (>3 n)
+      (if (> 3 n) #f n))
+
+    (let ([maybe->3 (>3 1)])
+      (if (false? maybe->3) -1 maybe->3))
+
+    (map >3 (list 1 2 3 4 5))
+
+    (filter natural? (map >3 (list 1 2 3 4 5)))
+  ]
 }
 
 
