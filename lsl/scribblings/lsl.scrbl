@@ -361,16 +361,14 @@ putting @racket[check-expect] or similar at the top-level.
   @racket[false?], or by using the contract for the associated type.
 
   @examples[#:eval evaluator #:label #f
-    (: >3 (-> Natural (Maybe Natural)))
-    (define (>3 n)
-      (if (> 3 n) #f n))
+    (: bigger-than-three (-> Integer (Maybe Integer)))
+    (define (bigger-than-three n)
+      (if (> n 3) n #f))
 
-    (let ([maybe->3 (>3 1)])
-      (if (false? maybe->3) -1 maybe->3))
+    (let ([x (bigger-than-three 1)])
+      (if (false? x) "small" x))
 
-    (map >3 (list 1 2 3 4 5))
-
-    (filter natural? (map >3 (list 1 2 3 4 5)))
+    (filter integer? (map bigger-than-three (list 1 2 3 4 5)))
   ]
 }
 
