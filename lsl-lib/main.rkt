@@ -19,6 +19,7 @@
          "private/library/list.rkt"
          "private/library/number.rkt"
          "private/library/string.rkt"
+         "private/library/symbol.rkt"
          "private/library/char.rkt"
          "private/library/test.rkt"
          "private/library/time.rkt")
@@ -55,6 +56,7 @@
   "private/library/list.rkt"
   "private/library/number.rkt"
   "private/library/string.rkt"
+  "private/library/symbol.rkt"
   "private/library/char.rkt"
   "private/library/test.rkt")
 
