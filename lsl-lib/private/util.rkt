@@ -30,7 +30,8 @@
          any?
          any-list?
          error-if-parametric
-         current-allowed-exns)
+         current-allowed-exns
+         current-traces)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
@@ -40,6 +41,7 @@
 (define current-logs (make-parameter #f))
 (define current-pbt-stats (make-parameter #f))
 (define current-allowed-exns (make-parameter #f))
+(define current-traces (make-parameter (hash)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; exns

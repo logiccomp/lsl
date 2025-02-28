@@ -25,7 +25,8 @@
   [cons? (-> any? boolean?)]
   [empty? (-> any? boolean?)]
   [null? (-> any? boolean?)]
-  [remove-all (-> any? any-list? any)])
+  [remove-all (-> any? any-list? any)]
+  [remove-duplicates (-> any-list? any-list?)])
 
  build-list
  range

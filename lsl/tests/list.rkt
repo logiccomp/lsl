@@ -112,6 +112,9 @@
         xs)
    '(1 2 3)
 
+   (run (remove-duplicates '(1 1 2)))
+   '(1 2)
+
    #:x (run* (: xs (NonemptyList Integer))
              (define xs '()))
    "expected: cons?"

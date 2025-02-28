@@ -145,6 +145,12 @@ and property-based randomized testing.
   (check-raises (always-raise) bar)]
 }
 
+@defproc[(remove-duplicates [l list?]) list?]{
+  Removes duplicates from a list without altering its order using @racket[equal?] for equality.
+  @examples[#:eval evaluator #:label #f
+  (remove-duplicates '(0 1 1 2))]
+}
+
 @section{Testing}
 
 @defform[(test-suite "name" ...)]{
@@ -469,6 +475,33 @@ putting @racket[check-expect] or similar at the top-level.
   using the supplied fuel.
   @examples[#:eval evaluator #:label #f
     (contract-generate Even)]
+}
+
+@defform[(with-traces body ...)]{
+  After executing the @racket[body] expressions,
+  @racket[with-traces] restores the value of traces
+  to their values before the @racket[body] expressions ran.
+  This is useful when you have a set of tests that use @racket[Record] on the same trace.
+  @examples[#:eval evaluator #:label #f
+    (define-contract AtMostOne
+      (AllOf Natural (lambda (x) (<= x 1))))
+
+    (: num-calls AtMostOne)
+    (define num-calls 0)
+
+    (: say-hi (-> (Record (lambda (old _) (add1 old)) num-calls)))
+    (define (say-hi) "hi")
+
+    (with-traces
+      (say-hi))
+
+    (with-traces
+      (say-hi))
+
+    (eval:error
+      (with-traces
+        (say-hi)
+        (say-hi)))]
 }
 
 @section{State Machines}

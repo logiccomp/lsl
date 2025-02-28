@@ -137,6 +137,10 @@
           (let ([c #,(compile-contract (expand-contract ctc))]
                 [f (~? folder default-folder)])
             (λ (val)
+              (define ct (current-traces))
+              (unless (hash-has-key? ct 'tr)
+                (define val* tr)
+                (current-traces (hash-set ct 'tr (λ () (set! tr val*)))))
               (define tr* (f tr val))
               (set! tr ((send c protect tr* #f) tr* #f)))))))])))
 

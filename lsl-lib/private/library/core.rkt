@@ -39,6 +39,8 @@
  disable-contracts!
  enable-contracts!
 
+ with-traces
+
  (filtered-out
   (strip "$")
   (combine-out
@@ -173,6 +175,17 @@
 
 (define (enable-contracts!)
   (current-disable-contract #f))
+
+(define-syntax with-traces
+  (syntax-parser
+    [(_ e:expr ...)
+     #'(parameterize ([current-traces (hash)])
+         (dynamic-wind
+           void
+           (λ () e ...)
+           (λ ()
+             (for ([reset (in-hash-values (current-traces))])
+               (reset)))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; structs
