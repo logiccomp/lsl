@@ -24,6 +24,15 @@
                [k (in-naturals)]
                [sym (in-cycle SYMS)])
       (define name (or (object-name f) '???))
+      (define (shorten lst)
+        (let ((l (length lst)))
+          (cond
+            [(> l 3) (take lst 3)]
+            [(> l 1) (take lst 1)]
+            [else lst])))
+      (define _warmup
+        (for/list ([arg (in-list (shorten args))])
+          (measure (λ () (f arg)))))
       (define results
         (for/list ([arg (in-list args)])
           (measure (λ () (f arg)))))
