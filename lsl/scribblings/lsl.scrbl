@@ -621,6 +621,8 @@ However, the order in which messages are delivered among all actors is
 unspecified. When starting an actor system, a scheduler can be provided to fix
 some delivery policy.
 
+See @racket[start] for an example of a concurrent system.
+
 @defform[(Packet contract)]{
   Describes a packet sent from a process identified by a @racket[String], sent to
   a process identified by a @racket[String], and
@@ -758,6 +760,41 @@ A contract for a process.
   Runs a concurrent program using a fixed list of processes.
   When no more messages need to be processed, the function returns a list of pairs
   of the process name and final state.
+
+  The example below demonstrates a concurrent program with two processes, @code{a} and @code{b},
+  which send greetings back and forth. The program starts with @code{a} greeting @code{b}.
+  Each process has its own @emph{state}, remembering how many greetings it has sent so far.
+  Once each process has sent three greetings, they stop greeting, and the concurrent program
+  terminates.
+
+  @examples[#:eval evaluator #:no-prompt #:label #f
+            (code:line
+             (define MAX-GREETINGS 3)
+
+             (: a-receive (-> Natural (ReceivePacket String) (Action Natural)))
+             (define (a-receive state pkt)
+               (cond
+                 [(>= state MAX-GREETINGS) (action state (list))]
+                 [else
+                  (let ([new-state (add1 state)]
+                        [messages-to-send (list (send-packet "b" "Hi b!"))])
+                    (action new-state messages-to-send))]))
+
+             (: b-receive (-> Natural (ReceivePacket String) (Action Natural)))
+             (define (b-receive state pkt)
+               (cond
+                 [(>= state MAX-GREETINGS) (action state (list))]
+                 [else
+                  (let ([new-state (add1 state)]
+                        [messages-to-send (list (send-packet "a" "Hi a!"))])
+                    (action new-state messages-to-send))]))
+
+             (start first (list (process (name "a")
+                                         (on-start (λ (others) (action 1 (list (send-packet "b" "Hi b!")))))
+                                         (on-receive a-receive))
+                                (process (name "b")
+                                         (on-start (λ (others) (action 0 (list))))
+                                         (on-receive b-receive)))))]
 }
 
 @defproc[(start-debug [scheduler (-> (List (Packet Any)) (Packet Any))]
