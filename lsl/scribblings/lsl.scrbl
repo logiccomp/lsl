@@ -47,13 +47,13 @@ and property-based randomized testing.
 @(define eqn (select '(eq? equal?)))
 @(define bool (select '(boolean=? boolean? not true false)))
 @(define nums (select '(* + / = - < <= > >= abs add1 ceiling even? exact->inexact floor inexact->exact integer? max
-                        min modulo negative? number? odd? pi positive? quotient real? remainder sgn sub1 sqr zero?
+                        min modulo negative? number? natural? odd? pi positive? quotient real? remainder sgn sub1 sqr zero?
 			sqrt expt random)))
 @(define str (select '(string=? format string-length string-append list->string make-string string string->list
                        string->number string->symbol string-contains? string-copy string-downcase string-ref
-                       string-upcase string? substring)))
+                       string-upcase string? substring implode explode number->string symbol->string string<?)))
 @(define lst (select '(append assoc assq build-list car cdr cons cons? eighth empty? fifth first fourth length
-                       list list-ref list? memq memq? null null? remove rest reverse second seventh sixth third empty
+                       list list-ref list? memq memq? null null? remove remove-all rest reverse second seventh sixth third empty
 		       member?)))
 @(define ho (select '(identity andmap apply argmax argmin compose filter foldl foldr map memf ormap
                       procedure? sort)))
@@ -444,6 +444,18 @@ putting @racket[check-expect] or similar at the top-level.
     (up)
     (up)
     (eval:error (up))]
+}
+
+@defform[(NonemptyList contract)]{
+  Like @racket[List], but empty lists are not valid.
+  @examples[#:eval evaluator #:label #f
+    (contract-generate (NonemptyList Integer))]
+}
+
+@defform[(BoundedList max-length contract)]{
+  Describes a list of any length up to @racket[max-length].
+  @examples[#:eval evaluator #:label #f
+    (contract-generate (BoundedList 3 Integer))]
 }
 
 @section{Property-Based Randomized Testing}
