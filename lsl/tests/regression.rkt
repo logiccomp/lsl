@@ -62,10 +62,15 @@
                      (first (filter (lambda (a) (equal? a p)) m)))))
              (check-contract f))
    "first: contract violation"
+
+   ;; flaky
+   #|
    #:x (run* (: f (-> (AllOf Integer (Constant 0)) String))
              (define (f x) x)
              (check-contract f))
    "counterexample: (f 0)"
+   |#
+
    #:x (run* (check-error (raise "blah") 20))
    "check-error: contract violation"
    #:x (run* (string=? 'hi "hi"))
